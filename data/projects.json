@@ -1,0 +1,136 @@
+{
+  "projects": [
+    {
+      "id": "1",
+      "title": "Student Management System",
+      "description": "A comprehensive web-based system to manage student records, attendance, grades, and academic progress. Features include student registration, course management, and report generation.",
+      "domain": "Web Development",
+      "github_url": "https://github.com/example/student-management",
+      "source_url": "https://example.com/student-management",
+      "tags": ["React", "Node.js", "MongoDB", "Express"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-15"
+    },
+    {
+      "id": "2",
+      "title": "Weather Prediction using Machine Learning",
+      "description": "Advanced weather forecasting system using machine learning algorithms to predict weather patterns based on historical data and real-time meteorological information.",
+      "domain": "Machine Learning",
+      "github_url": "https://github.com/example/weather-prediction",
+      "source_url": "https://example.com/weather-prediction",
+      "tags": ["Python", "TensorFlow", "Pandas", "Scikit-learn"],
+      "difficulty": "Advanced",
+      "created_at": "2024-01-14"
+    },
+    {
+      "id": "3",
+      "title": "IoT Home Automation System",
+      "description": "Smart home automation system using Arduino and various sensors to control lights, temperature, security systems, and appliances remotely via mobile app.",
+      "domain": "IoT",
+      "github_url": "https://github.com/example/home-automation",
+      "source_url": "https://example.com/home-automation",
+      "tags": ["Arduino", "ESP32", "Flutter", "Firebase"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-13"
+    },
+    {
+      "id": "4",
+      "title": "E-commerce Mobile Application",
+      "description": "Full-featured mobile e-commerce app with product catalog, shopping cart, payment integration, order tracking, and user reviews system.",
+      "domain": "Mobile Development",
+      "github_url": "https://github.com/example/ecommerce-app",
+      "source_url": "https://example.com/ecommerce-app",
+      "tags": ["React Native", "Redux", "Stripe", "Firebase"],
+      "difficulty": "Advanced",
+      "created_at": "2024-01-12"
+    },
+    {
+      "id": "5",
+      "title": "Blockchain-based Voting System",
+      "description": "Secure and transparent voting system using blockchain technology to ensure vote integrity, prevent fraud, and maintain voter anonymity.",
+      "domain": "Blockchain",
+      "github_url": "https://github.com/example/blockchain-voting",
+      "source_url": "https://example.com/blockchain-voting",
+      "tags": ["Solidity", "Web3.js", "Ethereum", "React"],
+      "difficulty": "Advanced",
+      "created_at": "2024-01-11"
+    },
+    {
+      "id": "6",
+      "title": "AI Chatbot for Customer Support",
+      "description": "Intelligent chatbot using natural language processing to provide automated customer support, handle queries, and escalate complex issues to human agents.",
+      "domain": "Artificial Intelligence",
+      "github_url": "https://github.com/example/ai-chatbot",
+      "source_url": "https://example.com/ai-chatbot",
+      "tags": ["Python", "NLTK", "TensorFlow", "Flask"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-10"
+    },
+    {
+      "id": "7",
+      "title": "Hospital Management System",
+      "description": "Complete hospital management solution with patient records, appointment scheduling, inventory management, billing, and staff management modules.",
+      "domain": "Web Development",
+      "github_url": "https://github.com/example/hospital-management",
+      "source_url": "https://example.com/hospital-management",
+      "tags": ["Java", "Spring Boot", "MySQL", "Angular"],
+      "difficulty": "Advanced",
+      "created_at": "2024-01-09"
+    },
+    {
+      "id": "8",
+      "title": "Image Recognition for Medical Diagnosis",
+      "description": "Deep learning system for medical image analysis to assist doctors in diagnosing diseases from X-rays, MRIs, and CT scans with high accuracy.",
+      "domain": "Machine Learning",
+      "github_url": "https://github.com/example/medical-diagnosis",
+      "source_url": "https://example.com/medical-diagnosis",
+      "tags": ["Python", "PyTorch", "OpenCV", "Flask"],
+      "difficulty": "Advanced",
+      "created_at": "2024-01-08"
+    },
+    {
+      "id": "9",
+      "title": "Smart Parking System",
+      "description": "IoT-based parking management system that uses sensors to detect available parking spots and guides drivers to empty spaces via mobile app.",
+      "domain": "IoT",
+      "github_url": "https://github.com/example/smart-parking",
+      "source_url": "https://example.com/smart-parking",
+      "tags": ["Arduino", "Raspberry Pi", "Python", "Flutter"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-07"
+    },
+    {
+      "id": "10",
+      "title": "Social Media Analytics Dashboard",
+      "description": "Real-time analytics dashboard for social media platforms that tracks engagement, sentiment analysis, and provides insights for marketing campaigns.",
+      "domain": "Data Analytics",
+      "github_url": "https://github.com/example/social-analytics",
+      "source_url": "https://example.com/social-analytics",
+      "tags": ["Python", "Django", "PostgreSQL", "Chart.js"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-06"
+    },
+    {
+      "id": "11",
+      "title": "Cryptocurrency Portfolio Tracker",
+      "description": "Mobile app to track cryptocurrency investments, monitor market prices, set alerts, and generate portfolio performance reports.",
+      "domain": "Mobile Development",
+      "github_url": "https://github.com/example/crypto-tracker",
+      "source_url": "https://example.com/crypto-tracker",
+      "tags": ["Flutter", "Dart", "CoinGecko API", "SQLite"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-05"
+    },
+    {
+      "id": "12",
+      "title": "Face Recognition Attendance System",
+      "description": "Automated attendance system using face recognition technology to mark attendance without manual intervention.",
+      "domain": "Computer Vision",
+      "github_url": "https://github.com/example/face-attendance",
+      "source_url": "https://example.com/face-attendance",
+      "tags": ["Python", "OpenCV", "Face Recognition", "SQLite"],
+      "difficulty": "Intermediate",
+      "created_at": "2024-01-04"
+    }
+  ]
+} 

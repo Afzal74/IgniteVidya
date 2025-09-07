@@ -1,0 +1,84 @@
+{
+  "programs": [
+    {
+      "id": "1",
+      "lab_title": "C Programming Lab",
+      "program_number": 1,
+      "description": "Write a C program to find the sum of two numbers",
+      "code": "#include <stdio.h>\nint main() {\n    int a, b, sum;\n    printf(\"Enter two numbers: \");\n    scanf(\"%d %d\", &a, &b);\n    sum = a + b;\n    printf(\"Sum = %d\\n\", sum);\n    return 0;\n}",
+      "expected_output": "Enter two numbers: 5 3\nSum = 8",
+      "semester": 1,
+      "created_at": "2024-01-15"
+    },
+    {
+      "id": "2",
+      "lab_title": "C Programming Lab",
+      "program_number": 2,
+      "description": "Write a C program to check if a number is prime",
+      "code": "#include <stdio.h>\nint main() {\n    int n, i, flag = 0;\n    printf(\"Enter a number: \");\n    scanf(\"%d\", &n);\n    \n    if (n <= 1) {\n        flag = 1;\n    } else {\n        for(i = 2; i <= n/2; ++i) {\n            if(n % i == 0) {\n                flag = 1;\n                break;\n            }\n        }\n    }\n    \n    if(flag == 0)\n        printf(\"%d is a prime number\\n\", n);\n    else\n        printf(\"%d is not a prime number\\n\", n);\n    \n    return 0;\n}",
+      "expected_output": "Enter a number: 7\n7 is a prime number",
+      "semester": 1,
+      "created_at": "2024-01-14"
+    },
+    {
+      "id": "3",
+      "lab_title": "C Programming Lab",
+      "program_number": 3,
+      "description": "Write a C program to find factorial of a number",
+      "code": "#include <stdio.h>\nint main() {\n    int n, i;\n    unsigned long long fact = 1;\n    printf(\"Enter a number: \");\n    scanf(\"%d\", &n);\n    \n    if (n < 0) {\n        printf(\"Error! Factorial of negative number doesn't exist.\\n\");\n    } else {\n        for (i = 1; i <= n; ++i) {\n            fact *= i;\n        }\n        printf(\"Factorial of %d = %llu\\n\", n, fact);\n    }\n    return 0;\n}",
+      "expected_output": "Enter a number: 5\nFactorial of 5 = 120",
+      "semester": 1,
+      "created_at": "2024-01-13"
+    },
+    {
+      "id": "4",
+      "lab_title": "Data Structures Lab",
+      "program_number": 1,
+      "description": "Implementation of Stack using Arrays",
+      "code": "#include <stdio.h>\n#include <stdlib.h>\n#define MAX 100\n\nstruct Stack {\n    int items[MAX];\n    int top;\n};\n\nvoid initStack(struct Stack* s) {\n    s->top = -1;\n}\n\nint isEmpty(struct Stack* s) {\n    return s->top == -1;\n}\n\nint isFull(struct Stack* s) {\n    return s->top == MAX - 1;\n}\n\nvoid push(struct Stack* s, int item) {\n    if (isFull(s)) {\n        printf(\"Stack Overflow\\n\");\n        return;\n    }\n    s->items[++s->top] = item;\n    printf(\"Pushed %d\\n\", item);\n}\n\nint pop(struct Stack* s) {\n    if (isEmpty(s)) {\n        printf(\"Stack Underflow\\n\");\n        return -1;\n    }\n    return s->items[s->top--];\n}\n\nint main() {\n    struct Stack s;\n    initStack(&s);\n    \n    push(&s, 10);\n    push(&s, 20);\n    push(&s, 30);\n    \n    printf(\"Popped: %d\\n\", pop(&s));\n    printf(\"Popped: %d\\n\", pop(&s));\n    \n    return 0;\n}",
+      "expected_output": "Pushed 10\nPushed 20\nPushed 30\nPopped: 30\nPopped: 20",
+      "semester": 3,
+      "created_at": "2024-01-12"
+    },
+    {
+      "id": "5",
+      "lab_title": "Data Structures Lab",
+      "program_number": 2,
+      "description": "Implementation of Queue using Arrays",
+      "code": "#include <stdio.h>\n#include <stdlib.h>\n#define MAX 100\n\nstruct Queue {\n    int items[MAX];\n    int front, rear;\n};\n\nvoid initQueue(struct Queue* q) {\n    q->front = -1;\n    q->rear = -1;\n}\n\nint isEmpty(struct Queue* q) {\n    return q->front == -1;\n}\n\nint isFull(struct Queue* q) {\n    return (q->front == 0 && q->rear == MAX - 1) || (q->front == q->rear + 1);\n}\n\nvoid enqueue(struct Queue* q, int item) {\n    if (isFull(q)) {\n        printf(\"Queue Overflow\\n\");\n        return;\n    }\n    if (isEmpty(q)) {\n        q->front = 0;\n    }\n    q->rear = (q->rear + 1) % MAX;\n    q->items[q->rear] = item;\n    printf(\"Enqueued %d\\n\", item);\n}\n\nint dequeue(struct Queue* q) {\n    if (isEmpty(q)) {\n        printf(\"Queue Underflow\\n\");\n        return -1;\n    }\n    int item = q->items[q->front];\n    if (q->front == q->rear) {\n        q->front = q->rear = -1;\n    } else {\n        q->front = (q->front + 1) % MAX;\n    }\n    return item;\n}\n\nint main() {\n    struct Queue q;\n    initQueue(&q);\n    \n    enqueue(&q, 10);\n    enqueue(&q, 20);\n    enqueue(&q, 30);\n    \n    printf(\"Dequeued: %d\\n\", dequeue(&q));\n    printf(\"Dequeued: %d\\n\", dequeue(&q));\n    \n    return 0;\n}",
+      "expected_output": "Enqueued 10\nEnqueued 20\nEnqueued 30\nDequeued: 10\nDequeued: 20",
+      "semester": 3,
+      "created_at": "2024-01-11"
+    },
+    {
+      "id": "6",
+      "lab_title": "Data Structures Lab",
+      "program_number": 3,
+      "description": "Implementation of Linked List",
+      "code": "#include <stdio.h>\n#include <stdlib.h>\n\nstruct Node {\n    int data;\n    struct Node* next;\n};\n\nstruct Node* createNode(int data) {\n    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));\n    newNode->data = data;\n    newNode->next = NULL;\n    return newNode;\n}\n\nvoid insertAtEnd(struct Node** head, int data) {\n    struct Node* newNode = createNode(data);\n    if (*head == NULL) {\n        *head = newNode;\n        return;\n    }\n    struct Node* current = *head;\n    while (current->next != NULL) {\n        current = current->next;\n    }\n    current->next = newNode;\n}\n\nvoid display(struct Node* head) {\n    struct Node* current = head;\n    printf(\"Linked List: \");\n    while (current != NULL) {\n        printf(\"%d -> \", current->data);\n        current = current->next;\n    }\n    printf(\"NULL\\n\");\n}\n\nint main() {\n    struct Node* head = NULL;\n    \n    insertAtEnd(&head, 10);\n    insertAtEnd(&head, 20);\n    insertAtEnd(&head, 30);\n    \n    display(head);\n    \n    return 0;\n}",
+      "expected_output": "Linked List: 10 -> 20 -> 30 -> NULL",
+      "semester": 3,
+      "created_at": "2024-01-10"
+    },
+    {
+      "id": "7",
+      "lab_title": "Java Programming Lab",
+      "program_number": 1,
+      "description": "Write a Java program to demonstrate inheritance",
+      "code": "class Animal {\n    protected String name;\n    \n    public Animal(String name) {\n        this.name = name;\n    }\n    \n    public void makeSound() {\n        System.out.println(\"Some animal sound\");\n    }\n}\n\nclass Dog extends Animal {\n    public Dog(String name) {\n        super(name);\n    }\n    \n    @Override\n    public void makeSound() {\n        System.out.println(name + \" says: Woof!\");\n    }\n}\n\npublic class InheritanceDemo {\n    public static void main(String[] args) {\n        Animal animal = new Animal(\"Generic Animal\");\n        Dog dog = new Dog(\"Buddy\");\n        \n        animal.makeSound();\n        dog.makeSound();\n    }\n}",
+      "expected_output": "Some animal sound\nBuddy says: Woof!",
+      "semester": 4,
+      "created_at": "2024-01-09"
+    },
+    {
+      "id": "8",
+      "lab_title": "Python Programming Lab",
+      "program_number": 1,
+      "description": "Write a Python program to demonstrate list operations",
+      "code": "# Python program to demonstrate list operations\n\n# Creating a list\nnumbers = [1, 2, 3, 4, 5]\nprint(\"Original list:\", numbers)\n\n# Adding elements\nnumbers.append(6)\nprint(\"After append:\", numbers)\n\n# Inserting at specific position\nnumbers.insert(0, 0)\nprint(\"After insert:\", numbers)\n\n# Removing elements\nnumbers.remove(3)\nprint(\"After remove:\", numbers)\n\n# List comprehension\nsquares = [x**2 for x in numbers]\nprint(\"Squares:\", squares)\n\n# Filtering\neven_numbers = [x for x in numbers if x % 2 == 0]\nprint(\"Even numbers:\", even_numbers)",
+      "expected_output": "Original list: [1, 2, 3, 4, 5]\nAfter append: [1, 2, 3, 4, 5, 6]\nAfter insert: [0, 1, 2, 3, 4, 5, 6]\nAfter remove: [0, 1, 2, 4, 5, 6]\nSquares: [0, 1, 4, 16, 25, 36]\nEven numbers: [0, 2, 4, 6]",
+      "semester": 5,
+      "created_at": "2024-01-08"
+    }
+  ]
+} 

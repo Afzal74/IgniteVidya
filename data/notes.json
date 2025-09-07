@@ -1,0 +1,99 @@
+{
+  "notes": [
+    {
+      "id": "1",
+      "subject_name": "Engineering Mathematics I",
+      "subject_code": "21MAT11",
+      "scheme": "2021",
+      "semester": 1,
+      "file_url": "/notes/21MAT11-Engineering-Mathematics-I.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-15",
+      "comments": [
+        {
+          "id": "c1",
+          "text": "Excellent notes! Very helpful for exam preparation.",
+          "author": "Student",
+          "created_at": "2024-01-16"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "subject_name": "Physics for Engineers",
+      "subject_code": "21PHY12",
+      "scheme": "2021",
+      "semester": 1,
+      "file_url": "/notes/21PHY12-Physics-for-Engineers.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-14",
+      "comments": []
+    },
+    {
+      "id": "3",
+      "subject_name": "Engineering Chemistry",
+      "subject_code": "21CHE12",
+      "scheme": "2021",
+      "semester": 1,
+      "file_url": "/notes/21CHE12-Engineering-Chemistry.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-13",
+      "comments": []
+    },
+    {
+      "id": "4",
+      "subject_name": "Programming in C",
+      "subject_code": "21CSL15",
+      "scheme": "2021",
+      "semester": 1,
+      "file_url": "/notes/21CSL15-Programming-in-C.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-12",
+      "comments": []
+    },
+    {
+      "id": "5",
+      "subject_name": "Elements of Civil Engineering",
+      "subject_code": "21CIV14",
+      "scheme": "2021",
+      "semester": 1,
+      "file_url": "/notes/21CIV14-Elements-of-Civil-Engineering.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-11",
+      "comments": []
+    },
+    {
+      "id": "6",
+      "subject_name": "Engineering Mathematics II",
+      "subject_code": "21MAT21",
+      "scheme": "2021",
+      "semester": 2,
+      "file_url": "/notes/21MAT21-Engineering-Mathematics-II.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-10",
+      "comments": []
+    },
+    {
+      "id": "7",
+      "subject_name": "Data Structures and Applications",
+      "subject_code": "21CS32",
+      "scheme": "2021",
+      "semester": 3,
+      "file_url": "/notes/21CS32-Data-Structures-and-Applications.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-09",
+      "comments": []
+    },
+    {
+      "id": "8",
+      "subject_name": "Analog and Digital Electronics",
+      "subject_code": "21CS33",
+      "scheme": "2021",
+      "semester": 3,
+      "file_url": "/notes/21CS33-Analog-and-Digital-Electronics.pdf",
+      "uploaded_by": "VTU Faculty",
+      "created_at": "2024-01-08",
+      "comments": []
+    }
+  ]
+} 
