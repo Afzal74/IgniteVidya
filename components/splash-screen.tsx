@@ -180,26 +180,26 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 ))}
                 
                 {/* Center Content Area */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-6">
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-6 -mt-8">
                   {/* Logo */}
                   <motion.div
-                    className="text-center mb-8"
+                    className="text-center mb-6"
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 1.2, delay: 0.5 }}
                   >
                     {/* VTU Logo Image - Mobile Optimized */}
-                    <div className="mb-4">
+                    <div className="mb-3">
                       <img 
                         src="/vtu-logo.png" 
                         alt="VTU Logo" 
-                        className="w-32 h-32 mx-auto object-contain"
+                        className="w-28 h-28 mx-auto object-contain"
                       />
                     </div>
                     
                     {/* IgniteVidya Text - Mobile Optimized */}
                     <div className="text-center">
-                      <h2 className="text-xl font-bold text-white mb-2 font-mono tracking-wider pixel-font">
+                      <h2 className="text-lg font-bold text-white mb-2 font-mono tracking-wider pixel-font">
                         <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                           IGNITE
                         </span>
@@ -214,7 +214,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                   
                   {/* Loading Section - Mobile Optimized */}
                   <motion.div
-                    className="w-60 text-center"
+                    className="w-60 text-center mb-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1.2, duration: 0.8 }}
@@ -231,12 +231,32 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                         transition={{ duration: 0.3 }}
                       />
                     </div>
-                    <motion.p
-                      className="text-sm text-cyan-300 mt-4 opacity-70 font-mono tracking-wide pixel-text"
-                      animate={{ opacity: [0.5, 1, 0.5] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
+                  </motion.div>
+                  
+                  {/* Action Buttons - Mobile Only */}
+                  <motion.div
+                    className="flex flex-col space-y-3 w-60"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.5, duration: 0.8 }}
+                  >
+                    <motion.button
+                      onClick={handleSkip}
+                      className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white font-mono text-sm py-3 px-6 rounded-lg shadow-lg border border-cyan-400/50 pixel-text tracking-wider transition-all duration-300 hover:shadow-cyan-400/25 hover:shadow-lg"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      {'>'} TAP TO CONTINUE
+                      <span className="flex items-center justify-center space-x-2">
+                        <span>{'>'} ENTER APP</span>
+                      </span>
+                    </motion.button>
+                    
+                    <motion.p
+                      className="text-xs text-cyan-300/70 text-center font-mono tracking-wide pixel-text"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      or tap anywhere to continue
                     </motion.p>
                   </motion.div>
                 </div>
