@@ -9,7 +9,6 @@ import Navigation from "@/components/navigation"
 import TerminalChat from "@/components/terminal-chat"
 import VTUCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
-import AppTutorial, { shouldShowTutorial } from "@/components/app-tutorial"
 import { useState, useEffect } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -20,7 +19,6 @@ export default function ClientLayout({
   children: React.ReactNode
 }) {
   const [showSplash, setShowSplash] = useState(true)
-  const [showTutorial, setShowTutorial] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [isTerminalOpen, setIsTerminalOpen] = useState(false)
   const [isVTUCompanionOpen, setIsVTUCompanionOpen] = useState(false)
@@ -28,18 +26,6 @@ export default function ClientLayout({
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  const handleSplashComplete = () => {
-    setShowSplash(false)
-    // Check if tutorial should be shown after splash
-    if (shouldShowTutorial()) {
-      setShowTutorial(true)
-    }
-  }
-
-  const handleTutorialComplete = () => {
-    setShowTutorial(false)
-  }
 
   const handleTerminalOpen = () => {
     setIsVTUCompanionOpen(false)
@@ -66,7 +52,7 @@ export default function ClientLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {showSplash ? (
-            <SplashScreen onComplete={handleSplashComplete} />
+            <SplashScreen onComplete={() => setShowSplash(false)} />
           ) : (
             <>
               <Navigation />
@@ -74,14 +60,6 @@ export default function ClientLayout({
               <TerminalChat isVTUCompanionOpen={isVTUCompanionOpen} onOpen={handleTerminalOpen} />
               <VTUCompanion isTerminalOpen={isTerminalOpen} onOpen={handleVTUCompanionOpen} />
               <Toaster />
-              
-              {/* Tutorial overlay */}
-              {showTutorial && (
-                <AppTutorial 
-                  onComplete={handleTutorialComplete}
-                  onSkip={handleTutorialComplete}
-                />
-              )}
             </>
           )}
         </ThemeProvider>

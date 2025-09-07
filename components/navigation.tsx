@@ -16,7 +16,6 @@ import {
   Star,
   Calculator,
   Lightbulb,
-  RotateCcw,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
@@ -158,32 +157,6 @@ export default function Navigation() {
                       </Link>
                     ))}
                   </div>
-                  
-                  {/* Tutorial Reset Button - Development Only */}
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-4 pt-4 border-t border-zinc-200 dark:border-zinc-800">
-                      <button
-                        onClick={() => {
-                          // Reset tutorial localStorage
-                          if (typeof window !== 'undefined') {
-                            localStorage.removeItem('igniteVidya_tutorialCompleted')
-                            localStorage.removeItem('igniteVidya_tutorialSkipped')
-                            localStorage.removeItem('igniteVidya_tutorialCompletedAt')
-                            localStorage.removeItem('igniteVidya_tutorialSkippedAt')
-                            window.location.reload()
-                          }
-                          setIsOpen(false)
-                        }}
-                        className="flex items-center gap-3 px-4 py-2 rounded-xl transition-all duration-200 hover:bg-orange-100 dark:hover:bg-orange-900/20 text-orange-600 dark:text-orange-400 w-full text-left"
-                      >
-                        <RotateCcw className="h-4 w-4" />
-                        <span className="text-sm font-medium">Reset Tutorial</span>
-                      </button>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 px-4">
-                        Development only - Clears tutorial progress
-                      </p>
-                    </div>
-                  )}
                 </div>
               </div>
             </motion.div>
