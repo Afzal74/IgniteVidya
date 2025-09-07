@@ -1,8 +1,8 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Calculator, BookOpen, Laptop, Microscope, Atom, Ruler, PenTool, Cpu } from "lucide-react"
+import { Calculator, BookOpen, Smartphone, Microscope, Atom, Ruler, PenTool, Cpu, Wifi, Battery } from "lucide-react"
 
 interface SplashScreenProps {
   onComplete?: () => void
@@ -67,7 +67,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
     { icon: PenTool, color: "text-green-300", x: "88%", y: "15%", delay: 1.3 },
     
     // Technology
-    { icon: Laptop, color: "text-purple-400", x: "12%", y: "45%", delay: 1.1 },
+    { icon: Smartphone, color: "text-purple-400", x: "12%", y: "45%", delay: 1.1 },
     { icon: Cpu, color: "text-purple-300", x: "82%", y: "50%", delay: 0.5 },
     
     // Science
@@ -101,8 +101,165 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
         }
       `}</style>
 
-      {/* Complete Computer Setup - Centered and Properly Sized */}
-      <div className="flex items-center justify-center min-h-screen p-8">
+      {/* Mobile Phone Design (visible on mobile) */}
+      <div className="flex items-center justify-center min-h-screen p-4 md:hidden">
+        <motion.div
+          className="relative w-72 max-w-sm"
+          initial={{ opacity: 0, scale: 0.9, rotateY: -15 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+        >
+          {/* Phone Body */}
+          <div className="relative bg-gradient-to-b from-gray-800 to-gray-900 rounded-[3rem] p-3 shadow-2xl border border-gray-700">
+            {/* Phone Brand */}
+            <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
+              <span className="text-xs text-gray-400 font-mono tracking-widest pixel-text">VTU QUANTUM</span>
+            </div>
+            
+            {/* Screen Container */}
+            <div className="relative bg-black rounded-[2.5rem] overflow-hidden shadow-inner">
+              {/* Screen Reflection */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent rounded-[2.5rem] z-10" />
+              
+              {/* Status Bar */}
+              <div className="flex justify-between items-center px-6 py-2 bg-black/50 backdrop-blur-sm relative z-20">
+                <div className="flex items-center space-x-1">
+                  <span className="text-xs text-white font-mono pixel-text">9:41</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Wifi className="h-4 w-4 text-white" />
+                  <Battery className="h-4 w-4 text-green-400" />
+                </div>
+              </div>
+              
+              {/* Active Screen */}
+              <div className="relative bg-gray-900 h-[600px] overflow-hidden">
+                {/* Screen Glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-purple-500/10" />
+                
+                {/* Random STEM Letters - Adjusted for mobile */}
+                {stemLetters.map(({ letter, color, x, y, delay }) => (
+                  <motion.div
+                    key={letter}
+                    className={`absolute text-4xl font-bold bg-gradient-to-r ${color} bg-clip-text text-transparent select-none`}
+                    style={{ left: x, top: y }}
+                    animate={{
+                      opacity: [0.3, 1, 0.3],
+                      scale: [0.8, 1.1, 0.8],
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      delay: delay,
+                    }}
+                  >
+                    {letter}
+                  </motion.div>
+                ))}
+                
+                {/* Educational Equipment Icons - Adjusted for mobile */}
+                {educationIcons.map(({ icon: Icon, color, x, y, delay }, index) => (
+                  <motion.div
+                    key={`icon-${index}`}
+                    className={`absolute ${color} opacity-50`}
+                    style={{ left: x, top: y }}
+                    animate={{
+                      y: [0, -10, 0],
+                      rotate: [0, 8, -8, 0],
+                      opacity: [0.3, 0.7, 0.3],
+                      scale: [0.8, 1, 0.8],
+                    }}
+                    transition={{
+                      duration: 4 + index * 0.3,
+                      repeat: Infinity,
+                      delay: delay,
+                    }}
+                  >
+                    <Icon className="h-5 w-5 drop-shadow-lg" />
+                  </motion.div>
+                ))}
+                
+                {/* Center Content Area */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center z-10 px-6">
+                  {/* Logo */}
+                  <motion.div
+                    className="text-center mb-8"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 1.2, delay: 0.5 }}
+                  >
+                    {/* VTU Logo Image - Mobile Optimized */}
+                    <div className="mb-4">
+                      <img 
+                        src="/vtu-logo.png" 
+                        alt="VTU Logo" 
+                        className="w-32 h-32 mx-auto object-contain"
+                      />
+                    </div>
+                    
+                    {/* IgniteVidya Text - Mobile Optimized */}
+                    <div className="text-center">
+                      <h2 className="text-xl font-bold text-white mb-2 font-mono tracking-wider pixel-font">
+                        <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                          IGNITE
+                        </span>
+                        <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                          VIDYA
+                        </span>
+                      </h2>
+                      <p className="text-sm text-cyan-200 mb-1 font-mono tracking-wide pixel-text">EQUAL LEARNING FOR ALL</p>
+                      <p className="text-xs text-purple-200 font-mono tracking-wider pixel-text">STEM EDUCATION PLATFORM</p>
+                    </div>
+                  </motion.div>
+                  
+                  {/* Loading Section - Mobile Optimized */}
+                  <motion.div
+                    className="w-60 text-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.2, duration: 0.8 }}
+                  >
+                    <div className="flex justify-between text-sm text-cyan-200 mb-3 font-mono tracking-wider pixel-text">
+                      <span>LOADING...</span>
+                      <span className="text-green-400">{progress}%</span>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-3 border border-gray-600">
+                      <motion.div
+                        className="bg-gradient-to-r from-cyan-400 to-purple-500 h-full rounded-full"
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                    <motion.p
+                      className="text-sm text-cyan-300 mt-4 opacity-70 font-mono tracking-wide pixel-text"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      {'>'} TAP TO CONTINUE
+                    </motion.p>
+                  </motion.div>
+                </div>
+                
+                {/* Scan Line Effect */}
+                <motion.div
+                  className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+                  animate={{ y: ['-4px', '100%'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+              
+              {/* Home Indicator */}
+              <div className="flex justify-center py-2">
+                <div className="w-32 h-1 bg-gray-600 rounded-full" />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Desktop Monitor Design (visible on desktop) */}
+      <div className="hidden md:flex items-center justify-center min-h-screen p-8">
         <motion.div
           className="relative max-w-6xl w-full"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -132,7 +289,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                 {stemLetters.map(({ letter, color, x, y, delay }) => (
                   <motion.div
                     key={letter}
-                    className={`absolute text-6xl md:text-8xl font-bold bg-gradient-to-r ${color} bg-clip-text text-transparent select-none`}
+                    className={`absolute text-8xl font-bold bg-gradient-to-r ${color} bg-clip-text text-transparent select-none`}
                     style={{ left: x, top: y }}
                     animate={{
                       opacity: [0.2, 1, 0.2],
@@ -166,7 +323,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                       delay: delay,
                     }}
                   >
-                    <Icon className="h-6 w-6 md:h-8 md:w-8 drop-shadow-lg" />
+                    <Icon className="h-8 w-8 drop-shadow-lg" />
                   </motion.div>
                 ))}
                 
@@ -184,13 +341,13 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                       <img 
                         src="/vtu-logo.png" 
                         alt="VTU Logo" 
-                        className="w-48 h-48 md:w-56 md:h-56 mx-auto object-contain"
+                        className="w-56 h-56 mx-auto object-contain"
                       />
                     </div>
                     
-                    {/* Small IgniteVidya Text */}
+                    {/* IgniteVidya Text */}
                     <div className="text-center">
-                      <h2 className="text-2xl font-bold text-white mb-2 font-mono tracking-wider pixel-font">
+                      <h2 className="text-3xl font-bold text-white mb-2 font-mono tracking-wider pixel-font">
                         <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
                           IGNITE
                         </span>
@@ -198,14 +355,14 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                           VIDYA
                         </span>
                       </h2>
-                      <p className="text-sm text-cyan-200 mb-1 font-mono tracking-wide pixel-text">EQUAL LEARNING FOR ALL</p>
-                      <p className="text-xs text-purple-200 font-mono tracking-widest pixel-text">STEM EDUCATION PLATFORM</p>
+                      <p className="text-lg text-cyan-200 mb-1 font-mono tracking-wide pixel-text">EQUAL LEARNING FOR ALL</p>
+                      <p className="text-sm text-purple-200 font-mono tracking-widest pixel-text">STEM EDUCATION PLATFORM</p>
                     </div>
                   </motion.div>
                   
                   {/* Loading Section */}
                   <motion.div
-                    className="w-80 md:w-96 text-center"
+                    className="w-96 text-center"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1, duration: 0.8 }}
