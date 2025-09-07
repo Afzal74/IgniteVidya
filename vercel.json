@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "next.config.mjs",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "GOOGLE_AI_API_KEY": "@google_ai_api_key"
+  }
+}
