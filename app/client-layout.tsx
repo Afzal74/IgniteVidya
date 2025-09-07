@@ -9,7 +9,6 @@ import Navigation from "@/components/navigation"
 import TerminalChat from "@/components/terminal-chat"
 import VTUCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
-import GuidedTour from "@/components/guided-tour"
 import { useState, useEffect } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -61,7 +60,6 @@ export default function ClientLayout({
               <TerminalChat isVTUCompanionOpen={isVTUCompanionOpen} onOpen={handleTerminalOpen} />
               <VTUCompanion isTerminalOpen={isTerminalOpen} onOpen={handleVTUCompanionOpen} />
               <Toaster />
-              <GuidedTour />
             </>
           )}
         </ThemeProvider>

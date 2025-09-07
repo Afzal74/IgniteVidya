@@ -270,7 +270,6 @@ export default function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative max-w-2xl mx-auto mb-6 md:mb-12"
-            data-tour="search-bar"
           >
             <div className="relative">
               <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-3 w-3 md:h-4 md:w-4" />
@@ -317,7 +316,7 @@ export default function HomePage() {
       </section>
 
       {/* Grade Cards */}
-      <section id="grade-section" className="py-6 md:py-12 px-2 md:px-4 pt-20" data-tour="class-section">
+      <section id="grade-section" className="py-6 md:py-12 px-2 md:px-4 pt-20">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -384,7 +383,7 @@ export default function HomePage() {
             <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400">Jump straight to what you need</p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3" data-tour="features-grid">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 md:gap-3">
             {shortcuts.map((shortcut, index) => (
               <motion.div
                 key={shortcut.title}
