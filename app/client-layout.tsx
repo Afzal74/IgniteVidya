@@ -9,7 +9,7 @@ import Navigation from "@/components/navigation"
 import TerminalChat from "@/components/terminal-chat"
 import IgniteVidyaCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
-import AudioManager from "@/components/audio-manager"
+import DraggableAudioWidget from "@/components/draggable-audio-widget"
 import { useState, useEffect } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -70,11 +70,11 @@ export default function ClientLayout({
               <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
               <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
               <Toaster />
-              {/* Audio Manager - starts after splash screen */}
+              {/* Draggable Audio Widget - starts after splash screen */}
               {audioEnabled && (
-                <AudioManager 
-                  autoPlay={true} 
-                  showControls={true}
+                <DraggableAudioWidget 
+                  initialX={20}
+                  initialY={100}
                 />
               )}
             </>
