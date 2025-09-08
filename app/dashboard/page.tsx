@@ -458,284 +458,155 @@ export default function DashboardPage() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Main Dashboard Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                {/* Left Column - Academic Progress Score */}
-                <div className="lg:col-span-1">
-                  <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50">
-                    <div className="text-center">
-                      <div className="text-sm text-gray-300 mb-2">Academic Performance</div>
-                      <div className="relative w-32 h-32 mx-auto mb-4">
-                        {/* Circular Progress */}
-                        <svg className="w-32 h-32 transform -rotate-90" viewBox="0 0 36 36">
-                          <path
-                            className="text-gray-700"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            fill="none"
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                          <path
-                            className="text-gradient-to-r from-green-400 to-blue-500"
-                            stroke="url(#gradient)"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            fill="none"
-                            strokeDasharray={`${overallStats.averageScore * 0.628}, 100`}
-                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                          />
-                          <defs>
-                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                              <stop offset="0%" stopColor="#22c55e" />
-                              <stop offset="100%" stopColor="#3b82f6" />
-                            </linearGradient>
-                          </defs>
-                        </svg>
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="text-center">
-                            <div className="text-3xl font-bold text-white">{overallStats.averageScore.toFixed(0)}</div>
-                            <div className="text-xs text-gray-400">Score</div>
-                          </div>
-                        </div>
+        {/* Compact Stats Grid */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+                {/* Academic Performance */}
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                  <div className="text-center">
+                    <div className="relative w-16 h-16 mx-auto mb-2">
+                      <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
+                        <path className="text-gray-700" stroke="currentColor" strokeWidth="2" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path className="text-green-400" stroke="currentColor" strokeWidth="2" strokeLinecap="round" fill="none" strokeDasharray={`${overallStats.averageScore * 0.628}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="text-lg font-bold text-white">{overallStats.averageScore.toFixed(0)}</div>
                       </div>
-                      <div className="flex items-center justify-center gap-1 mb-4">
-                        <ArrowUp className="h-4 w-4 text-green-500" />
-                        <span className="text-sm text-green-400">+5.2% from last month</span>
-                      </div>
-                      <Button className="w-full bg-gray-800 text-white hover:bg-gray-700 border border-gray-600">
-                        Improve your score
-                      </Button>
                     </div>
+                    <div className="text-xs text-gray-300">Avg Score</div>
                   </div>
                 </div>
 
-                {/* Middle Column - Stats Grid */}
-                <div className="lg:col-span-1">
-                  <div className="space-y-4">
-                    {/* Lessons Progress */}
-                <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-600/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-300">Lessons Completed</span>
-                    <TrendingUp className="h-4 w-4 text-green-400" />
+                {/* Lessons Progress */}
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                  <div className="flex items-center justify-between mb-1">
+                    <BookOpen className="h-4 w-4 text-blue-400" />
+                    <TrendingUp className="h-3 w-3 text-green-400" />
                   </div>
-                      <div className="text-2xl font-bold text-white mb-2">
-                        {overallStats.completedLessons}<span className="text-gray-400">/{overallStats.totalLessons}</span>
-                      </div>
-                      <div className="w-full bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full" 
-                          style={{ width: `${(overallStats.completedLessons / overallStats.totalLessons) * 100}%` }}
-                        />
-                      </div>
-                    </div>
+                  <div className="text-lg font-bold text-white">
+                    {overallStats.completedLessons}<span className="text-gray-400 text-sm">/{overallStats.totalLessons}</span>
+                  </div>
+                  <div className="text-xs text-gray-300">Lessons</div>
+                  <div className="w-full bg-gray-700 rounded-full h-1 mt-1">
+                    <div className="bg-blue-500 h-1 rounded-full" style={{ width: `${(overallStats.completedLessons / overallStats.totalLessons) * 100}%` }} />
+                  </div>
+                </div>
 
-                    {/* Study Streak */}
-                <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-600/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-300">Study Streak</span>
+                {/* Study Streak */}
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                  <div className="flex items-center justify-between mb-1">
                     <Flame className="h-4 w-4 text-orange-400" />
+                    <span className="text-xs text-green-400">+2</span>
                   </div>
-                      <div className="text-2xl font-bold text-white">{streakCount} <span className="text-sm text-gray-400">days</span></div>
-                    </div>
+                  <div className="text-lg font-bold text-white">{streakCount}</div>
+                  <div className="text-xs text-gray-300">Day Streak</div>
+                </div>
 
-                    {/* Class Rank */}
-                <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-600/50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-300">Class Rank</span>
+                {/* Class Rank */}
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                  <div className="flex items-center justify-between mb-1">
                     <Crown className="h-4 w-4 text-yellow-400" />
+                    <ArrowUp className="h-3 w-3 text-green-400" />
                   </div>
-                      <div className="text-2xl font-bold text-white">#{overallStats.rank}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right Column - Quick Stats */}
-                <div className="lg:col-span-1">
-                  <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50 h-full">
-                    <h3 className="text-lg font-semibold text-white mb-4">Quick Overview</h3>
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Study Time</span>
-                        <span className="text-white font-medium">{progress.reduce((sum, p) => sum + p.weeklyHours, 0).toFixed(1)}h</span>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Achievements</span>
-                        <Badge className="bg-green-600 text-white">{achievements.length}</Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Level</span>
-                        <Badge className="bg-purple-600 text-white">Level {levelInfo.currentLevel}</Badge>
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-300">Total XP</span>
-                        <span className="text-white font-medium">{overallStats.totalPoints}</span>
-                      </div>
-                      
-                      <div className="pt-4 border-t border-gray-700">
-                        <div className="text-sm text-gray-300 mb-2">Level Progress</div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-700 rounded-full h-2">
-                            <div 
-                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full" 
-                              style={{ width: `${levelInfo.levelProgress}%` }}
-                            />
-                          </div>
-                          <span className="text-xs text-gray-300">{levelInfo.levelProgress.toFixed(0)}%</span>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {(levelInfo.nextLevelXP - levelInfo.currentXP)} XP to next level
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <div className="text-lg font-bold text-white">#{overallStats.rank}</div>
+                  <div className="text-xs text-gray-300">Rank</div>
                 </div>
               </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Subject Progress */}
-          <div className="lg:col-span-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.5 }}
-            >
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-6 border border-gray-600/50">
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-400" />
-                  Subject Progress
-                </h2>
-                
-                <div className="space-y-3">
-                  {progress.map((subject, index) => {
-                    const progressPercentage = (subject.completedLessons / subject.totalLessons) * 100
-                    return (
-                      <motion.div
-                        key={subject.subject}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="p-3 bg-gray-700/50 rounded-lg border border-gray-600/30"
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h3 className="font-semibold text-white">
-                            {subject.subject}
-                          </h3>
-                          <div className="flex items-center gap-4">
-                            <span className={`text-sm font-medium ${getGradeColor(subject.averageScore)}`}>
-                              {subject.averageScore}%
-                            </span>
-                            <Badge variant="outline">
-                              {subject.completedLessons}/{subject.totalLessons}
-                            </Badge>
-                          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.5 }}
+          >
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-4 border border-gray-600/50">
+              <h2 className="text-lg font-bold text-white mb-3 flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-blue-400" />
+                Subject Progress
+              </h2>
+              
+              <div className="space-y-2">
+                {progress.map((subject, index) => {
+                  const progressPercentage = (subject.completedLessons / subject.totalLessons) * 100
+                  return (
+                    <div key={subject.subject} className="p-2 bg-gray-700/50 rounded border border-gray-600/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className="font-medium text-white text-sm">{subject.subject}</h3>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs font-medium ${getGradeColor(subject.averageScore)}`}>
+                            {subject.averageScore}%
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {subject.completedLessons}/{subject.totalLessons}
+                          </Badge>
                         </div>
-                        
-                        <Progress 
-                          value={progressPercentage} 
-                          className="h-2 mb-2"
-                        />
-                        
-                        <div className="flex justify-between text-xs text-gray-400">
-                          <span>Last activity: {subject.lastActivity}</span>
-                          <span>{progressPercentage.toFixed(1)}% complete</span>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
+                      </div>
+                      <Progress value={progressPercentage} className="h-1.5" />
+                    </div>
+                  )
+                })}
               </div>
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
 
-          {/* Recent Activity & Achievements */}
-          <div className="space-y-4">
+          {/* Recent Activity */}
+          <div className="space-y-3">
             {/* Recent Quizzes */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.6 }}
             >
-              <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-4 border border-gray-600/50">
-                <h2 className="text-md font-bold text-white mb-3 flex items-center gap-2">
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                <h2 className="text-md font-bold text-white mb-2 flex items-center gap-2">
                   <Clock className="h-4 w-4 text-blue-400" />
                   Recent Quizzes
                 </h2>
                 
-                <div className="space-y-3">
-                  {recentQuizzes.map((quiz, index) => (
-                    <motion.div
-                      key={quiz.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="p-3 bg-gray-700/50 rounded-lg border border-gray-600/30"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-medium text-white text-sm">
-                          {quiz.title}
-                        </h4>
+                <div className="space-y-1.5">
+                  {recentQuizzes.slice(0, 3).map((quiz, index) => (
+                    <div key={quiz.id} className="p-2 bg-gray-700/50 rounded border border-gray-600/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-white text-xs">{quiz.title}</h4>
+                          <div className="text-xs text-gray-400">{quiz.subject}</div>
+                        </div>
                         <span className={`text-xs font-bold ${getGradeColor((quiz.score / quiz.totalQuestions) * 100)}`}>
                           {quiz.score}/{quiz.totalQuestions}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span>{quiz.subject}</span>
-                        <span>{quiz.date}</span>
-                      </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
             </motion.div>
 
-            {/* Achievements */}
+            {/* Top Achievements */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.7 }}
             >
-              <Card className="p-6 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  Achievements
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                <h2 className="text-md font-bold text-white mb-2 flex items-center gap-2">
+                  <Award className="h-4 w-4 text-yellow-400" />
+                  Top Achievements
                 </h2>
                 
-                <div className="space-y-3">
-                  {achievements.map((achievement, index) => (
-                    <motion.div
-                      key={achievement.id}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.1 }}
-                      className="p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="text-2xl">{achievement.icon}</div>
+                <div className="space-y-1.5">
+                  {achievements.slice(0, 3).map((achievement, index) => (
+                    <div key={achievement.id} className="p-2 bg-gradient-to-r from-yellow-900/20 to-orange-900/20 rounded border border-yellow-600/30">
+                      <div className="flex items-center gap-2">
+                        <div className="text-lg">{achievement.icon}</div>
                         <div className="flex-1">
-                          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
-                            {achievement.title}
-                          </h4>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {achievement.description}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs font-bold text-yellow-600 dark:text-yellow-400">
-                            +{achievement.points}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-500">
-                            {achievement.earnedDate}
-                          </div>
+                          <h4 className="font-medium text-white text-xs">{achievement.title}</h4>
+                          <div className="text-xs text-yellow-400">+{achievement.points} XP</div>
                         </div>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
-              </Card>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -745,45 +616,28 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.8 }}
-                className="mt-4"
+                className="mt-3"
               >
-                <Card className="p-4 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
-                    Quick Actions
-                  </h2>
+                <div className="bg-gray-800/90 backdrop-blur-sm rounded-lg p-3 border border-gray-600/50">
+                  <h2 className="text-md font-bold text-white mb-3">Quick Actions</h2>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <Button className="h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white">
-                      <div className="flex items-center gap-3">
-                        <PlayCircle className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">Continue Learning</div>
-                          <div className="text-sm opacity-90">Resume your lessons</div>
-                        </div>
-                      </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white p-2 h-auto flex-col">
+                      <PlayCircle className="h-4 w-4 mb-1" />
+                      <div className="text-xs">Continue</div>
                     </Button>
                     
-                    <Button className="h-12 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
-                      <div className="flex items-center gap-3">
-                        <Target className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">Take Quiz</div>
-                          <div className="text-sm opacity-90">Test your knowledge</div>
-                        </div>
-                      </div>
+                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white p-2 h-auto flex-col">
+                      <Target className="h-4 w-4 mb-1" />
+                      <div className="text-xs">Quiz</div>
                     </Button>
                     
-                    <Button className="h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-                      <div className="flex items-center gap-3">
-                        <BookOpen className="h-6 w-6" />
-                        <div className="text-left">
-                          <div className="font-semibold">View Notes</div>
-                          <div className="text-sm opacity-90">Study materials</div>
-                        </div>
-                      </div>
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white p-2 h-auto flex-col">
+                      <BookOpen className="h-4 w-4 mb-1" />
+                      <div className="text-xs">Notes</div>
                     </Button>
                   </div>
-                </Card>
+                </div>
               </motion.div>
             </motion.div>
           )}

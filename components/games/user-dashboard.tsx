@@ -54,87 +54,85 @@ export function UserDashboard({
 
   return (
     <div className={cn("space-y-6", className)}>
-      {/* User Profile Header */}
+      {/* Compact User Profile Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <Card className="bg-gradient-to-br from-blue-500/10 to-purple-600/10 border-blue-200/50">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4 mb-6">
-              <Avatar className="h-16 w-16 ring-4 ring-blue-100">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3 mb-4">
+              <Avatar className="h-12 w-12 ring-2 ring-blue-100">
                 <AvatarImage src="/placeholder-avatar.png" />
-                <AvatarFallback className="text-xl font-bold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <AvatarFallback className="text-sm font-bold bg-gradient-to-br from-blue-500 to-purple-600 text-white">
                   SL
                 </AvatarFallback>
               </Avatar>
               
               <div className="flex-1">
-                <h2 className="text-2xl font-bold">Student Learner</h2>
-                <p className="text-muted-foreground">STEM Explorer • Level {userStats.level}</p>
-                <div className="flex items-center gap-4 mt-2">
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                    <Zap className="h-3 w-3 mr-1" />
-                    {userStats.totalAuraPoints} Aura Points
-                  </Badge>
-                  <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-                    <Flame className="h-3 w-3 mr-1" />
-                    {userStats.currentStreak} day streak
-                  </Badge>
-                </div>
+                <h2 className="text-lg font-bold">Student Learner</h2>
+                <p className="text-muted-foreground text-sm">Level {userStats.level} • STEM Explorer</p>
               </div>
 
               <div className="text-right">
-                <div className="text-3xl font-bold text-blue-600 mb-1">
+                <div className="text-xl font-bold text-blue-600">
                   #{leaderboard.findIndex(entry => entry.userId === userStats.userId) + 1 || "?"}
                 </div>
-                <p className="text-sm text-muted-foreground">Rank</p>
+                <p className="text-xs text-muted-foreground">Rank</p>
               </div>
             </div>
 
-            {/* Level Progress */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
+            <div className="flex items-center gap-3 mb-3">
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-xs">
+                <Zap className="h-3 w-3 mr-1" />
+                {userStats.totalAuraPoints}
+              </Badge>
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-xs">
+                <Flame className="h-3 w-3 mr-1" />
+                {userStats.currentStreak} days
+              </Badge>
+            </div>
+
+            {/* Compact Level Progress */}
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Level Progress</span>
                 <span className="font-medium">
-                  {userStats.experience} / {getXPForNextLevel(userStats.level)} XP
+                  {userStats.experience}/{getXPForNextLevel(userStats.level)}
                 </span>
               </div>
-              <Progress value={getXPProgress()} className="h-2" />
-              <p className="text-xs text-muted-foreground">
-                {getXPForNextLevel(userStats.level) - userStats.experience} XP to next level
-              </p>
+              <Progress value={getXPProgress()} className="h-1.5" />
             </div>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Compact Quick Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           {
-            title: "Games Completed",
+            title: "Games",
             value: userStats.gamesCompleted,
             icon: Target,
             color: "text-green-600",
             bgColor: "bg-green-100"
           },
           {
-            title: "Time Spent",
-            value: `${Math.floor(userStats.totalTimeSpent / 60)}h ${userStats.totalTimeSpent % 60}m`,
+            title: "Time",
+            value: `${Math.floor(userStats.totalTimeSpent / 60)}h`,
             icon: Clock,
             color: "text-blue-600",
             bgColor: "bg-blue-100"
           },
           {
-            title: "Best Streak",
-            value: `${userStats.longestStreak} days`,
+            title: "Streak",
+            value: `${userStats.longestStreak}d`,
             icon: Flame,
             color: "text-orange-600",
             bgColor: "bg-orange-100"
           },
           {
-            title: "Achievements",
+            title: "Badges",
             value: userStats.achievements.length,
             icon: Award,
             color: "text-purple-600",
@@ -148,13 +146,13 @@ export function UserDashboard({
             transition={{ delay: index * 0.1 + 0.2 }}
           >
             <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-2 rounded-lg", stat.bgColor)}>
-                    <stat.icon className={cn("h-4 w-4", stat.color)} />
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2">
+                  <div className={cn("p-1.5 rounded-lg", stat.bgColor)}>
+                    <stat.icon className={cn("h-3 w-3", stat.color)} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{stat.value}</p>
+                    <p className="text-lg font-bold">{stat.value}</p>
                     <p className="text-xs text-muted-foreground">{stat.title}</p>
                   </div>
                 </div>
@@ -164,138 +162,119 @@ export function UserDashboard({
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Achievements */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Compact Recent Achievements */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Award className="h-4 w-4" />
                 Recent Achievements
               </CardTitle>
-              <CardDescription>
-                Your latest accomplishments
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               {recentAchievements.length > 0 ? (
-                recentAchievements.map((achievement) => (
+                recentAchievements.slice(0, 3).map((achievement) => (
                   <div
                     key={achievement.id}
-                    className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg"
+                    className="flex items-center gap-2 p-2 bg-muted/30 rounded"
                   >
-                    <div className="text-2xl">{achievement.emoji}</div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{achievement.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {achievement.description}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="secondary" className="text-xs">
-                          +{achievement.auraPointsReward} points
+                    <div className="text-lg">{achievement.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs truncate">{achievement.title}</p>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="secondary" className="text-xs px-1 py-0">
+                          +{achievement.auraPointsReward}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {achievement.unlockedAt?.toLocaleDateString()}
-                        </span>
                       </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Award className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No achievements yet</p>
-                  <p className="text-xs">Complete games to earn achievements!</p>
+                <div className="text-center py-4 text-muted-foreground">
+                  <Award className="h-6 w-6 mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">No achievements yet</p>
                 </div>
               )}
               
-              <Button variant="outline" size="sm" className="w-full">
-                View All Achievements
+              <Button variant="outline" size="sm" className="w-full h-8 text-xs">
+                View All
               </Button>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Weekly Progress */}
+        {/* Compact Weekly Progress */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4" />
                 This Week
               </CardTitle>
-              <CardDescription>
-                Your learning activity
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Mock weekly data */}
-              <div className="space-y-3">
-                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
-                  <div key={day} className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground w-8">{day}</span>
-                    <div className="flex-1 mx-3">
+            <CardContent className="space-y-2">
+              {/* Compact weekly data */}
+              <div className="space-y-1.5">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, index) => (
+                  <div key={day} className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground w-6">{day}</span>
+                    <div className="flex-1">
                       <Progress 
                         value={Math.random() * 100} 
-                        className="h-2"
+                        className="h-1.5"
                       />
                     </div>
-                    <span className="text-sm font-medium w-8 text-right">
+                    <span className="text-xs font-medium w-6 text-right">
                       {Math.floor(Math.random() * 60)}m
                     </span>
                   </div>
                 ))}
               </div>
               
-              <div className="pt-3 border-t">
-                <div className="flex justify-between text-sm">
+              <div className="pt-2 border-t">
+                <div className="flex justify-between text-xs mb-1">
                   <span className="text-muted-foreground">Weekly Goal</span>
-                  <span className="font-medium">180 minutes</span>
+                  <span className="font-medium">75%</span>
                 </div>
-                <Progress value={75} className="h-2 mt-2" />
-                <p className="text-xs text-muted-foreground mt-1">
-                  45 minutes to reach your goal!
-                </p>
+                <Progress value={75} className="h-1.5" />
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Mini Leaderboard */}
+        {/* Compact Mini Leaderboard */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Leaderboard
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="h-4 w-4" />
+                Top Players
               </CardTitle>
-              <CardDescription>
-                Top performers this month
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {leaderboard.slice(0, 5).map((entry, index) => (
+            <CardContent className="space-y-1.5">
+              {leaderboard.slice(0, 4).map((entry, index) => (
                 <div
                   key={entry.userId}
                   className={cn(
-                    "flex items-center gap-3 p-2 rounded-lg",
-                    entry.userId === userStats.userId && "bg-blue-50 ring-2 ring-blue-200"
+                    "flex items-center gap-2 p-1.5 rounded",
+                    entry.userId === userStats.userId && "bg-blue-50 ring-1 ring-blue-200"
                   )}
                 >
                   <div className={cn(
-                    "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
+                    "flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold",
                     index === 0 && "bg-yellow-100 text-yellow-800",
                     index === 1 && "bg-gray-100 text-gray-600",
                     index === 2 && "bg-orange-100 text-orange-800",
@@ -304,27 +283,27 @@ export function UserDashboard({
                     {index + 1}
                   </div>
                   
-                  <Avatar className="h-6 w-6">
+                  <Avatar className="h-5 w-5">
                     <AvatarImage src={entry.avatar} />
                     <AvatarFallback className="text-xs">
-                      {entry.userName.slice(0, 2).toUpperCase()}
+                      {entry.userName.slice(0, 1).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-xs font-medium truncate">
                       {entry.userName}
                       {entry.userId === userStats.userId && " (You)"}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {entry.auraPoints} points • {entry.gamesCompleted} games
+                      {entry.auraPoints} pts
                     </p>
                   </div>
                 </div>
               ))}
               
-              <Button variant="outline" size="sm" className="w-full">
-                View Full Leaderboard
+              <Button variant="outline" size="sm" className="w-full h-8 text-xs">
+                View All
               </Button>
             </CardContent>
           </Card>
