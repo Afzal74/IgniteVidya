@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme Switcher Sound Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .sound-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        button {
+            background: #007AFF;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #0056CC;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .download-btn {
+            background: #34C759;
+        }
+        .download-btn:hover {
+            background: #28A745;
+        }
+        input[type="range"] {
+            width: 150px;
+        }
+        label {
+            font-weight: 500;
+            color: #555;
+        }
+        .description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 Theme Switcher Sound Generator</h1>
+        <p style="text-align: center; color: #666;">Generate Apple-inspired theme switching sounds for your app</p>
+
+        <!-- Light Theme Sound -->
+        <div class="sound-section">
+            <h3>☀️ Light Theme Sound</h3>
+            <p class="description">Higher pitch sound for switching to light theme (feels bright and uplifting)</p>
+            
+            <div class="controls">
+                <label>Frequency: <input type="range" id="lightFreq" min="800" max="1400" value="1000"> <span id="lightFreqValue">1000</span> Hz</label>
+                <label>Duration: <input type="range" id="lightDuration" min="50" max="300" value="120"> <span id="lightDurationValue">120</span> ms</label>
+            </div>
+            
+            <div class="controls">
+                <button onclick="playLightSound()">🔊 Preview</button>
+                <button onclick="downloadLightSound()" class="download-btn">⬇️ Download WAV</button>
+            </div>
+        </div>
+
+        <!-- Dark Theme Sound -->
+        <div class="sound-section">
+            <h3>🌙 Dark Theme Sound</h3>
+            <p class="description">Lower pitch sound for switching to dark theme (feels warm and cozy)</p>
+            
+            <div class="controls">
+                <label>Frequency: <input type="range" id="darkFreq" min="600" max="1000" value="750"> <span id="darkFreqValue">750</span> Hz</label>
+                <label>Duration: <input type="range" id="darkDuration" min="50" max="300" value="120"> <span id="darkDurationValue">120</span> ms</label>
+            </div>
+            
+            <div class="controls">
+                <button onclick="playDarkSound()">🔊 Preview</button>
+                <button onclick="downloadDarkSound()" class="download-btn">⬇️ Download WAV</button>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; padding: 20px; background: #e8f4fd; border-radius: 8px;">
+            <h4>📝 Usage Instructions:</h4>
+            <ol>
+                <li>Adjust the frequency and duration sliders to your liking</li>
+                <li>Preview the sounds using the play buttons</li>
+                <li>Download the WAV files when you're satisfied</li>
+                <li>Place the files in your project's <code>public/sounds/</code> directory</li>
+                <li>Use the provided React hook to implement theme switching with sounds</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        // Update frequency displays
+        document.getElementById('lightFreq').addEventListener('input', function() {
+            document.getElementById('lightFreqValue').textContent = this.value;
+        });
+        document.getElementById('darkFreq').addEventListener('input', function() {
+            document.getElementById('darkFreqValue').textContent = this.value;
+        });
+        document.getElementById('lightDuration').addEventListener('input', function() {
+            document.getElementById('lightDurationValue').textContent = this.value;
+        });
+        document.getElementById('darkDuration').addEventListener('input', function() {
+            document.getElementById('darkDurationValue').textContent = this.value;
+        });
+
+        function createWavFile(frequency, duration) {
+            const sampleRate = 44100;
+            const samples = Math.floor(sampleRate * (duration / 1000));
+            const buffer = new ArrayBuffer(44 + samples * 2);
+            const view = new DataView(buffer);
+            
+            // WAV header
+            const writeString = (offset, string) => {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            };
+            
+            writeString(0, 'RIFF');
+            view.setUint32(4, 36 + samples * 2, true);
+            writeString(8, 'WAVE');
+            writeString(12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(36, 'data');
+            view.setUint32(40, samples * 2, true);
+            
+            // Generate sine wave with smooth fade
+            for (let i = 0; i < samples; i++) {
+                const t = i / sampleRate;
+                const envelope = Math.sin(Math.PI * i / samples); // Smooth fade in/out
+                
+                // Create a pleasant tone with harmonics
+                let sample = 0;
+                sample += Math.sin(2 * Math.PI * frequency * t) * 0.7;
+                sample += Math.sin(2 * Math.PI * (frequency * 1.2) * t) * 0.2;
+                sample += Math.sin(2 * Math.PI * (frequency * 0.8) * t) * 0.1;
+                
+                sample *= envelope * 0.3; // Apply envelope and keep volume reasonable
+                
+                const intSample = Math.max(-32768, Math.min(32767, Math.floor(sample * 32767)));
+                view.setInt16(44 + i * 2, intSample, true);
+            }
+            
+            return buffer;
+        }
+
+        function playSound(frequency, duration) {
+            const buffer = createWavFile(frequency, duration);
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.volume = 0.5;
+            audio.play().catch(() => console.log('Audio play failed - user interaction required'));
+        }
+
+        function downloadSound(frequency, duration, filename) {
+            const buffer = createWavFile(frequency, duration);
+            const blob = new Blob([buffer], { type: 'audio/wav' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function playLightSound() {
+            const freq = parseInt(document.getElementById('lightFreq').value);
+            const duration = parseInt(document.getElementById('lightDuration').value);
+            playSound(freq, duration);
+        }
+
+        function playDarkSound() {
+            const freq = parseInt(document.getElementById('darkFreq').value);
+            const duration = parseInt(document.getElementById('darkDuration').value);
+            playSound(freq, duration);
+        }
+
+        function downloadLightSound() {
+            const freq = parseInt(document.getElementById('lightFreq').value);
+            const duration = parseInt(document.getElementById('lightDuration').value);
+            downloadSound(freq, duration, 'theme-to-light.wav');
+        }
+
+        function downloadDarkSound() {
+            const freq = parseInt(document.getElementById('darkFreq').value);
+            const duration = parseInt(document.getElementById('darkDuration').value);
+            downloadSound(freq, duration, 'theme-to-dark.wav');
+        }
+    </script>
+</body>
+</html>

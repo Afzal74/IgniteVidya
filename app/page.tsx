@@ -487,22 +487,24 @@ export default function HomePage() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-center mb-4 md:mb-8"
           >
-            <h2 className="text-lg md:text-2xl font-bold text-black dark:text-white mb-1 md:mb-2">
-              Choose Your Education Level
+            <h2 className="text-xl md:text-3xl font-extrabold text-black dark:text-white mb-1 md:mb-2 font-serif tracking-wide">
+              <span className="bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 dark:from-slate-100 dark:via-white dark:to-slate-100 bg-clip-text text-transparent">
+                Choose Your Education Level
+              </span>
             </h2>
             <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400">
               Select your education level to access appropriate STEM resources
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {educationLevels.map((level, index) => (
               <motion.div
                 key={level.level}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
-                className={`${level.level === 'Higher Primary' || level.level === 'Higher Secondary' ? 'md:mt-6' : ''}`}
+                className={`${level.level === 'Higher Primary' || level.level === 'Higher Secondary' ? 'md:mt-10' : ''}`}
               >
                 <Link href={level.href}>
                   <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-40 md:h-48 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">

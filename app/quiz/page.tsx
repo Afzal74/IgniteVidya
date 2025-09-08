@@ -1,571 +1,866 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { 
-  Brain, 
-  Clock, 
-  Target, 
-  CheckCircle, 
-  XCircle, 
-  ArrowRight, 
-  ArrowLeft,
+  GamepadIcon,
+  Users,
+  Plus,
+  ArrowRight,
+  Copy,
+  Settings,
+  Crown,
+  Clock,
+  Brain,
   Trophy,
-  Star,
+  Zap,
+  Shield,
+  Target,
+  User,
+  LogOut,
+  Home,
+  Gamepad2,
+  Globe,
   BookOpen,
-  Users
+  FlaskConical,
+  Code,
+  UserPlus,
+  Play
 } from "lucide-react"
 
-interface Question {
+type Screen = "home" | "create" | "join" | "lobby"
+type GameMode = "classic" | "speed" | "survival" | "team"
+type Difficulty = "easy" | "medium" | "hard" | "mixed"
+
+interface Player {
   id: string
-  question: string
-  options: string[]
-  correctAnswer: number
-  explanation: string
-  difficulty: "easy" | "medium" | "hard"
-  subject: string
-  grade: string
+  name: string
+  avatar: string
+  isHost: boolean
+  isReady: boolean
+  score?: number
 }
 
-interface Quiz {
+interface Room {
   id: string
-  title: string
-  description: string
-  subject: string
-  grade: string
-  duration: number
-  questions: Question[]
-  totalQuestions: number
-  createdBy: string
-  createdAt: string
+  name: string
+  code: string
+  host: string
+  players: Player[]
+  maxPlayers: number
+  gameMode: GameMode
+  difficulty: Difficulty
+  questionCount: number
+  timeLimit: number
+  isPrivate: boolean
+  createdAt: Date
 }
 
 export default function QuizPage() {
-  const [selectedGrade, setSelectedGrade] = useState("")
-  const [selectedSubject, setSelectedSubject] = useState("")
-  const [quizzes, setQuizzes] = useState<Quiz[]>([])
-  const [currentQuiz, setCurrentQuiz] = useState<Quiz | null>(null)
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [selectedAnswers, setSelectedAnswers] = useState<number[]>([])
-  const [timeLeft, setTimeLeft] = useState(0)
-  const [quizStarted, setQuizStarted] = useState(false)
-  const [quizCompleted, setQuizCompleted] = useState(false)
-  const [score, setScore] = useState(0)
+  const [currentScreen, setCurrentScreen] = useState<Screen>("home")
+  const [tabletMode, setTabletMode] = useState<"join" | "create">("join")
+  const [playerName, setPlayerName] = useState("")
+  const [roomCode, setRoomCode] = useState("")
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null)
+  const [isHost, setIsHost] = useState(false)
+  
+  // Room settings (when creating)
+  const [roomName, setRoomName] = useState("")
+  const [gameMode, setGameMode] = useState<GameMode>("classic")
+  const [difficulty, setDifficulty] = useState<Difficulty>("medium")
+  const [selectedCategory, setSelectedCategory] = useState<string>("mathematics")
+  const [questionCount, setQuestionCount] = useState(10)
+  const [timeLimit, setTimeLimit] = useState(30)
+  const [maxPlayers, setMaxPlayers] = useState(6)
+  const [isPrivateRoom, setIsPrivateRoom] = useState(false)
 
-  const grades = ["6", "7", "8", "9", "10", "11", "12"]
-  const subjects = [
-    "Mathematics", "Physics", "Chemistry", "Biology", 
-    "Computer Science", "English", "Social Studies"
-  ]
-
-  // Sample quiz data
-  const sampleQuizzes: Quiz[] = [
+  // Sample players for demo
+  const samplePlayers: Player[] = [
     {
       id: "1",
-      title: "Basic Mathematics - Grade 6",
-      description: "Test your understanding of basic mathematical concepts",
-      subject: "Mathematics",
-      grade: "6",
-      duration: 30,
-      totalQuestions: 5,
-      createdBy: "Ms. Sarah Johnson",
-      createdAt: "2024-01-15",
-      questions: [
-        {
-          id: "1",
-          question: "What is 15 + 27?",
-          options: ["40", "42", "41", "43"],
-          correctAnswer: 1,
-          explanation: "15 + 27 = 42",
-          difficulty: "easy",
-          subject: "Mathematics",
-          grade: "6"
-        },
-        {
-          id: "2",
-          question: "What is the area of a rectangle with length 8 cm and width 5 cm?",
-          options: ["13 cm", "40 cm", "26 cm", "35 cm"],
-          correctAnswer: 1,
-          explanation: "Area = length  width = 8  5 = 40 cm",
-          difficulty: "medium",
-          subject: "Mathematics",
-          grade: "6"
-        },
-        {
-          id: "3",
-          question: "What is 3/4 as a decimal?",
-          options: ["0.25", "0.5", "0.75", "0.8"],
-          correctAnswer: 2,
-          explanation: "3/4 = 0.75",
-          difficulty: "easy",
-          subject: "Mathematics",
-          grade: "6"
-        },
-        {
-          id: "4",
-          question: "What is the perimeter of a square with side length 6 cm?",
-          options: ["12 cm", "24 cm", "36 cm", "18 cm"],
-          correctAnswer: 1,
-          explanation: "Perimeter = 4  side = 4  6 = 24 cm",
-          difficulty: "medium",
-          subject: "Mathematics",
-          grade: "6"
-        },
-        {
-          id: "5",
-          question: "What is 2?",
-          options: ["6", "8", "9", "4"],
-          correctAnswer: 1,
-          explanation: "2 = 2  2  2 = 8",
-          difficulty: "hard",
-          subject: "Mathematics",
-          grade: "6"
-        }
-      ]
+      name: "Alex",
+      avatar: "🎯",
+      isHost: true,
+      isReady: true
     },
     {
-      id: "2",
-      title: "Introduction to Physics - Grade 7",
-      description: "Basic concepts of physics for grade 7 students",
-      subject: "Physics",
-      grade: "7",
-      duration: 25,
-      totalQuestions: 4,
-      createdBy: "Dr. Michael Chen",
-      createdAt: "2024-01-20",
-      questions: [
-        {
-          id: "1",
-          question: "What is the unit of force?",
-          options: ["Joule", "Newton", "Watt", "Pascal"],
-          correctAnswer: 1,
-          explanation: "Force is measured in Newtons (N)",
-          difficulty: "easy",
-          subject: "Physics",
-          grade: "7"
-        },
-        {
-          id: "2",
-          question: "What is the speed of light in vacuum?",
-          options: ["3  10 m/s", "3  10 m/s", "3  10 m/s", "3  10 m/s"],
-          correctAnswer: 0,
-          explanation: "The speed of light in vacuum is approximately 3  10 m/s",
-          difficulty: "medium",
-          subject: "Physics",
-          grade: "7"
-        }
-      ]
+      id: "2", 
+      name: "Sarah",
+      avatar: "🚀",
+      isHost: false,
+      isReady: true
+    },
+    {
+      id: "3",
+      name: "Mike",
+      avatar: "⚡",
+      isHost: false,
+      isReady: false
+    },
+    {
+      id: "4",
+      name: "Emma",
+      avatar: "🎨",
+      isHost: false,
+      isReady: true
     }
   ]
 
-  useEffect(() => {
-    // Filter quizzes based on selected grade and subject
-    let filteredQuizzes = sampleQuizzes
-    if (selectedGrade) {
-      filteredQuizzes = filteredQuizzes.filter(quiz => quiz.grade === selectedGrade)
+  const generateRoomCode = () => {
+    return Math.random().toString(36).substring(2, 8).toUpperCase()
+  }
+
+  const createRoom = () => {
+    if (!roomName.trim() || !playerName.trim()) return
+    
+    const newRoom: Room = {
+      id: Math.random().toString(36).substring(2),
+      name: roomName,
+      code: generateRoomCode(),
+      host: playerName,
+      players: [{
+        id: "host",
+        name: playerName,
+        avatar: "👑",
+        isHost: true,
+        isReady: true
+      }, ...samplePlayers.slice(1)],
+      maxPlayers,
+      gameMode,
+      difficulty,
+      questionCount,
+      timeLimit,
+      isPrivate: isPrivateRoom,
+      createdAt: new Date()
     }
-    if (selectedSubject) {
-      filteredQuizzes = filteredQuizzes.filter(quiz => quiz.subject === selectedSubject)
+    
+    setCurrentRoom(newRoom)
+    setIsHost(true)
+    setCurrentScreen("lobby")
+  }
+
+  const joinRoom = () => {
+    if (!roomCode.trim() || !playerName.trim()) return
+    
+    // Simulate joining a room
+    const mockRoom: Room = {
+      id: "mock",
+      name: "Mathematics Championship",
+      code: roomCode.toUpperCase(),
+      host: "Alex",
+      players: [...samplePlayers, {
+        id: "player",
+        name: playerName,
+        avatar: "🎮",
+        isHost: false,
+        isReady: false
+      }],
+      maxPlayers: 6,
+      gameMode: "classic",
+      difficulty: "medium",
+      questionCount: 15,
+      timeLimit: 30,
+      isPrivate: false,
+      createdAt: new Date()
     }
-    setQuizzes(filteredQuizzes)
-  }, [selectedGrade, selectedSubject])
-
-  useEffect(() => {
-    if (quizStarted && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000)
-      return () => clearTimeout(timer)
-    } else if (quizStarted && timeLeft === 0) {
-      finishQuiz()
-    }
-  }, [quizStarted, timeLeft])
-
-  const startQuiz = (quiz: Quiz) => {
-    setCurrentQuiz(quiz)
-    setTimeLeft(quiz.duration * 60) // Convert minutes to seconds
-    setQuizStarted(true)
-    setCurrentQuestionIndex(0)
-    setSelectedAnswers(new Array(quiz.questions.length).fill(-1))
-    setQuizCompleted(false)
-    setScore(0)
+    
+    setCurrentRoom(mockRoom)
+    setIsHost(false)
+    setCurrentScreen("lobby")
   }
 
-  const selectAnswer = (answerIndex: number) => {
-    const newAnswers = [...selectedAnswers]
-    newAnswers[currentQuestionIndex] = answerIndex
-    setSelectedAnswers(newAnswers)
-  }
-
-  const nextQuestion = () => {
-    if (currentQuestionIndex < currentQuiz!.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1)
-    }
-  }
-
-  const previousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1)
-    }
-  }
-
-  const finishQuiz = () => {
-    let correctAnswers = 0
-    currentQuiz!.questions.forEach((question, index) => {
-      if (selectedAnswers[index] === question.correctAnswer) {
-        correctAnswers++
-      }
-    })
-    setScore(correctAnswers)
-    setQuizCompleted(true)
-    setQuizStarted(false)
-  }
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "easy": return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
-      case "medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400"
-      case "hard": return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400"
+  const copyRoomCode = () => {
+    if (currentRoom) {
+      navigator.clipboard.writeText(currentRoom.code)
+      // You could add a toast notification here
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+  const leaveRoom = () => {
+    setCurrentRoom(null)
+    setIsHost(false)
+    setCurrentScreen("home")
   }
 
-  if (quizStarted && currentQuiz) {
-    const currentQuestion = currentQuiz.questions[currentQuestionIndex]
-    const progress = ((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100
+  const getGameModeIcon = (mode: GameMode) => {
+    switch (mode) {
+      case "classic": return <Brain className="h-5 w-5" />
+      case "speed": return <Zap className="h-5 w-5" />
+      case "survival": return <Shield className="h-5 w-5" />
+      case "team": return <Users className="h-5 w-5" />
+    }
+  }
 
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 py-8 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Quiz Header */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{currentQuiz.title}</h1>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Clock className="h-4 w-4" />
-                  {formatTime(timeLeft)}
+  const getDifficultyColor = (diff: Difficulty) => {
+    switch (diff) {
+      case "easy": return "text-green-600 bg-green-50 border-green-200 dark:bg-green-900/20 dark:text-green-400"
+      case "medium": return "text-yellow-600 bg-yellow-50 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400"
+      case "hard": return "text-red-600 bg-red-50 border-red-200 dark:bg-red-900/20 dark:text-red-400"
+      case "mixed": return "text-purple-600 bg-purple-50 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400"
+    }
+  }
+
+  const renderHomeScreen = () => (
+    <div className="max-w-6xl mx-auto">
+      {/* Hero Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="text-center mb-8 pt-16 md:pt-20"
+      >
+        <div className="mb-12 px-4 md:px-8">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight mb-6 tracking-tight">
+            <span className="text-white drop-shadow-lg font-bold">Challenge Your </span>
+            <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent drop-shadow-xl font-bold tracking-wide">STEM Knowledge</span>
+            <br className="block md:hidden" />
+            <span className="text-white drop-shadow-lg font-bold"> in Real-Time </span>
+            <span className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 bg-clip-text text-transparent drop-shadow-xl font-bold tracking-wide">Quizzes</span>
+          </h1>
+          <p className="text-sm md:text-base lg:text-lg text-gray-300 leading-relaxed max-w-3xl mx-auto font-medium px-4">
+            Master Science, Technology, Engineering & Mathematics through exciting multiplayer quiz battles. 
+            Join thousands of students advancing their STEM education!
+          </p>
+        </div>
+        
+        <div className="flex justify-center gap-4 mb-16">
+          <Button 
+            onClick={() => setTabletMode("create")}
+            size="lg"
+            className={`px-6 md:px-8 py-3 md:py-4 rounded-xl text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 ${tabletMode === 'create' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700'}`}
+          >
+            <UserPlus className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+            Create Room
+          </Button>
+          
+          <Button 
+            onClick={() => setTabletMode("join")}
+            size="lg"
+            variant="outline"
+            className={`border-2 px-6 md:px-8 py-3 md:py-4 rounded-xl text-base md:text-lg font-semibold transition-all duration-300 ${tabletMode === 'join' ? 'border-purple-500 text-white bg-gray-800' : 'border-gray-600 text-white hover:bg-gray-800'}`}
+          >
+            <ArrowRight className="mr-2 h-4 w-4 md:h-5 md:w-5" />
+            Join Room
+          </Button>
+        </div>
+        
+        <div className="flex justify-center items-center gap-8">
+          <div className="flex items-center gap-2 text-gray-400">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+            <span className="text-sm">Interactive STEM Learning</span>
+          </div>
+          <div className="text-blue-400 text-sm font-medium">
+            25,000+ STEM students online
+          </div>
+        </div>
+      </motion.div>
+      
+      {/* Tablet-Style Join Room Interface */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+        className="max-w-4xl mx-auto"
+      >
+        {/* Tablet Frame */}
+        <div className="relative">
+          {/* Tablet Bezel */}
+          <div className="bg-gray-800 p-4 md:p-6 rounded-3xl shadow-2xl border border-gray-700">
+            {/* Screen */}
+            <div className="bg-gray-900 rounded-2xl p-6 md:p-8 border border-gray-600 min-h-[500px] max-h-[70vh] overflow-y-auto">
+              {/* Status Bar */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-700">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-xs text-gray-400">IgniteVidya STEM Quiz Portal</span>
                 </div>
-                <Badge className={getDifficultyColor(currentQuestion.difficulty)}>
-                  {currentQuestion.difficulty}
-                </Badge>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-2 bg-gray-600 rounded-sm"></div>
+                  <div className="w-6 h-3 border border-gray-600 rounded-sm">
+                    <div className="w-4 h-full bg-green-500 rounded-sm"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
+                {tabletMode === 'join' ? 'Join a STEM Quiz Room' : 'Create a New Quiz Room'}
+              </h2>
+              
+              {tabletMode === 'join' ? (
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* Room Code */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Room Code</label>
+                    <Input
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                      placeholder="Enter 6-digit code"
+                      className="bg-gray-800 border-2 border-gray-600 text-white placeholder-gray-400 rounded-xl h-14 text-center text-lg font-mono tracking-wider focus:border-purple-500 transition-colors"
+                      maxLength={6}
+                    />
+                    <p className="text-xs text-gray-400 mt-2">Enter a 6-character room code (e.g. ABC123)</p>
+                  </div>
+                  
+                  {/* Your Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Your Name</label>
+                    <Input
+                      value={playerName}
+                      onChange={(e) => setPlayerName(e.target.value)}
+                      placeholder="Enter your name"
+                      className="bg-gray-800 border-2 border-gray-600 text-white placeholder-gray-400 rounded-xl h-14 focus:border-purple-500 transition-colors"
+                      maxLength={20}
+                    />
+                  </div>
+                  
+                  {/* Select Difficulty */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">Select Difficulty</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { id: 'easy', label: 'Easy', time: '45s', icon: '🎯', color: 'green', selected: difficulty === 'easy' },
+                        { id: 'medium', label: 'Medium', time: '30s', icon: '⚡', color: 'yellow', selected: difficulty === 'medium' },
+                        { id: 'hard', label: 'Hard', time: '20s', icon: '🚀', color: 'red', selected: difficulty === 'hard' }
+                      ].map((diff) => (
+                        <button
+                          key={diff.id}
+                          onClick={() => setDifficulty(diff.id as Difficulty)}
+                          className={`p-4 rounded-xl border-2 text-center transition-all hover:scale-105 ${
+                            diff.selected
+                              ? diff.color === 'green' ? 'border-green-500 bg-green-500/20 shadow-green-500/25'
+                              : diff.color === 'yellow' ? 'border-yellow-500 bg-yellow-500/20 shadow-yellow-500/25'
+                              : 'border-red-500 bg-red-500/20 shadow-red-500/25'
+                              : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
+                          } shadow-lg`}
+                        >
+                          <div className="text-2xl mb-2">{diff.icon}</div>
+                          <div className="text-white font-semibold text-sm">{diff.label}</div>
+                          <div className="text-gray-400 text-xs mt-1">{diff.time} per Q</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* STEM Categories */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-3">
+                      STEM Subject Categories
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { id: 'mathematics', label: 'Mathematics', icon: '📐' },
+                        { id: 'physics', label: 'Physics', icon: '⚛️' },
+                        { id: 'chemistry', label: 'Chemistry', icon: '🧪' },
+                        { id: 'biology', label: 'Biology', icon: '🧬' },
+                        { id: 'engineering', label: 'Engineering', icon: '⚙️' },
+                        { id: 'technology', label: 'Technology', icon: '💻' }
+                      ].map((cat) => {
+                        const selected = selectedCategory === cat.id
+                        return (
+                          <button
+                            type="button"
+                            key={cat.id}
+                            onClick={() => setSelectedCategory(cat.id)}
+                            aria-pressed={selected}
+                            className={`p-4 rounded-xl border-2 text-center transition-all hover:scale-105 ${
+                              selected
+                                ? 'border-blue-500 bg-blue-500/20 shadow-blue-500/25'
+                                : 'border-gray-600 bg-gray-800/50 hover:border-gray-500'
+                            } shadow-lg`}
+                          >
+                            <div className="text-xl mb-2">{cat.icon}</div>
+                            <div className="text-white font-medium text-xs">{cat.label}</div>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Additional Settings */}
+                  <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                    <h4 className="text-white font-medium mb-3">Quiz Settings</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between text-gray-300">
+                        <span>Questions per Round:</span>
+                        <span className="text-white font-medium">15-20</span>
+                      </div>
+                      <div className="flex justify-between text-gray-300">
+                        <span>Max Players:</span>
+                        <span className="text-white font-medium">8</span>
+                      </div>
+                      <div className="flex justify-between text-gray-300">
+                        <span>Real-time Scoring:</span>
+                        <span className="text-green-400 font-medium">✓ Enabled</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              ) : (
+              <div className="space-y-6">
+                {/* Creator name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+                  <Input
+                    value={playerName}
+                    onChange={(e) => setPlayerName(e.target.value)}
+                    placeholder="Enter your name"
+                    className="bg-gray-800 border-2 border-gray-600 text-white placeholder-gray-400 rounded-xl h-12 focus:border-purple-500 transition-colors"
+                  />
+                </div>
+                
+                {/* Room name */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Room Name</label>
+                  <Input
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    placeholder="e.g. Physics Wizards"
+                    className="bg-gray-800 border-2 border-gray-600 text-white placeholder-gray-400 rounded-xl h-12 focus:border-purple-500 transition-colors"
+                  />
+                </div>
+                
+                {/* Settings grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Difficulty</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {['easy','medium','hard'].map((d) => (
+                        <button key={d} onClick={() => setDifficulty(d as Difficulty)}
+                          className={`p-2 rounded-lg border-2 text-center transition-all text-xs ${
+                            difficulty===d ? 'border-purple-500 bg-purple-500/20 text-purple-300' : 'border-gray-600 bg-gray-800/50 hover:border-gray-500 text-gray-300'
+                          }`}
+                        >
+                          <div className="font-semibold capitalize">{d}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Max Players</label>
+                    <div className="flex items-center gap-3 bg-gray-800 border-2 border-gray-600 rounded-xl px-3 py-2">
+                      <input 
+                        type="range" 
+                        min={2} 
+                        max={10} 
+                        value={maxPlayers} 
+                        onChange={(e)=>setMaxPlayers(parseInt(e.target.value))} 
+                        className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                        style={{
+                          background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${((maxPlayers - 2) / 8) * 100}%, #374151 ${((maxPlayers - 2) / 8) * 100}%, #374151 100%)`
+                        }}
+                      />
+                      <span className="text-white font-bold text-lg min-w-[1.5rem] text-center">{maxPlayers}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* STEM Categories for Create Mode */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">STEM Subject</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: 'mathematics', label: 'Math', icon: '📐' },
+                      { id: 'physics', label: 'Physics', icon: '⚛️' },
+                      { id: 'chemistry', label: 'Chemistry', icon: '🧪' },
+                      { id: 'biology', label: 'Biology', icon: '🧬' },
+                      { id: 'engineering', label: 'Engineering', icon: '⚙️' },
+                      { id: 'technology', label: 'Tech', icon: '💻' }
+                    ].map((cat) => {
+                      const selected = selectedCategory === cat.id
+                      return (
+                        <button
+                          type="button"
+                          key={cat.id}
+                          onClick={() => setSelectedCategory(cat.id)}
+                          className={`p-2 rounded-lg border-2 text-center transition-all text-xs ${
+                            selected
+                              ? 'border-blue-500 bg-blue-500/20 text-blue-300'
+                              : 'border-gray-600 bg-gray-800/50 hover:border-gray-500 text-gray-300'
+                          }`}
+                        >
+                          <div className="text-sm mb-1">{cat.icon}</div>
+                          <div className="font-medium">{cat.label}</div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              </div>
+              )}
+              
+              {/* Action Button */}
+              <div className="mt-8 pt-6 border-t border-gray-700">
+                {tabletMode === 'join' ? (
+                  <Button onClick={joinRoom} disabled={!roomCode.trim() || !playerName.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-14">
+                    <Play className="mr-2 h-5 w-5" />
+                    Join {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Room
+                  </Button>
+                ) : (
+                  <Button onClick={createRoom} disabled={!roomName.trim() || !playerName.trim()} className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed h-14">
+                    <Play className="mr-2 h-5 w-5" />
+                    Create Room
+                  </Button>
+                )}
               </div>
             </div>
-            
-            <Progress value={progress} className="h-2" />
-            <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-2">
-              <span>Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
-              <span>{Math.round(progress)}% Complete</span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+
+  const renderCreateScreen = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="max-w-2xl mx-auto"
+    >
+      <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 shadow-2xl">
+        <h1 className="text-3xl font-bold text-white mb-8">Create a New Quiz Room</h1>
+        
+        <div className="space-y-6">
+          {/* Your Name */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Your Name</label>
+            <Input
+              value={playerName}
+              onChange={(e) => setPlayerName(e.target.value)}
+              placeholder="Enter your name"
+              className="bg-gray-700 border-2 border-purple-500 text-white placeholder-gray-400 rounded-lg h-12"
+              maxLength={20}
+            />
+          </div>
+          
+          {/* Add Bots Slider */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Add Bots (0-15)</label>
+            <div className="flex items-center gap-4">
+              <input
+                type="range"
+                min="0"
+                max="15"
+                value={maxPlayers - 1}
+                onChange={(e) => setMaxPlayers(parseInt(e.target.value) + 1)}
+                className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                style={{
+                  background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${((maxPlayers - 1) / 15) * 100}%, #374151 ${((maxPlayers - 1) / 15) * 100}%, #374151 100%)`
+                }}
+              />
+              <span className="text-2xl font-bold text-purple-400 min-w-[2rem]">{maxPlayers - 1}</span>
+            </div>
+            <p className="text-sm text-gray-400 mt-1">{maxPlayers - 1} bots will join</p>
+          </div>
+          
+          {/* Number of Rounds */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">Number of Rounds</label>
+            <div className="relative">
+              <select
+                value={questionCount}
+                onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                className="w-full bg-gray-700 border-gray-600 text-white rounded-lg h-12 appearance-none px-4 pr-10"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={15}>15</option>
+                <option value={20}>20</option>
+              </select>
+              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                ▼
+              </div>
+            </div>
+            <p className="text-sm text-gray-400 mt-1">{questionCount} questions per game</p>
+          </div>
+          
+          {/* Select Difficulty */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">Select Difficulty</label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { id: 'easy', label: 'Easy', time: '30s per question', icon: '🛡️', selected: difficulty === 'easy' },
+                { id: 'medium', label: 'Average', time: '20s per question', icon: '⚡', selected: difficulty === 'medium' },
+                { id: 'hard', label: 'Hard', time: '15s per question', icon: '🏆', selected: difficulty === 'hard' }
+              ].map((diff) => (
+                <button
+                  key={diff.id}
+                  onClick={() => setDifficulty(diff.id as Difficulty)}
+                  className={`p-4 rounded-lg border-2 text-center transition-all ${
+                    diff.selected
+                      ? 'border-orange-500 bg-orange-500/20'
+                      : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-2xl mb-1">{diff.icon}</div>
+                  <div className="text-white font-medium text-sm">{diff.label}</div>
+                  <div className="text-gray-400 text-xs mt-1">{diff.time}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Select Category */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">Select Category (20s per question)</label>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {[
+                { id: 'all', label: 'All', icon: '🏆', selected: true },
+                { id: 'english', label: 'English', icon: '📚', selected: false },
+                { id: 'science', label: 'Science', icon: '🔬', selected: false }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    cat.selected
+                      ? 'border-purple-500 bg-purple-500/20'
+                      : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{cat.icon}</div>
+                  <div className="text-white font-medium text-sm">{cat.label}</div>
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'social', label: 'Social', icon: '🌍', selected: false },
+                { id: 'cs', label: 'CS', icon: '💻', selected: false }
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${
+                    cat.selected
+                      ? 'border-purple-500 bg-purple-500/20'
+                      : 'border-gray-600 bg-gray-700/50 hover:border-gray-500'
+                  }`}
+                >
+                  <div className="text-lg mb-1">{cat.icon}</div>
+                  <div className="text-white font-medium text-sm">{cat.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <Button 
+            onClick={createRoom}
+            disabled={!playerName.trim()}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Create Room
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  )
+
+  const renderJoinScreen = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="max-w-md mx-auto"
+    >
+      <div className="mb-8">
+        <Button
+          onClick={() => setCurrentScreen("home")}
+          variant="outline"
+          className="mb-4"
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Back to Home
+        </Button>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+          Join Room
+        </h1>
+        <p className="text-gray-600 dark:text-gray-400 text-center">
+          Enter the room code to join the game
+        </p>
+      </div>
+
+      <Card className="p-8 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
+        <div className="space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Users className="h-8 w-8 text-white" />
             </div>
           </div>
 
-          {/* Question Card */}
-          <Card className="p-8 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                {currentQuestion.question}
-              </h2>
-              
-              <div className="space-y-3">
-                {currentQuestion.options.map((option, index) => (
-                  <motion.button
-                    key={index}
-                    onClick={() => selectAnswer(index)}
-                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
-                      selectedAnswers[currentQuestionIndex] === index
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-gray-300 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-700'
-                    }`}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        selectedAnswers[currentQuestionIndex] === index
-                          ? 'border-blue-500 bg-blue-500'
-                          : 'border-gray-300 dark:border-gray-600'
-                      }`}>
-                        {selectedAnswers[currentQuestionIndex] === index && (
-                          <CheckCircle className="h-4 w-4 text-white" />
-                        )}
-                      </div>
-                      <span className="text-gray-900 dark:text-white">{option}</span>
-                    </div>
-                  </motion.button>
-                ))}
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Room Code
+            </label>
+            <Input
+              value={roomCode}
+              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              placeholder="Enter 6-digit code..."
+              className="text-center text-2xl font-mono tracking-widest"
+              maxLength={6}
+            />
+          </div>
 
-            {/* Navigation */}
-            <div className="flex justify-between">
-              <Button
-                onClick={previousQuestion}
-                disabled={currentQuestionIndex === 0}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              
-              <div className="flex gap-2">
-                {currentQuiz.questions.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentQuestionIndex(index)}
-                    className={`w-8 h-8 rounded-full text-sm font-medium ${
-                      index === currentQuestionIndex
-                        ? 'bg-blue-500 text-white'
-                        : selectedAnswers[index] !== -1
-                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}
-                  >
-                    {index + 1}
-                  </button>
-                ))}
-              </div>
-              
-              {currentQuestionIndex === currentQuiz.questions.length - 1 ? (
-                <Button
-                  onClick={finishQuiz}
-                  className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-                >
-                  Finish Quiz
-                  <Trophy className="h-4 w-4" />
-                </Button>
-              ) : (
-                <Button
-                  onClick={nextQuestion}
-                  className="flex items-center gap-2"
-                >
-                  Next
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </Card>
+          <Button
+            onClick={joinRoom}
+            disabled={roomCode.length !== 6}
+            className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white font-medium py-3"
+          >
+            Join Room
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Don't have a room code? Ask your friend to share it!
+            </p>
+          </div>
         </div>
-      </div>
-    )
-  }
+      </Card>
+    </motion.div>
+  )
 
-  if (quizCompleted && currentQuiz) {
-    const percentage = (score / currentQuiz.questions.length) * 100
-    const isPassed = percentage >= 60
+  const renderLobbyScreen = () => {
+    if (!currentRoom) return null
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 py-8 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="mb-8">
-              <div className={`w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center ${
-                isPassed ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'
-              }`}>
-                {isPassed ? (
-                  <Trophy className="h-12 w-12 text-green-600 dark:text-green-400" />
-                ) : (
-                  <XCircle className="h-12 w-12 text-red-600 dark:text-red-400" />
-                )}
-              </div>
-              
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {isPassed ? "Congratulations!" : "Keep Learning!"}
-              </h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {isPassed ? "You passed the quiz!" : "Don't worry, practice makes perfect!"}
-              </p>
-            </div>
-
-            <Card className="p-8 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm mb-6">
-              <div className="space-y-4">
-                <div className="text-4xl font-bold text-gray-900 dark:text-white">
-                  {score}/{currentQuiz.questions.length}
-                </div>
-                <div className="text-2xl font-semibold text-gray-600 dark:text-gray-400">
-                  {percentage.toFixed(1)}%
-                </div>
-                <div className="text-lg text-gray-500 dark:text-gray-500">
-                  {isPassed ? "Well Done!" : "Try Again!"}
-                </div>
-              </div>
-            </Card>
-
-            <div className="flex gap-4 justify-center">
-              <Button
-                onClick={() => {
-                  setQuizCompleted(false)
-                  setCurrentQuiz(null)
-                }}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                Take Another Quiz
-              </Button>
-              <Button
-                onClick={() => window.location.href = "/dashboard"}
-                className="flex items-center gap-2"
-              >
-                <Users className="h-4 w-4" />
-                Go to Dashboard
-              </Button>
-            </div>
-          </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        className="max-w-4xl mx-auto"
+      >
+        <div className="text-center mb-8">
+          {/* Quiz Verse Branding */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold mb-2">
+              <span className="text-pink-500">Quiz</span>
+              <span className="text-purple-400"> Verse</span>
+            </h1>
+          </div>
+          
+          {/* Game Lobby Title */}
+          <h2 className="text-4xl font-bold text-white mb-4">Game Lobby</h2>
+          
+          {/* Room Code */}
+          <div className="inline-flex items-center gap-2 bg-gray-700/80 px-4 py-2 rounded-lg mb-4">
+            <span className="text-gray-300 text-sm">Room Code:</span>
+            <code className="text-xl font-mono font-bold text-white tracking-wider">
+              {currentRoom.code}
+            </code>
+          </div>
+          
+          {/* Game Mode and Subject Pills */}
+          <div className="flex justify-center gap-3 mb-8">
+            <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1">
+              Average Mode
+            </Badge>
+            <Badge className="bg-purple-500/20 text-purple-400 border border-purple-500/30 px-3 py-1">
+              All Subjects
+            </Badge>
+          </div>
         </div>
-      </div>
+        
+        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-8 border border-gray-700 shadow-2xl">
+          {/* Players Section */}
+          <div className="mb-8">
+            <h3 className="text-2xl font-bold text-white mb-6">Players (3)</h3>
+            
+            <div className="space-y-4">
+              {[
+                { name: 'sad', isHost: true, avatar: '⚡', color: 'from-purple-500 to-pink-500' },
+                { name: 'BrainBot0', isHost: false, avatar: '🚀', color: 'from-purple-500 to-pink-500' },
+                { name: 'QuizQueen1', isHost: false, avatar: '⚡', color: 'from-purple-500 to-pink-500' }
+              ].map((player, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="flex items-center gap-4 bg-gray-700/50 rounded-xl p-4 border border-gray-600"
+                >
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${player.color} flex items-center justify-center text-white text-lg font-bold`}>
+                    {player.avatar}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-white font-medium text-lg">{player.name}</span>
+                    {player.isHost && (
+                      <Badge className="bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2 py-1 text-xs">
+                        Host
+                      </Badge>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Question Time Settings */}
+          <div className="mb-8">
+            <h3 className="text-xl font-bold text-white mb-4">Question Time</h3>
+            <div className="flex gap-4">
+              {[
+                { value: '5s', selected: false },
+                { value: '10s', selected: true },
+                { value: '15s', selected: false }
+              ].map((option, index) => (
+                <button
+                  key={index}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 transition-all ${
+                    option.selected
+                      ? 'border-purple-500 bg-purple-500/20 text-purple-400'
+                      : 'border-gray-600 text-gray-400 hover:border-gray-500'
+                  }`}
+                >
+                  <div className={`w-3 h-3 rounded-full border-2 ${
+                    option.selected
+                      ? 'border-purple-500 bg-purple-500'
+                      : 'border-gray-500'
+                  }`}></div>
+                  <span className="text-white font-medium">{option.value}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Action Buttons */}
+          <div className="space-y-4">
+            <Button 
+              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 rounded-xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Play className="mr-2 h-5 w-5" />
+              Start Game
+            </Button>
+            
+            <Button 
+              onClick={leaveRoom}
+              variant="outline"
+              className="w-full border-2 border-gray-600 text-gray-300 hover:bg-gray-700 py-4 rounded-xl text-lg font-semibold transition-all duration-300"
+            >
+              Leave Lobby
+            </Button>
+          </div>
+        </div>
+      </motion.div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-black dark:to-purple-900 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-8"
-        >
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-20 h-20 rounded-2xl bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center">
-              <img 
-                src="/vtu-logo.png" 
-                alt="VTU Logo" 
-                className="w-16 h-16 object-contain"
-                onError={(e) => {
-                  // Fallback to icon if image fails to load
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                }}
-              />
-              <Brain className="h-10 w-10 text-blue-600 dark:text-blue-400 hidden" />
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Quiz Center</h1>
-          <p className="text-gray-600 dark:text-gray-400">Test your knowledge and track your progress</p>
-        </motion.div>
-
-        {/* Filters */}
-        <Card className="p-6 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Grade
-              </label>
-              <select
-                value={selectedGrade}
-                onChange={(e) => setSelectedGrade(e.target.value)}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              >
-                <option value="">All Grades</option>
-                {grades.map(grade => (
-                  <option key={grade} value={grade}>Grade {grade}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Select Subject
-              </label>
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-              >
-                <option value="">All Subjects</option>
-                {subjects.map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="flex items-end">
-              <Button
-                onClick={() => {
-                  setSelectedGrade("")
-                  setSelectedSubject("")
-                }}
-                variant="outline"
-                className="w-full"
-              >
-                Clear Filters
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Quiz List */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {quizzes.map((quiz, index) => (
-            <motion.div
-              key={quiz.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.1 }}
-            >
-              <Card className="p-6 shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
-                <div className="mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                    {quiz.title}
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
-                    {quiz.description}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="outline">Grade {quiz.grade}</Badge>
-                    <Badge variant="outline">{quiz.subject}</Badge>
-                    <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
-                      {quiz.totalQuestions} Questions
-                    </Badge>
-                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400">
-                      {quiz.duration} min
-                    </Badge>
-                  </div>
-                </div>
-                
-                <div className="text-sm text-gray-500 dark:text-gray-500 mb-4">
-                  <div>Created by: {quiz.createdBy}</div>
-                  <div>Created: {quiz.createdAt}</div>
-                </div>
-                
-                <Button
-                  onClick={() => startQuiz(quiz)}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium py-3 rounded-lg"
-                >
-                  Start Quiz
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-
-        {quizzes.length === 0 && (
-          <Card className="p-8 text-center shadow-xl border-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-            <Target className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              No quizzes found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Try adjusting your filters or check back later for new quizzes.
-            </p>
-          </Card>
-        )}
-      </div>
+    <div className="min-h-screen bg-gray-900 py-8 px-4">
+      <AnimatePresence mode="wait">
+        {currentScreen === "home" && renderHomeScreen()}
+        {currentScreen === "create" && renderCreateScreen()}
+        {currentScreen === "join" && renderJoinScreen()}
+        {currentScreen === "lobby" && renderLobbyScreen()}
+      </AnimatePresence>
     </div>
   )
 }
