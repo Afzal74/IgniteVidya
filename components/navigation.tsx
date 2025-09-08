@@ -16,6 +16,7 @@ import {
   Star,
   Calculator,
   Lightbulb,
+  Gamepad2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
@@ -26,6 +27,7 @@ import { useState as useNewsState, useEffect } from "react"
 const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/notes", label: "Notes", icon: BookOpen },
+  { href: "/games", label: "STEM Games", icon: Gamepad2 },
   { href: "/lectures", label: "Lectures", icon: Play },
   { href: "/ai-tutor", label: "AI Tutor", icon: Brain },
   { href: "/quiz", label: "Quiz", icon: Target },

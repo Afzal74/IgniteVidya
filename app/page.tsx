@@ -22,6 +22,7 @@ import {
   Atom,
   Microscope,
   Beaker,
+  Gamepad2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -106,6 +107,41 @@ export default function HomePage() {
     }
   }, [mounted])
 
+
+  const educationLevels = [
+    {
+      level: "Higher Primary",
+      grades: ["6th", "7th"],
+      gradeCount: 2,
+      theme: "Foundation Builder",
+      description: "Build strong STEM foundations",
+      icon: Rocket,
+      color: "blue",
+      href: "/level/higher-primary"
+    },
+    {
+      level: "High School",
+      grades: ["8th", "9th", "10th"],
+      gradeCount: 3,
+      theme: "Knowledge Explorer",
+      description: "Explore advanced concepts",
+      icon: Microscope,
+      color: "green",
+      href: "/level/high-school"
+    },
+    {
+      level: "Higher Secondary",
+      grades: ["11th", "12th"],
+      gradeCount: 2,
+      theme: "Future Leader",
+      description: "Master specialized subjects",
+      icon: Crown,
+      color: "purple",
+      href: "/level/higher-secondary"
+    },
+  ]
+
+  // Keep the original grades data for search functionality
   const grades = [
     {
       grade: "6th",
@@ -167,6 +203,7 @@ export default function HomePage() {
 
   const shortcuts = [
     { title: "Notes", icon: BookOpen, href: "/notes", description: "Study materials" },
+    { title: "STEM Games", icon: Gamepad2, href: "/games", description: "Interactive learning" },
     { title: "Lectures", icon: Play, href: "/lectures", description: "Video lessons" },
     { title: "AI Tutor", icon: Brain, href: "/ai-tutor", description: "Smart learning" },
     { title: "Quiz", icon: Target, href: "/quiz", description: "Test yourself" },
@@ -183,7 +220,50 @@ export default function HomePage() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+      {/* Global Animated Background Elements */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Animated Grid */}
+        <div className="absolute inset-0 opacity-30 dark:opacity-10">
+          <div className="h-full w-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
+        </div>
+        
+        {/* Floating Geometric Shapes */}
+        {[...Array(8)].map((_, i) => {
+          const initialX = Math.random() * 1200
+          const initialY = Math.random() * 800
+          const duration = Math.random() * 15 + 10
+          const delay = Math.random() * 10
+          
+          return (
+            <motion.div
+              key={`bg-shape-${i}`}
+            className={`absolute w-2 h-2 ${
+              i % 3 === 0 ? 'bg-blue-400/60 dark:bg-blue-400/20' : 
+              i % 3 === 1 ? 'bg-green-400/60 dark:bg-green-400/20' : 'bg-purple-400/60 dark:bg-purple-400/20'
+            } ${
+              i % 2 === 0 ? 'rounded-full' : 'rotate-45'
+            }`}
+              initial={{
+                x: initialX,
+                y: initialY,
+              }}
+              animate={{
+                y: [initialY, initialY - 200, initialY],
+                x: [initialX, initialX + (Math.random() * 200 - 100), initialX],
+                rotate: [0, 360],
+                opacity: [0.2, 0.6, 0.2],
+              }}
+              transition={{
+                duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              }}
+            />
+          )
+        })}
+      </div>
       {/* Pixel Font Styles */}
       <style jsx>{`
         .pixel-font {
@@ -207,11 +287,94 @@ export default function HomePage() {
           image-rendering: crisp-edges;
           text-shadow: 0.5px 0.5px 0px rgba(0, 255, 255, 0.3);
         }
+        
       `}</style>
       {/* Hero Section */}
       <section className="relative pt-20 md:pt-24 pb-8 md:pb-16 px-2 md:px-4 overflow-hidden">
-        {/* Clean Background */}
+        {/* Animated Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
+        
+        {/* Floating Particles */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(20)].map((_, i) => {
+            const initialX = Math.random() * 1200
+            const initialY = Math.random() * 800
+            const duration = Math.random() * 10 + 10
+            const delay = Math.random() * 5
+            const moveX = Math.random() * 100 - 50
+            
+            return (
+              <motion.div
+                key={`particle-${i}`}
+                className="absolute w-1 h-1 bg-blue-400/70 dark:bg-blue-400/30 rounded-full"
+                initial={{
+                  x: initialX,
+                  y: initialY,
+                }}
+                animate={{
+                  y: [initialY, initialY - 100, initialY],
+                  x: [initialX, initialX + moveX, initialX],
+                  opacity: [0.3, 0.8, 0.3],
+                }}
+                transition={{
+                  duration,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay,
+                }}
+              />
+            )
+          })}
+        </div>
+        
+        {/* Gradient Orbs */}
+        <div className="absolute inset-0">
+          <motion.div
+            className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/25 to-purple-400/25 dark:from-blue-400/10 dark:to-purple-400/10 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              x: [0, 50, 0],
+              y: [0, -30, 0],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-green-400/25 to-blue-400/25 dark:from-green-400/10 dark:to-blue-400/10 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              x: [0, -40, 0],
+              y: [0, 20, 0],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2,
+            }}
+          />
+          <motion.div
+            className="absolute top-1/2 right-1/3 w-32 h-32 bg-gradient-to-r from-purple-400/35 to-pink-400/35 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-2xl"
+            animate={{
+              scale: [1, 1.4, 1],
+              rotate: [0, 180, 360],
+            }}
+            transition={{
+              duration: 12,
+              repeat: Infinity,
+              ease: "linear",
+              delay: 4,
+            }}
+          />
+        </div>
+        
+        {/* Mesh Gradient Overlay */}
+        <div className="absolute inset-0 opacity-40 dark:opacity-30">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.4),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.4),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.4),_transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.3),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.3),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.3),_transparent_50%)] animate-pulse" />
+        </div>
 
         <div className="relative z-10 max-w-6xl mx-auto text-center">
           {/* Online Users Badge */}
@@ -325,23 +488,23 @@ export default function HomePage() {
             className="text-center mb-4 md:mb-8"
           >
             <h2 className="text-lg md:text-2xl font-bold text-black dark:text-white mb-1 md:mb-2">
-              Choose Your Grade
+              Choose Your Education Level
             </h2>
             <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400">
-              Select your grade to access age-appropriate STEM resources
+              Select your education level to access appropriate STEM resources
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
-            {grades.map((grade, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+            {educationLevels.map((level, index) => (
               <motion.div
-                key={grade.grade}
+                key={level.level}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
-                <Link href={`/grade/${grade.grade.replace(/[^0-9]/g, '')}`}>
-                  <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-24 md:h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
+                <Link href={level.href}>
+                  <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-40 md:h-48 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
                     {/* Shiny Overlay Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
@@ -350,17 +513,32 @@ export default function HomePage() {
                       <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)] bg-[length:8px_8px]" />
                     </div>
 
-                    <div className="relative p-2 md:p-4 text-center h-full flex flex-col justify-center">
+                    <div className="relative p-4 md:p-6 text-center h-full flex flex-col justify-center">
                       {/* Hero Badge with Icon - Enhanced Shiny Effect */}
-                      <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mx-auto mb-1 md:mb-2 group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-xl">
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                        <grade.icon className="text-white dark:text-black h-3 w-3 md:h-5 md:w-5 relative z-10" />
+                      <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br ${level.color === 'blue' ? 'from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600' : level.color === 'green' ? 'from-green-500 to-green-700 dark:from-green-400 dark:to-green-600' : 'from-purple-500 to-purple-700 dark:from-purple-400 dark:to-purple-600'} flex items-center justify-center mx-auto mb-3 md:mb-4 group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-xl`}>
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <level.icon className="text-white dark:text-black h-6 w-6 md:h-8 md:w-8 relative z-10" />
                       </div>
-                      <h3 className="font-bold text-black dark:text-white mb-0.5 text-xs md:text-sm group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
-                        Grade {grade.grade}
+                      
+                      <h3 className="font-bold text-black dark:text-white mb-2 text-sm md:text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                        {level.level}
                       </h3>
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">{grade.subjects} Subjects</p>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1 hidden md:block">{grade.theme}</p>
+                      
+                      <div className="flex justify-center gap-1 mb-2">
+                        {level.grades.map((grade, gradeIndex) => (
+                          <span key={gradeIndex} className={`text-xs px-2 py-1 rounded-full ${level.color === 'blue' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : level.color === 'green' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300'}`}>
+                            Class {grade}
+                          </span>
+                        ))}
+                      </div>
+                      
+                      <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors mb-1">
+                        {level.description}
+                      </p>
+                      
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 font-medium">
+                        {level.theme}
+                      </p>
                     </div>
                   </Card>
                 </Link>
@@ -420,7 +598,9 @@ export default function HomePage() {
             className="text-center mb-6 md:mb-8"
           >
             <h2 className="text-lg md:text-2xl font-bold text-black dark:text-white mb-1 md:mb-2">Latest News</h2>
-            <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400">Stay updated with the latest from IgniteVidya</p>
+            <p className="text-xs md:text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              Stay updated with the latest from IgniteVidya
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
@@ -431,21 +611,7 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.1 }}
             >
               <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 h-full">
-                <motion.div
-                  className="p-4 md:p-6"
-                  animate={{
-                    boxShadow: [
-                      "0 0 0px rgba(59, 130, 246, 0)",
-                      "0 0 20px rgba(59, 130, 246, 0.3)",
-                      "0 0 0px rgba(59, 130, 246, 0)"
-                    ]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                >
+                <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 group-hover:bg-blue-400 transition-colors" />
                     <div className="flex-1">
@@ -461,7 +627,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
 
@@ -472,22 +638,7 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 h-full">
-                <motion.div
-                  className="p-4 md:p-6"
-                  animate={{
-                    boxShadow: [
-                      "0 0 0px rgba(34, 197, 94, 0)",
-                      "0 0 20px rgba(34, 197, 94, 0.3)",
-                      "0 0 0px rgba(34, 197, 94, 0)"
-                    ]
-                  }}
-                  transition={{
-                    duration: 2.5,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 0.5
-                  }}
-                >
+                <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-2 group-hover:bg-green-400 transition-colors" />
                     <div className="flex-1">
@@ -503,7 +654,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
 
@@ -514,22 +665,7 @@ export default function HomePage() {
               transition={{ duration: 0.5, delay: 0.3 }}
             >
               <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-purple-500 dark:hover:border-purple-400 transition-all duration-300 h-full">
-                <motion.div
-                  className="p-4 md:p-6"
-                  animate={{
-                    boxShadow: [
-                      "0 0 0px rgba(168, 85, 247, 0)",
-                      "0 0 20px rgba(168, 85, 247, 0.3)",
-                      "0 0 0px rgba(168, 85, 247, 0)"
-                    ]
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: 1
-                  }}
-                >
+                <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 group-hover:bg-purple-400 transition-colors" />
                     <div className="flex-1">
@@ -545,7 +681,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               </Card>
             </motion.div>
           </div>
