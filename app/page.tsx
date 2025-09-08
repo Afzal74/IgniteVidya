@@ -421,7 +421,7 @@ export default function HomePage() {
               transition={{ duration: 0.5 }}
               className="mt-4 md:mt-6"
             >
-              <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-500 italic max-w-xl mx-auto px-2">
+              <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-500 italic max-w-4xl mx-auto px-2 whitespace-nowrap overflow-hidden text-ellipsis">
                 "{quotes[currentQuote]}"
               </p>
             </motion.div>

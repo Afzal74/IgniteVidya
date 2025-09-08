@@ -174,18 +174,18 @@ function NewsSection() {
   const [currentNews, setCurrentNews] = useNewsState(0)
   
   const newsItems = [
-    "🔬 STEM Education Summit 2024 - Register for free workshops",
-    "📊 Mathematics Olympiad results announced - Check winners list",
-    "⚗️ New Chemistry lab equipment installed in 50+ schools",
-    "🧬 Biology project competition deadline: March 20, 2024",
-    "🔭 Physics practical exam schedule released for Class 12",
-    "💻 Computer Science coding bootcamp - Applications open",
-    "🌟 Science Fair 2024 - Theme: Sustainable Technology",
-    "📐 Engineering entrance exam pattern updated for 2024",
-    "🎓 CBSE Board exam dates announced for Science subjects",
-    "⚡ Robotics workshop for grades 9-12 - Limited seats available",
-    "📚 New NCERT textbooks for Physics and Chemistry released",
-    "🏫 Top 100 Engineering colleges ranking published"
+    "📢 STEM Education Summit 2024 - Register for free workshops",
+    "📢 Mathematics Olympiad results announced - Check winners list",
+    "📢 New Chemistry lab equipment installed in 50+ schools",
+    "📢 Biology project competition deadline: March 20, 2024",
+    "📢 Physics practical exam schedule released for Class 12",
+    "📢 Computer Science coding bootcamp - Applications open",
+    "📢 Science Fair 2024 - Theme: Sustainable Technology",
+    "📢 Engineering entrance exam pattern updated for 2024",
+    "📢 CBSE Board exam dates announced for Science subjects",
+    "📢 Robotics workshop for grades 9-12 - Limited seats available",
+    "📢 New NCERT textbooks for Physics and Chemistry released",
+    "📢 Top 100 Engineering colleges ranking published"
   ]
 
   useEffect(() => {
@@ -197,17 +197,35 @@ function NewsSection() {
 
   return (
     <div className="hidden lg:block">
-      <div className="text-center max-w-lg mx-auto">
-        <div className="flex items-center justify-center mb-1">
-          <span className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">
-            Latest News
-          </span>
-          <div className="ml-2 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-500/50" />
-        </div>
-        <div className="overflow-hidden">
-          <p className="text-sm text-red-600 dark:text-red-400 font-medium transition-all duration-300 whitespace-nowrap text-ellipsis overflow-hidden shadow-sm drop-shadow-sm" style={{textShadow: '0 0 8px rgba(239, 68, 68, 0.3)'}}>
-            {newsItems[currentNews]}
-          </p>
+      <div className="text-center max-w-lg mx-auto relative">
+        {/* Background glow effect */}
+        <div className="absolute inset-0 -inset-y-4 -inset-x-8 bg-red-500/10 dark:bg-red-400/15 rounded-xl blur-xl animate-pulse" />
+        <div className="absolute inset-0 -inset-y-2 -inset-x-4 bg-red-500/20 dark:bg-red-400/25 rounded-lg blur-lg animate-pulse" />
+        
+        <div className="relative z-10">
+          <div className="flex items-center justify-center mb-1">
+            <span 
+              className="text-xs font-bold text-red-500 dark:text-red-400 uppercase tracking-wide" 
+              style={{
+                textShadow: '0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4)'
+              }}
+            >
+              Latest News
+            </span>
+            <div className="ml-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{
+              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6)'
+            }} />
+          </div>
+          <div className="overflow-hidden">
+            <p 
+              className="text-sm text-red-500 dark:text-red-400 font-semibold transition-all duration-300 whitespace-nowrap text-ellipsis overflow-hidden" 
+              style={{
+                textShadow: '0 0 8px rgba(239, 68, 68, 0.7), 0 0 16px rgba(239, 68, 68, 0.5), 0 0 24px rgba(239, 68, 68, 0.3)'
+              }}
+            >
+              {newsItems[currentNews]}
+            </p>
+          </div>
         </div>
       </div>
     </div>
