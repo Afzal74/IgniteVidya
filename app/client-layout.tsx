@@ -9,6 +9,7 @@ import Navigation from "@/components/navigation"
 import TerminalChat from "@/components/terminal-chat"
 import IgniteVidyaCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
+import AudioManager from "@/components/audio-manager"
 import { useState, useEffect } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -22,6 +23,7 @@ export default function ClientLayout({
   const [mounted, setMounted] = useState(false)
   const [isTerminalOpen, setIsTerminalOpen] = useState(false)
   const [isIgniteVidyaCompanionOpen, setIsIgniteVidyaCompanionOpen] = useState(false)
+  const [audioEnabled, setAudioEnabled] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -35,6 +37,14 @@ export default function ClientLayout({
   const handleIgniteVidyaCompanionOpen = () => {
     setIsTerminalOpen(false)
     setIsIgniteVidyaCompanionOpen(true)
+  }
+
+  const handleSplashComplete = () => {
+    setShowSplash(false)
+    // Enable audio after splash screen with a small delay
+    setTimeout(() => {
+      setAudioEnabled(true)
+    }, 500)
   }
 
   if (!mounted) {
@@ -52,7 +62,7 @@ export default function ClientLayout({
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {showSplash ? (
-            <SplashScreen onComplete={() => setShowSplash(false)} />
+            <SplashScreen onComplete={handleSplashComplete} />
           ) : (
             <>
               <Navigation />
@@ -60,6 +70,13 @@ export default function ClientLayout({
               <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
               <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
               <Toaster />
+              {/* Audio Manager - starts after splash screen */}
+              {audioEnabled && (
+                <AudioManager 
+                  autoPlay={true} 
+                  showControls={true}
+                />
+              )}
             </>
           )}
         </ThemeProvider>

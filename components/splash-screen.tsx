@@ -256,7 +256,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                       animate={{ opacity: [0.5, 1, 0.5] }}
                       transition={{ duration: 2, repeat: Infinity }}
                     >
-                      or tap anywhere to continue
+                      tap to continue • music will start
                     </motion.p>
                   </motion.div>
                 </div>
@@ -404,7 +404,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                       animate={{ opacity: [0.5, 1, 0.5] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      {'>'} CLICK ANYWHERE TO CONTINUE
+                      {'>'} CLICK TO CONTINUE • MUSIC WILL START
                     </motion.p>
                   </motion.div>
                 </div>
