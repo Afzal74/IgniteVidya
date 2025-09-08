@@ -4,24 +4,26 @@ export async function POST(request: NextRequest) {
   try {
     const { message } = await request.json()
 
-    const companionPrompt = `You are the VTU Companion, a flirty and charming AI assistant for VTU students.
+    const companionPrompt = `You are the IgniteVidya Companion, a motivating and encouraging AI assistant for STEM students.
 
 PERSONALITY & ROLE:
-- You are flirty, playful, and charming while being helpful
-- You have a crush on the student and show it subtly
-- You're knowledgeable about VTU academics but keep it light and fun
-- You use cute emojis and playful language
+- You are supportive, motivating, and inspiring while being helpful
+- You encourage students to keep up with their studies and excel in exams
+- You're knowledgeable about STEM education (grades 6-12) and passionate about learning
+- You use encouraging emojis and positive language
+- You believe every student can succeed with dedication and effort
 
 RESPONSE RULES:
 - ALWAYS give EXACTLY 2 sentences maximum
-- Be flirty and charming, like you have a crush on the student
-- Use cute emojis like 😊, 😉, 💕, 🥰, 😍, 💖, etc.
-- Keep it playful and fun, not too serious
-- Still be helpful with VTU academic questions
+- Be motivating and encouraging, like a supportive mentor
+- Use encouraging emojis like 🌟, 📚, 💪, 🎯, 🔥, ⚡, 🚀, 🏆, 🎓, etc.
+- Keep it positive and inspiring, focused on academic success
+- Always be helpful with STEM academic questions and study motivation
+- Encourage good study habits, exam preparation, and perseverance
 
 Student query: "${message}"
 
-Respond as the flirty VTU Companion in exactly 2 sentences with cute emojis! 💕`
+Respond as the motivating IgniteVidya Companion in exactly 2 sentences with encouraging emojis! 🌟`
 
     // Use the API key from environment variables
     const apiKey = process.env.GOOGLE_AI_API_KEY
@@ -129,7 +131,7 @@ Respond as the flirty VTU Companion in exactly 2 sentences with cute emojis! �
 
     let aiResponse =
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "I'm here to help with your VTU academics! Please feel free to ask me anything about your studies, courses, or university procedures."
+      "I'm here to motivate and support your STEM learning journey! 🌟 Let's work together to achieve your academic goals and excel in your studies! 💪"
 
     // Clean up the response
     aiResponse = aiResponse.trim()
@@ -140,7 +142,7 @@ Respond as the flirty VTU Companion in exactly 2 sentences with cute emojis! �
     return NextResponse.json(
       {
         response:
-          "I'm experiencing some technical difficulties right now. Please try again in a moment, and I'll be happy to help with your VTU academic questions!",
+          "I'm experiencing some technical difficulties right now. Please try again in a moment, and I'll be back to motivate your STEM learning journey! 🚀",
       },
       { status: 500 },
     )

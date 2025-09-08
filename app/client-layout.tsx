@@ -7,7 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import Navigation from "@/components/navigation"
 import TerminalChat from "@/components/terminal-chat"
-import VTUCompanion from "@/components/afzal-chat"
+import IgniteVidyaCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
 import { useState, useEffect } from "react"
 
@@ -21,20 +21,20 @@ export default function ClientLayout({
   const [showSplash, setShowSplash] = useState(true)
   const [mounted, setMounted] = useState(false)
   const [isTerminalOpen, setIsTerminalOpen] = useState(false)
-  const [isVTUCompanionOpen, setIsVTUCompanionOpen] = useState(false)
+  const [isIgniteVidyaCompanionOpen, setIsIgniteVidyaCompanionOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
   const handleTerminalOpen = () => {
-    setIsVTUCompanionOpen(false)
+    setIsIgniteVidyaCompanionOpen(false)
     setIsTerminalOpen(true)
   }
 
-  const handleVTUCompanionOpen = () => {
+  const handleIgniteVidyaCompanionOpen = () => {
     setIsTerminalOpen(false)
-    setIsVTUCompanionOpen(true)
+    setIsIgniteVidyaCompanionOpen(true)
   }
 
   if (!mounted) {
@@ -57,8 +57,8 @@ export default function ClientLayout({
             <>
               <Navigation />
               <main>{children}</main>
-              <TerminalChat isVTUCompanionOpen={isVTUCompanionOpen} onOpen={handleTerminalOpen} />
-              <VTUCompanion isTerminalOpen={isTerminalOpen} onOpen={handleVTUCompanionOpen} />
+              <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
+              <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
               <Toaster />
             </>
           )}

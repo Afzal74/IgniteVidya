@@ -15,17 +15,17 @@ interface Message {
 }
 
 interface TerminalChatProps {
-  isVTUCompanionOpen: boolean
+  isIgniteVidyaCompanionOpen: boolean
   onOpen: () => void
 }
 
-export default function TerminalChat({ isVTUCompanionOpen, onOpen }: TerminalChatProps) {
+export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: TerminalChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "VTU Vault Terminal v1.0 initialized\nType 'help' for available commands",
+      text: "IgniteVidya Terminal v1.0 initialized\nType 'help' for available commands",
       isUser: false,
       timestamp: new Date(),
     },
@@ -51,15 +51,15 @@ export default function TerminalChat({ isVTUCompanionOpen, onOpen }: TerminalCha
     }
   }, [isOpen, isMinimized])
 
-  // Close terminal when VTU Companion opens
+  // Close terminal when IgniteVidya Companion opens
   useEffect(() => {
-    if (isVTUCompanionOpen && isOpen) {
+    if (isIgniteVidyaCompanionOpen && isOpen) {
       setIsOpen(false)
     }
-  }, [isVTUCompanionOpen, isOpen])
+  }, [isIgniteVidyaCompanionOpen, isOpen])
 
   const handleOpen = () => {
-    onOpen() // This will close VTU Companion
+    onOpen() // This will close IgniteVidya Companion
     setIsOpen(true)
   }
 
@@ -71,15 +71,13 @@ export default function TerminalChat({ isVTUCompanionOpen, onOpen }: TerminalCha
       return `Available commands:
 • help - Show this help message
 • clear - Clear terminal
-• about - About VTU Vault
+• about - About IgniteVidya
 • notes - Access study notes
-• papers - View question papers
-• labs - Browse lab programs
-• calc - Open CGPA calculator
-• projects - Explore project ideas
-• syllabus - View syllabus
-• results - Check VTU results
-• grades - VTU grading system info
+• lectures - View video lessons
+• games - Interactive STEM games
+• ai-tutor - Smart learning assistant
+• quiz - Test your knowledge
+• dashboard - Track your progress
 • contact - Contact information
 • version - Show version info`
     }
@@ -88,7 +86,7 @@ export default function TerminalChat({ isVTUCompanionOpen, onOpen }: TerminalCha
       setMessages([
         {
           id: Date.now().toString(),
-          text: "VTU Vault Terminal v1.0 initialized\nType 'help' for available commands",
+          text: "IgniteVidya Terminal v1.0 initialized\nType 'help' for available commands",
           isUser: false,
           timestamp: new Date(),
         },
@@ -97,50 +95,47 @@ export default function TerminalChat({ isVTUCompanionOpen, onOpen }: TerminalCha
     }
 
     if (cmd === "about") {
-      return `VTU Vault - Your Academic Companion
+      return `IgniteVidya - Your Academic Companion
 Version: 1.0.0
-Built for: VTU students
-Features: Notes, Papers, Labs, Calculator, Projects
-Developer: VTU Vault Team
-License: MIT`
+Built for: STEM Students (Grades 6-12)
+Features: Notes, Lectures, Games, AI Tutor, Quiz, Dashboard
+Developer: IgniteVidya Team
+Mission: Equal learning for all`
     }
 
     if (cmd === "version") {
-      return "VTU Vault Terminal v1.0.0\nBuilt with Next.js, React, and TypeScript"
+      return "IgniteVidya Terminal v1.0.0\nBuilt with Next.js, React, TypeScript, and Framer Motion"
     }
 
     if (cmd === "contact") {
       return `Contact Information:
-Email: support@vtuvault.com
-GitHub: github.com/vtuvault
-Website: vtuvault.com
+Email: support@ignitevidya.com
+GitHub: github.com/ignitevidya
+Website: ignitevidya.com
 Support: Available 24/7`
     }
 
     if (cmd === "grades") {
-      return `VTU Grading System:
-O: 10 points (90-100 marks) - Outstanding
-A+: 9 points (80-89 marks) - Excellent  
-A: 8 points (70-79 marks) - Very Good
-B+: 7 points (60-69 marks) - Good
-B: 6 points (55-59 marks) - Above Average
-C+: 5 points (50-54 marks) - Average
-C: 4 points (45-49 marks) - Satisfactory
-P: 4 points (40-44 marks) - Pass
-F: 0 points (0-39 marks) - Fail
+      return `Academic Grading Information:
+A+: 90-100% - Excellent
+A: 80-89% - Very Good
+B+: 70-79% - Good
+B: 60-69% - Above Average
+C+: 50-59% - Average
+C: 40-49% - Pass
+F: Below 40% - Fail
 
-Use 'calc' command to calculate your SGPA/CGPA`
+Track your progress with 'dashboard' command!`
     }
 
-    if (["notes", "papers", "labs", "calc", "projects", "syllabus", "results"].includes(cmd)) {
+    if (["notes", "lectures", "games", "ai-tutor", "quiz", "dashboard"].includes(cmd)) {
       const routes = {
         notes: "/notes",
-        papers: "/question-papers",
-        labs: "/lab-programs",
-        calc: "/calculator",
-        projects: "/projects",
-        syllabus: "/syllabus",
-        results: "/results",
+        lectures: "/lectures",
+        games: "/games",
+        "ai-tutor": "/ai-tutor",
+        quiz: "/quiz",
+        dashboard: "/dashboard",
       }
       setTimeout(() => {
         window.location.href = routes[cmd as keyof typeof routes]
@@ -253,7 +248,7 @@ Use 'calc' command to calculate your SGPA/CGPA`
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <span className="text-zinc-300 text-xs ml-4">vtu-vault-terminal</span>
+              <span className="text-zinc-300 text-xs ml-4">ignitevidya-terminal</span>
             </div>
             <div className="flex items-center space-x-1">
               <Button

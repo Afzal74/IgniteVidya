@@ -726,8 +726,8 @@ export default function HomePage() {
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
               <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-gray-800 flex items-center justify-center">
                 <img 
-                  src="/vtu-logo.png" 
-                  alt="VTU Logo" 
+                  src="/ignitevidya-logo.png" 
+                  alt="IgniteVidya Logo" 
                   className="w-8 h-8 md:w-12 md:h-12 object-contain"
                   onError={(e) => {
                     // Fallback to icon if image fails to load

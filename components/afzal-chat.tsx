@@ -15,18 +15,18 @@ interface Message {
   timestamp: Date
 }
 
-interface VTUCompanionProps {
+interface IgniteVidyaCompanionProps {
   isTerminalOpen: boolean
   onOpen: () => void
 }
 
-export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionProps) {
+export default function IgniteVidyaCompanion({ isTerminalOpen, onOpen }: IgniteVidyaCompanionProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      text: "Hello! I'm your VTU Companion 🤖 I'm here to help you with VTU academics, answer questions about courses, and guide you through your studies. How can I assist you today?",
+      text: "Hello! I'm your IgniteVidya Companion 🌟 I'm here to motivate you in your STEM learning journey, help you excel in your studies, and support you through grades 6-12 subjects! Let's achieve academic greatness together! 💪 What can I help you with today?",
       isUser: false,
       timestamp: new Date(),
     },
@@ -51,7 +51,7 @@ export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionPro
     }
   }, [isOpen, isMinimized])
 
-  // Close VTU Companion when Terminal opens
+  // Close IgniteVidya Companion when Terminal opens
   useEffect(() => {
     if (isTerminalOpen && isOpen) {
       setIsOpen(false)
@@ -87,7 +87,7 @@ export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionPro
     setIsLoading(true)
 
     try {
-      const response = await fetch("/api/vtu-companion", {
+      const response = await fetch("/api/ignitevidya-companion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message }),
@@ -156,7 +156,7 @@ export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionPro
                 <Bot className="h-3 w-3 md:h-4 md:w-4" />
               </div>
               <div>
-                <h3 className="font-bold text-sm md:text-base">VTU Companion</h3>
+                <h3 className="font-bold text-sm md:text-base">IgniteVidya Companion</h3>
                 <div className="flex items-center gap-1 md:gap-2">
                   <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                   <p className="text-xs opacity-90">{onlineCount} students online</p>
@@ -242,7 +242,7 @@ export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionPro
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Ask about VTU academics..."
+                    placeholder="Ask about STEM learning..."
                     className="flex-1 rounded-lg border-zinc-200 dark:border-zinc-800 text-xs md:text-sm"
                     disabled={isLoading}
                   />
@@ -256,7 +256,7 @@ export default function VTUCompanion({ isTerminalOpen, onOpen }: VTUCompanionPro
                   </Button>
                 </div>
                 <div className="flex items-center justify-between mt-1 md:mt-2">
-                  <p className="text-xs text-zinc-500">Powered by AI • VTU Vault</p>
+                  <p className="text-xs text-zinc-500">Powered by AI • IgniteVidya</p>
                   <Badge variant="secondary" className="text-xs">
                     <Sparkles className="h-2 w-2 mr-1" />
                     Smart
