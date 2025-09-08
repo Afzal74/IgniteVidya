@@ -49,14 +49,12 @@ export default function DraggableAudioWidget({
     audio.load()
 
     const handleCanPlay = () => {
-      console.log('Audio can play - setting loaded to true')
       setIsLoaded(true)
       // Try to play with user gesture
       const playPromise = audio.play()
       if (playPromise !== undefined) {
         playPromise
           .then(() => {
-            console.log('Audio started playing')
             setIsPlaying(true)
           })
           .catch((error) => {
@@ -64,16 +62,6 @@ export default function DraggableAudioWidget({
             setIsPlaying(false)
           })
       }
-    }
-
-    const handleLoadStart = () => {
-      console.log('Audio load started')
-    }
-
-    const handleError = (e: Event) => {
-      console.error('Audio failed to load:', e)
-      // Still show the widget even if audio fails
-      setIsLoaded(true)
     }
 
     const handlePlay = () => setIsPlaying(true)
@@ -84,29 +72,16 @@ export default function DraggableAudioWidget({
       audio.play()
     }
 
-    audio.addEventListener('loadstart', handleLoadStart)
     audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('play', handlePlay)
     audio.addEventListener('pause', handlePause)
     audio.addEventListener('ended', handleEnded)
-    audio.addEventListener('error', handleError)
-
-    // Force loading after a timeout
-    const timeoutId = setTimeout(() => {
-      if (!isLoaded) {
-        console.log('Force enabling widget after timeout')
-        setIsLoaded(true)
-      }
-    }, 2000)
 
     return () => {
-      clearTimeout(timeoutId)
-      audio.removeEventListener('loadstart', handleLoadStart)
       audio.removeEventListener('canplay', handleCanPlay)
       audio.removeEventListener('play', handlePlay)
       audio.removeEventListener('pause', handlePause)
       audio.removeEventListener('ended', handleEnded)
-      audio.removeEventListener('error', handleError)
     }
   }, [])
 
@@ -142,24 +117,7 @@ export default function DraggableAudioWidget({
     dragControls.start(event)
   }
 
-  if (!mounted) return null
-
-  // Show a loading state while audio loads
-  if (!isLoaded) {
-    return (
-      <div 
-        style={{
-          position: 'fixed',
-          left: position.x,
-          top: position.y,
-          zIndex: 9999
-        }}
-        className="bg-red-500 text-white p-3 rounded-lg border-2 border-red-600"
-      >
-        Loading Audio Widget...
-      </div>
-    )
-  }
+  if (!mounted || !isLoaded) return null
 
   const isDark = theme === 'dark'
 

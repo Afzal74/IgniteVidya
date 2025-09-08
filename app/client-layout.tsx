@@ -10,7 +10,6 @@ import TerminalChat from "@/components/terminal-chat"
 import IgniteVidyaCompanion from "@/components/afzal-chat"
 import SplashScreen from "@/components/splash-screen"
 import DraggableAudioWidget from "@/components/draggable-audio-widget"
-import TestAudioWidget from "@/components/test-audio-widget"
 import { useState, useEffect } from "react"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -24,7 +23,7 @@ export default function ClientLayout({
   const [mounted, setMounted] = useState(false)
   const [isTerminalOpen, setIsTerminalOpen] = useState(false)
   const [isIgniteVidyaCompanionOpen, setIsIgniteVidyaCompanionOpen] = useState(false)
-  const [audioEnabled, setAudioEnabled] = useState(true) // Temporarily force enabled for debugging
+  const [audioEnabled, setAudioEnabled] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -71,36 +70,12 @@ export default function ClientLayout({
               <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
               <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
               <Toaster />
-              {/* Test Widget - Always visible for debugging */}
-              <TestAudioWidget />
-              
               {/* Draggable Audio Widget - starts after splash screen */}
               {audioEnabled && (
                 <DraggableAudioWidget 
                   initialX={20}
                   initialY={100}
                 />
-              )}
-              
-              {/* Debug: Force show audio widget after 3 seconds */}
-              {mounted && (
-                <div 
-                  style={{
-                    position: 'fixed',
-                    bottom: '20px',
-                    left: '20px',
-                    background: 'blue',
-                    color: 'white',
-                    padding: '10px',
-                    borderRadius: '5px',
-                    zIndex: 9998,
-                    fontSize: '12px'
-                  }}
-                >
-                  🎵 Audio Enabled: {audioEnabled ? 'YES' : 'NO'} | Mounted: {mounted ? 'YES' : 'NO'}
-                  <br />
-                  Splash: {showSplash ? 'SHOWING' : 'HIDDEN'}
-                </div>
               )}
             </>
           )}
