@@ -1,13 +1,14 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
-import { Search, Download, Eye, Upload, MessageSquare, Filter } from "lucide-react"
+import { motion } from "framer-motion"
+import Image from "next/image"
+import { useState } from "react"
+import { useSoundEffects } from "@/hooks/useSoundEffects"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -16,170 +17,158 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { motion } from "framer-motion"
-import { supabase } from "@/lib/supabase"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Search,
+  Filter,
+  Eye,
+  Download,
+  MessageSquare,
+} from "lucide-react"
 
-interface Note {
-  id: string
-  subject_name: string
-  subject_code: string
-  scheme: string
-  semester: number
-  file_url: string
-  uploaded_by: string
-  created_at: string
-  comments: Comment[]
-}
-
-interface Comment {
-  id: string
-  text: string
-  author: string
-  created_at: string
-}
+// Sample data for notes
+const sampleNotes = [
+  {
+    id: "1",
+    subject_name: "Advanced Mathematics",
+    subject_code: "MATH12",
+    scheme: "2025",
+    class: "12",
+    created_at: "Jan 15, 2025",
+    comments: [
+      {
+        id: "c1",
+        text: "Excellent calculus examples! Very helpful for board exams.",
+        author: "Math Student",
+        created_at: "2025-01-10T10:30:00Z"
+      }
+    ]
+  },
+  {
+    id: "2",
+    subject_name: "Organic Chemistry",
+    subject_code: "CHEM11",
+    scheme: "2025",
+    class: "11",
+    created_at: "Jan 12, 2025",
+    comments: []
+  },
+  {
+    id: "3",
+    subject_name: "Physics - Mechanics",
+    subject_code: "PHYS11",
+    scheme: "2025",
+    class: "11",
+    created_at: "Jan 10, 2025",
+    comments: [
+      {
+        id: "c2",
+        text: "Could you add more solved problems on kinematics?",
+        author: "Physics Student",
+        created_at: "2025-01-08T14:20:00Z"
+      },
+      {
+        id: "c3",
+        text: "Great explanation of Newton's laws!",
+        author: "Science Student",
+        created_at: "2025-01-09T09:15:00Z"
+      }
+    ]
+  },
+  {
+    id: "4",
+    subject_name: "Biology - Genetics",
+    subject_code: "BIOL12",
+    scheme: "2024",
+    class: "12",
+    created_at: "Jan 8, 2025",
+    comments: [
+      {
+        id: "c4",
+        text: "The heredity diagrams are crystal clear!",
+        author: "Bio Student",
+        created_at: "2025-01-05T16:45:00Z"
+      }
+    ]
+  },
+  {
+    id: "5",
+    subject_name: "Computer Science",
+    subject_code: "CS12",
+    scheme: "2025",
+    class: "12",
+    created_at: "Jan 7, 2025",
+    comments: [
+      {
+        id: "c5",
+        text: "Python programming examples are perfect!",
+        author: "CS Student",
+        created_at: "2025-01-04T11:20:00Z"
+      },
+      {
+        id: "c6",
+        text: "Need more examples on data structures.",
+        author: "Tech Student",
+        created_at: "2025-01-06T14:30:00Z"
+      }
+    ]
+  },
+  {
+    id: "6",
+    subject_name: "English Literature",
+    subject_code: "ENG10",
+    scheme: "2024",
+    class: "10",
+    created_at: "Jan 5, 2025",
+    comments: [
+      {
+        id: "c7",
+        text: "Shakespeare analysis is well explained!",
+        author: "Literature Student",
+        created_at: "2025-01-02T09:15:00Z"
+      }
+    ]
+  }
+];
 
 export default function NotesPage() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const [filteredNotes, setFilteredNotes] = useState<Note[]>([])
-  const [searchQuery, setSearchQuery] = useState("")
-  const [semesterFilter, setSemesterFilter] = useState("all")
-  const [schemeFilter, setSchemeFilter] = useState("all")
-  const [isUploading, setIsUploading] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
-  const [uploadForm, setUploadForm] = useState({
-    subject_name: "",
-    subject_code: "",
-    scheme: "2021",
-    semester: "1",
-  })
-  const [newComment, setNewComment] = useState("")
-  const [selectedNoteId, setSelectedNoteId] = useState("")
-  const { toast } = useToast()
-
-  // Fetch notes from API
-  useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const response = await fetch('/api/notes')
-        const data = await response.json()
-        if (data.success) {
-          setNotes(data.notes)
-          setFilteredNotes(data.notes)
-        }
-      } catch (error) {
-        console.error('Error fetching notes:', error)
-        toast({
-          title: "Error",
-          description: "Failed to load notes",
-          variant: "destructive",
-        })
-      }
-    }
+  const { playHoverSound, playClickSound, playSearchSound, playTypingSound } = useSoundEffects()
+  
+  // State for search and filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  const [classFilter, setClassFilter] = useState("all");
+  const [schemeFilter, setSchemeFilter] = useState("all");
+  
+  // State for comments
+  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
+  const [newComment, setNewComment] = useState("");
+  
+  // Filter notes based on search and filters
+  const filteredNotes = sampleNotes.filter(note => {
+    const matchesSearch = 
+      note.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.subject_code.toLowerCase().includes(searchQuery.toLowerCase());
     
-    fetchNotes()
-  }, [toast])
-
-  useEffect(() => {
-    let filtered = notes
-
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (note) =>
-          note.subject_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          note.subject_code.toLowerCase().includes(searchQuery.toLowerCase()),
-      )
+    const matchesClass = classFilter === "all" || note.class === classFilter;
+    const matchesScheme = schemeFilter === "all" || note.scheme === schemeFilter;
+    
+    return matchesSearch && matchesClass && matchesScheme;
+  });
+  
+  // Add comment function
+  const addComment = (noteId: string) => {
+    if (newComment.trim()) {
+      console.log(`Adding comment to note ${noteId}:`, newComment);
+      setNewComment("");
     }
-
-    if (semesterFilter !== "all") {
-      filtered = filtered.filter((note) => note.semester.toString() === semesterFilter)
-    }
-
-    if (schemeFilter !== "all") {
-      filtered = filtered.filter((note) => note.scheme === schemeFilter)
-    }
-
-    setFilteredNotes(filtered)
-  }, [searchQuery, semesterFilter, schemeFilter, notes])
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    setIsUploading(true)
-    try {
-      // 1. Upload to Supabase Storage
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("notes")
-        .upload(fileName, file)
-
-      if (uploadError) throw uploadError
-
-      // 2. Get the public URL
-      const { data: publicUrlData } = supabase.storage
-        .from("notes")
-        .getPublicUrl(fileName)
-      const publicUrl = publicUrlData?.publicUrl
-
-      if (!publicUrl) throw new Error("Failed to get public URL from Supabase.")
-
-      // 3. Save note with Supabase file URL
-      const newNote: Note = {
-        id: Date.now().toString(),
-        ...uploadForm,
-        semester: Number.parseInt(uploadForm.semester),
-        file_url: publicUrl,
-        uploaded_by: "Current User",
-        created_at: new Date().toISOString().split("T")[0],
-        comments: [],
-      }
-
-      setNotes((prev) => [newNote, ...prev])
-      setUploadForm({
-        subject_name: "",
-        subject_code: "",
-        scheme: "2021",
-        semester: "1",
-      })
-
-      toast({
-        title: "Success",
-        description: "Notes uploaded successfully!",
-      })
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload notes. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsUploading(false)
-    }
-  }
-
-  const addComment = async (noteId: string) => {
-    if (!newComment.trim()) return
-
-    const comment: Comment = {
-      id: Date.now().toString(),
-      text: newComment,
-      author: "Current User",
-      created_at: new Date().toISOString(),
-    }
-
-    setNotes((prev) =>
-      prev.map((note) => (note.id === noteId ? { ...note, comments: [...note.comments, comment] } : note)),
-    )
-
-    setNewComment("")
-    toast({
-      title: "Comment added",
-      description: "Your comment has been posted successfully!",
-    })
-  }
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-black pt-20 pb-24">
@@ -193,75 +182,9 @@ export default function NotesPage() {
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-black dark:text-white mb-2">Study Notes</h1>
-              <p className="text-zinc-600 dark:text-zinc-400">Access and share study materials for all subjects</p>
+              <h1 className="text-4xl font-bold text-black dark:text-white mb-2">Student Library</h1>
+              <p className="text-zinc-600 dark:text-zinc-400">Access study materials for all subjects</p>
             </div>
-
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button className="bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-xl">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload Notes
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-white dark:bg-black border-zinc-200 dark:border-zinc-800">
-                <DialogHeader>
-                  <DialogTitle className="text-black dark:text-white">Upload Study Notes</DialogTitle>
-                  <DialogDescription className="text-zinc-600 dark:text-zinc-400">
-                    Share your notes with fellow students
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <Input
-                    placeholder="Subject Name"
-                    value={uploadForm.subject_name}
-                    onChange={(e) => setUploadForm((prev) => ({ ...prev, subject_name: e.target.value }))}
-                    className="rounded-xl border-zinc-200 dark:border-zinc-800"
-                  />
-                  <Input
-                    placeholder="Subject Code"
-                    value={uploadForm.subject_code}
-                    onChange={(e) => setUploadForm((prev) => ({ ...prev, subject_code: e.target.value }))}
-                    className="rounded-xl border-zinc-200 dark:border-zinc-800"
-                  />
-                  <Select
-                    value={uploadForm.scheme}
-                    onValueChange={(value) => setUploadForm((prev) => ({ ...prev, scheme: value }))}
-                  >
-                    <SelectTrigger className="rounded-xl border-zinc-200 dark:border-zinc-800">
-                      <SelectValue placeholder="Select Scheme" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2021">2021 Scheme</SelectItem>
-                      <SelectItem value="CBCS">CBCS Scheme</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={uploadForm.semester}
-                    onValueChange={(value) => setUploadForm((prev) => ({ ...prev, semester: value }))}
-                  >
-                    <SelectTrigger className="rounded-xl border-zinc-200 dark:border-zinc-800">
-                      <SelectValue placeholder="Select Semester" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                        <SelectItem key={sem} value={sem.toString()}>
-                          {sem}st Semester
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileUpload}
-                    disabled={isUploading}
-                    className="rounded-xl border-zinc-200 dark:border-zinc-800"
-                  />
-                  {isUploading && <p className="text-sm text-zinc-600 dark:text-zinc-400">Uploading...</p>}
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </motion.div>
 
@@ -278,14 +201,24 @@ export default function NotesPage() {
               <Input
                 placeholder="Search subjects or codes..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (e.target.value.length > 0) {
+                    playTypingSound()
+                  }
+                }}
+                onFocus={() => playSearchSound()}
                 className="pl-12 rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
               />
             </div>
 
             <Button
               variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={() => {
+                playClickSound('secondary')
+                setShowFilters(!showFilters)
+              }}
+              onMouseEnter={() => playHoverSound('button')}
               className="rounded-xl border-zinc-200 dark:border-zinc-800"
             >
               <Filter className="h-4 w-4 mr-2" />
@@ -300,15 +233,15 @@ export default function NotesPage() {
               exit={{ opacity: 0, height: 0 }}
               className="mt-4 flex flex-col md:flex-row gap-4"
             >
-              <Select value={semesterFilter} onValueChange={setSemesterFilter}>
+              <Select value={classFilter} onValueChange={setClassFilter}>
                 <SelectTrigger className="rounded-xl border-zinc-200 dark:border-zinc-800">
-                  <SelectValue placeholder="All Semesters" />
+                  <SelectValue placeholder="All Classes" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Semesters</SelectItem>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
-                    <SelectItem key={sem} value={sem.toString()}>
-                      {sem}st Semester
+                  <SelectItem value="all">All Classes</SelectItem>
+                  {[6, 7, 8, 9, 10, 11, 12].map((cls) => (
+                    <SelectItem key={cls} value={cls.toString()}>
+                      Class {cls}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -320,8 +253,8 @@ export default function NotesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Schemes</SelectItem>
-                  <SelectItem value="2021">2021 Scheme</SelectItem>
-                  <SelectItem value="CBCS">CBCS Scheme</SelectItem>
+                  <SelectItem value="2025">2025 Scheme</SelectItem>
+                  <SelectItem value="2024">2024 Scheme</SelectItem>
                 </SelectContent>
               </Select>
             </motion.div>
@@ -337,7 +270,10 @@ export default function NotesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 * index }}
             >
-              <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 overflow-hidden">
+              <Card 
+                className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 overflow-hidden"
+                onMouseEnter={() => playHoverSound('card')}
+              >
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
@@ -355,7 +291,7 @@ export default function NotesPage() {
                   </div>
 
                   <div className="flex items-center justify-between text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                    <span>Semester {note.semester}</span>
+                    <span>Class {note.class}</span>
                     <span>{note.created_at}</span>
                   </div>
 
@@ -364,6 +300,8 @@ export default function NotesPage() {
                       <Button
                         size="sm"
                         className="flex-1 bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-lg"
+                        onClick={() => playClickSound('primary')}
+                        onMouseEnter={() => playHoverSound('button')}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
@@ -372,6 +310,8 @@ export default function NotesPage() {
                         size="sm"
                         variant="outline"
                         className="flex-1 rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent"
+                        onClick={() => playClickSound('secondary')}
+                        onMouseEnter={() => playHoverSound('button')}
                       >
                         <Download className="h-4 w-4 mr-2" />
                         Download
@@ -442,8 +382,7 @@ export default function NotesPage() {
         <footer className="py-3 md:py-6 px-2 md:px-4 border-t border-zinc-200 dark:border-zinc-800 mt-12">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
-              © 2024 VTU Vault. Created by <span className="font-semibold text-black dark:text-white">Afzal</span>. All
-              rights reserved.
+              © 2025 IgniteVidya. All rights reserved.
             </p>
           </div>
         </footer>

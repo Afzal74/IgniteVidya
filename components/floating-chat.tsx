@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
 import { MessageCircle, X, Send, Terminal, Minimize2, Maximize2 } from "lucide-react"
+import { useSoundEffects } from "@/hooks/useSoundEffects"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,6 +19,8 @@ interface Message {
 }
 
 export default function FloatingChat() {
+  const { playHoverSound, playClickSound, playNotificationSound, playTypingSound } = useSoundEffects()
+  
   const [isOpen, setIsOpen] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
@@ -97,7 +100,11 @@ export default function FloatingChat() {
   if (!isOpen) {
     return (
       <Button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          playClickSound('primary')
+          setIsOpen(true)
+        }}
+        onMouseEnter={() => playHoverSound('button')}
         className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 z-50"
         size="icon"
       >
@@ -121,10 +128,28 @@ export default function FloatingChat() {
           </Badge>
         </div>
         <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} className="h-8 w-8">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              playClickSound('secondary')
+              setIsMinimized(!isMinimized)
+            }}
+            onMouseEnter={() => playHoverSound('button')}
+            className="h-8 w-8"
+          >
             {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minimize2 className="h-4 w-4" />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="h-8 w-8">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => {
+              playClickSound('secondary')
+              setIsOpen(false)
+            }}
+            onMouseEnter={() => playHoverSound('button')}
+            className="h-8 w-8"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -176,13 +201,26 @@ export default function FloatingChat() {
             <div className="flex space-x-2">
               <Input
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => {
+                  setInputValue(e.target.value)
+                  if (e.target.value.length > 0) {
+                    playTypingSound()
+                  }
+                }}
                 onKeyPress={handleKeyPress}
                 placeholder="Ask about STEM learning..."
                 className="flex-1"
                 disabled={isLoading}
               />
-              <Button onClick={sendMessage} disabled={isLoading || !inputValue.trim()} size="icon">
+              <Button 
+                onClick={() => {
+                  playClickSound('primary')
+                  sendMessage()
+                }}
+                onMouseEnter={() => playHoverSound('button')}
+                disabled={isLoading || !inputValue.trim()} 
+                size="icon"
+              >
                 <Send className="h-4 w-4" />
               </Button>
             </div>

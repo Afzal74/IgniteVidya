@@ -17,17 +17,19 @@ import {
   Calculator,
   Lightbulb,
   Gamepad2,
+  Volume2,
+  VolumeX,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState as useNewsState, useEffect } from "react"
+import { useSoundEffects } from "@/hooks/useSoundEffects"
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/notes", label: "Notes", icon: BookOpen },
-  { href: "/games", label: "STEM Games", icon: Gamepad2 },
+  { href: "/notes", label: "Library", icon: BookOpen },
   { href: "/lectures", label: "Lectures", icon: Play },
   { href: "/ai-tutor", label: "AI Tutor", icon: Brain },
   { href: "/quiz", label: "Quiz", icon: Target },
@@ -40,6 +42,7 @@ export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const { theme, setTheme } = useTheme()
   const pathname = usePathname()
+  const { soundEnabled, toggleSound, playHoverSound, playClickSound } = useSoundEffects()
 
   return (
     <>
@@ -82,7 +85,30 @@ export default function Navigation() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  onClick={() => {
+                    playClickSound('secondary')
+                    toggleSound()
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
+                  className="rounded-xl"
+                  title={soundEnabled ? 'Disable sounds' : 'Enable sounds'}
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <VolumeX className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+                  )}
+                  <span className="sr-only">Toggle sound</span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    playClickSound('secondary')
+                    setTheme(theme === "dark" ? "light" : "dark")
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
                   className="rounded-xl"
                 >
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -90,7 +116,16 @@ export default function Navigation() {
                   <span className="sr-only">Toggle theme</span>
                 </Button>
 
-                <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="rounded-xl">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    playClickSound('navigation')
+                    setIsOpen(!isOpen)
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
+                  className="rounded-xl"
+                >
                   <Menu className="h-5 w-5" />
                 </Button>
               </div>
@@ -100,14 +135,46 @@ export default function Navigation() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  onClick={() => {
+                    playClickSound('secondary')
+                    toggleSound()
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
+                  className="rounded-xl"
+                  title={soundEnabled ? 'Disable sounds' : 'Enable sounds'}
+                >
+                  {soundEnabled ? (
+                    <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  ) : (
+                    <VolumeX className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+                  )}
+                  <span className="sr-only">Toggle sound</span>
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    playClickSound('secondary')
+                    setTheme(theme === "dark" ? "light" : "dark")
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
                   className="rounded-xl"
                 >
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 </Button>
 
-                <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)} className="rounded-xl">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => {
+                    playClickSound('navigation')
+                    setIsOpen(!isOpen)
+                  }}
+                  onMouseEnter={() => playHoverSound('button')}
+                  className="rounded-xl"
+                >
                   {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
                 </Button>
               </div>
@@ -146,7 +213,11 @@ export default function Navigation() {
                       <Link
                         key={item.href}
                         href={item.href}
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                          playClickSound('navigation')
+                          setIsOpen(false)
+                        }}
+                        onMouseEnter={() => playHoverSound('link')}
                         className={cn(
                           "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                           pathname === item.href

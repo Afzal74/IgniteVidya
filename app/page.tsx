@@ -29,6 +29,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useSoundEffects } from "@/hooks/useSoundEffects"
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -37,6 +38,8 @@ export default function HomePage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [onlineUsers, setOnlineUsers] = useState(1247)
   const [currentQuote, setCurrentQuote] = useState(0)
+  
+  const { playHoverSound, playClickSound, playSearchSound, playTypingSound, playSuccessSound } = useSoundEffects()
 
   const searchInputRef = useRef<HTMLInputElement>(null)
 
@@ -202,8 +205,7 @@ export default function HomePage() {
   ]
 
   const shortcuts = [
-    { title: "Notes", icon: BookOpen, href: "/notes", description: "Study materials" },
-    { title: "STEM Games", icon: Gamepad2, href: "/games", description: "Interactive learning" },
+    { title: "Library", icon: BookOpen, href: "/notes", description: "Study materials" },
     { title: "Lectures", icon: Play, href: "/lectures", description: "Video lessons" },
     { title: "AI Tutor", icon: Brain, href: "/ai-tutor", description: "Smart learning" },
     { title: "Quiz", icon: Target, href: "/quiz", description: "Test yourself" },
@@ -211,6 +213,7 @@ export default function HomePage() {
   ]
 
   const handleGetStarted = () => {
+    playSuccessSound()
     const gradeSection = document.getElementById("grade-section")
     if (gradeSection) {
       gradeSection.scrollIntoView({ behavior: "smooth" })
@@ -441,7 +444,13 @@ export default function HomePage() {
                 type="text"
                 placeholder="Search subjects, notes, lectures..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (e.target.value.length > 0) {
+                    playTypingSound()
+                  }
+                }}
+                onFocus={() => playSearchSound()}
                 className="pl-8 md:pl-10 py-2 md:py-3 text-sm md:text-base rounded-lg md:rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:border-black dark:focus:border-white transition-colors"
               />
             </div>
@@ -456,6 +465,7 @@ export default function HomePage() {
                     key={index}
                     className="p-2 md:p-3 hover:bg-zinc-50 dark:hover:bg-zinc-950 cursor-pointer border-b border-zinc-100 dark:border-zinc-900 last:border-b-0"
                     onClick={() => {
+                      playClickSound('secondary')
                       if ("grade" in item) {
                         window.location.href = `/grade/${item.grade.replace(/[^0-9]/g, '')}`
                       } else {
@@ -463,6 +473,7 @@ export default function HomePage() {
                       }
                       setSearchQuery("")
                     }}
+                    onMouseEnter={() => playHoverSound('card')}
                   >
                     <div className="font-medium text-black dark:text-white text-xs md:text-sm">
                       {"grade" in item ? `Grade ${item.grade}` : item.title}
@@ -507,7 +518,11 @@ export default function HomePage() {
                 className={`${level.level === 'Higher Primary' || level.level === 'Higher Secondary' ? 'md:mt-10' : ''}`}
               >
                 <Link href={level.href}>
-                  <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-40 md:h-48 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
+                  <Card 
+                    className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-40 md:h-48 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl"
+                    onClick={() => playClickSound('card')}
+                    onMouseEnter={() => playHoverSound('card')}
+                  >
                     {/* Shiny Overlay Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
@@ -571,9 +586,19 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
+                className={`${
+                  // Wave pattern: middle highest (index 2), nearby lower (index 1,3), outer lowest (index 0,4)
+                  index === 2 ? 'md:mt-0' : // Middle card - highest
+                  index === 1 || index === 3 ? 'md:mt-4' : // Cards next to middle - slightly lower
+                  'md:mt-8' // Outer cards - lowest
+                }`}
               >
                 <Link href={shortcut.href}>
-                  <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-full">
+                  <Card 
+                    className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-full"
+                    onClick={() => playClickSound('card')}
+                    onMouseEnter={() => playHoverSound('card')}
+                  >
                     <div className="p-2 md:p-4 text-center">
                       <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 md:mb-2 group-hover:bg-black dark:group-hover:bg-white transition-colors">
                         <shortcut.icon className="h-3 w-3 md:h-5 md:w-5 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors" />
@@ -613,7 +638,11 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 h-full">
+              <Card 
+                className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 h-full"
+                onClick={() => playClickSound('card')}
+                onMouseEnter={() => playHoverSound('card')}
+              >
                 <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 group-hover:bg-blue-400 transition-colors" />
@@ -640,7 +669,11 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 h-full">
+              <Card 
+                className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 h-full"
+                onClick={() => playClickSound('card')}
+                onMouseEnter={() => playHoverSound('card')}
+              >
                 <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-green-500 rounded-full mt-2 group-hover:bg-green-400 transition-colors" />
@@ -667,7 +700,11 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <Card className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-purple-500 dark:hover:border-purple-400 transition-all duration-300 h-full">
+              <Card 
+                className="group cursor-pointer overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-purple-500 dark:hover:border-purple-400 transition-all duration-300 h-full"
+                onClick={() => playClickSound('card')}
+                onMouseEnter={() => playHoverSound('card')}
+              >
                 <div className="p-4 md:p-6 relative">
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 bg-purple-500 rounded-full mt-2 group-hover:bg-purple-400 transition-colors" />
@@ -707,6 +744,7 @@ export default function HomePage() {
             </p>
             <Button
               onClick={handleGetStarted}
+              onMouseEnter={() => playHoverSound('button')}
               size="lg"
               className="bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 rounded-lg px-4 md:px-6 py-2 md:py-3 text-sm md:text-base font-mono font-bold tracking-widest pixel-text"
             >
@@ -757,7 +795,11 @@ export default function HomePage() {
                 variant="outline"
                 size="sm"
                 className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
-                onClick={() => window.open('https://www.linkedin.com/company/ignitevidya', '_blank')}
+                onClick={() => {
+                  playClickSound('secondary')
+                  window.open('https://www.linkedin.com/company/ignitevidya', '_blank')
+                }}
+                onMouseEnter={() => playHoverSound('button')}
               >
                 <Linkedin className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
                 LinkedIn
@@ -766,7 +808,11 @@ export default function HomePage() {
                 variant="outline"
                 size="sm"
                 className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
-                onClick={() => window.open('https://github.com/ignitevidya', '_blank')}
+                onClick={() => {
+                  playClickSound('secondary')
+                  window.open('https://github.com/ignitevidya', '_blank')
+                }}
+                onMouseEnter={() => playHoverSound('button')}
               >
                 <Github className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
                 GitHub

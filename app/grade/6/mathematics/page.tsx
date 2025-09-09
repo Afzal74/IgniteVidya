@@ -192,7 +192,7 @@ export default function Grade6MathematicsPage() {
             <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
               Numbers, Algebra, Geometry • Interactive Learning Resources
             </p>
-            <div className="flex justify-center gap-2">
+            <div className="flex justify-center gap-2 flex-wrap px-2">
               <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                 Interactive Games
               </span>
@@ -234,7 +234,7 @@ export default function Grade6MathematicsPage() {
             </div>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4 mb-8 md:mb-12">
             {mathTopics.map((topic, index) => {
               const IconComponent = topic.icon
               const isAvailable = topic.status === "available"
@@ -247,7 +247,7 @@ export default function Grade6MathematicsPage() {
                 >
                   {isAvailable ? (
                     <Link href={topic.href}>
-                      <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 cursor-pointer h-36 bg-gradient-to-br from-white to-green-50 dark:from-zinc-900 dark:to-green-950/20 shadow-lg hover:shadow-xl">
+                      <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-green-500 dark:hover:border-green-400 transition-all duration-300 cursor-pointer h-32 sm:h-36 bg-gradient-to-br from-white to-green-50 dark:from-zinc-900 dark:to-green-950/20 shadow-lg hover:shadow-xl">
                         {/* Available Badge */}
                         <div className="absolute top-2 right-2">
                           <span className="text-xs px-2 py-1 rounded-full bg-green-500 text-white font-medium">
@@ -260,8 +260,8 @@ export default function Grade6MathematicsPage() {
                         
                         <div className="relative p-4 md:p-6 h-full flex flex-col justify-center">
                           {/* Icon */}
-                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-700 dark:from-green-400 dark:to-green-600 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-xl">
-                            <IconComponent className="text-white h-5 w-5 md:h-6 md:w-6" />
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-green-500 to-green-700 dark:from-green-400 dark:to-green-600 flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:scale-110 transition-transform shadow-lg group-hover:shadow-xl">
+                            <IconComponent className="text-white h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                           </div>
                           
                           <h3 className="font-bold text-black dark:text-white mb-2 text-center text-sm md:text-base group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
@@ -275,7 +275,7 @@ export default function Grade6MathematicsPage() {
                       </Card>
                     </Link>
                   ) : (
-                    <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all duration-300 cursor-not-allowed h-36 bg-gradient-to-br from-white to-yellow-50 dark:from-zinc-900 dark:to-yellow-950/20 opacity-75">
+                    <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all duration-300 cursor-not-allowed h-32 sm:h-36 bg-gradient-to-br from-white to-yellow-50 dark:from-zinc-900 dark:to-yellow-950/20 opacity-75">
                       {/* Coming Soon Badge */}
                       <div className="absolute top-2 right-2">
                         <div className="flex items-center gap-1">
@@ -288,8 +288,8 @@ export default function Grade6MathematicsPage() {
                       
                       <div className="relative p-4 md:p-6 h-full flex flex-col justify-center">
                         {/* Icon */}
-                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 dark:from-yellow-500 dark:to-yellow-700 flex items-center justify-center mx-auto mb-3 shadow-md">
-                          <IconComponent className="text-white h-5 w-5 md:h-6 md:w-6" />
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-600 dark:from-yellow-500 dark:to-yellow-700 flex items-center justify-center mx-auto mb-2 sm:mb-3 shadow-md">
+                          <IconComponent className="text-white h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6" />
                         </div>
                         
                         <h3 className="font-bold text-black dark:text-white mb-2 text-center text-sm md:text-base">
@@ -326,7 +326,7 @@ export default function Grade6MathematicsPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12">
             {resources.map((resource, index) => {
               const IconComponent = getIcon(resource.type)
               return (
@@ -337,7 +337,7 @@ export default function Grade6MathematicsPage() {
                   transition={{ duration: 0.5, delay: 0.5 + 0.1 * index }}
                 >
                   <Link href={resource.href}>
-                    <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-36 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
+                    <Card className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 sm:h-36 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
                       {/* Shiny Overlay Effect */}
                       <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       
