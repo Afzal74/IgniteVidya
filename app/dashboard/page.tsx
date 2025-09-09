@@ -374,7 +374,7 @@ export default function DashboardPage() {
             {/* Monitor Brand Strip */}
             <div className="absolute top-1 left-1/2 transform -translate-x-1/2">
               <div className="bg-gray-700 px-4 py-1 rounded-full">
-                <span className="text-xs text-gray-300 font-mono tracking-wider">VTU QUANTUM DISPLAY</span>
+                <span className="text-xs text-gray-300 font-mono tracking-wider">IGNITE QUANTUM DISPLAY</span>
               </div>
             </div>
             
@@ -1078,7 +1078,7 @@ export default function DashboardPage() {
                   
                   {/* System Info */}
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-gray-400 font-mono">VTU-DASH v2.1</span>
+                    <span className="text-xs text-gray-400 font-mono">IGNITE-DASH v2.1</span>
                     <span className="text-xs text-cyan-400 font-mono">{new Date().toLocaleTimeString()}</span>
                   </div>
                 </div>

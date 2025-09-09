@@ -3,6 +3,21 @@ import { ClassData, GameContent, Subject as SubjectInterface } from "../types/ga
 // Upper Primary (Classes 6-7) - Foundation STEM
 const upperPrimaryMathGames: GameContent[] = [
   {
+    id: "number-comparison",
+    title: "Number Comparison Challenge",
+    emoji: "🔢",
+    description: "Master comparing numbers with interactive exercises perfect for Class 6 students",
+    content: ["Number comparison", "Greater than", "Less than", "Equal to"],
+    gameType: "quiz",
+    example: "Compare numbers like 5 and 10 using >, <, or = symbols",
+    implementation: "Interactive comparison game with immediate feedback",
+    syllabusMatch: ["Unit 1 - Number Comparison", "Unit 2 - Basic Number Concepts"],
+    difficultyLevel: "easy",
+    estimatedTime: 15,
+    auraPoints: 80,
+    localContext: "Learn through familiar numbers and contexts from daily life"
+  },
+  {
     id: "number-detective",
     title: "Number Detective Adventures",
     emoji: "🧮",

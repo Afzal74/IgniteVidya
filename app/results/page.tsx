@@ -21,8 +21,8 @@ export default function ResultsPage() {
     // Simulate API call
     setTimeout(() => {
       setIsChecking(false)
-      // This would redirect to VTU results page or show results
-      alert("This would redirect to the official VTU results page or display results here.")
+      // This would redirect to IgniteVidya results page or show results
+      alert("This would redirect to the official IgniteVidya results page or display results here.")
     }, 2000)
   }
 
@@ -36,8 +36,8 @@ export default function ResultsPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2">VTU Results</h1>
-          <p className="text-muted-foreground">Check your VTU examination results</p>
+          <h1 className="text-3xl font-bold mb-2">IgniteVidya Results</h1>
+          <p className="text-muted-foreground">Check your IgniteVidya examination results</p>
         </div>
 
         {/* Result Checker */}
@@ -75,11 +75,11 @@ export default function ResultsPage() {
           </CardContent>
         </Card>
 
-        {/* Official VTU Results Links */}
+        {/* Official IgniteVidya Results Links */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Official VTU Results</CardTitle>
-            <CardDescription>Access official VTU results portal for the most up-to-date information</CardDescription>
+            <CardTitle>Official IgniteVidya Results</CardTitle>
+            <CardDescription>Access official IgniteVidya results portal for the most up-to-date information</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -87,7 +87,7 @@ export default function ResultsPage() {
                 <Link href="https://results.vtu.ac.in" target="_blank">
                   <div className="text-left">
                     <div className="font-semibold flex items-center gap-2">
-                      VTU Results Portal
+                      IgniteVidya Results Portal
                       <ExternalLink className="h-4 w-4" />
                     </div>
                     <div className="text-sm text-muted-foreground">Official results website</div>
@@ -99,7 +99,7 @@ export default function ResultsPage() {
                 <Link href="https://vtu.ac.in" target="_blank">
                   <div className="text-left">
                     <div className="font-semibold flex items-center gap-2">
-                      VTU Main Website
+                      IgniteVidya Main Website
                       <ExternalLink className="h-4 w-4" />
                     </div>
                     <div className="text-sm text-muted-foreground">University homepage</div>
@@ -113,7 +113,7 @@ export default function ResultsPage() {
         {/* How to Check Results Guide */}
         <Card>
           <CardHeader>
-            <CardTitle>How to Check VTU Results</CardTitle>
+            <CardTitle>How to Check IgniteVidya Results</CardTitle>
             <CardDescription>Step-by-step guide to check your examination results</CardDescription>
           </CardHeader>
           <CardContent>
@@ -126,7 +126,7 @@ export default function ResultsPage() {
                       <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
                         1
                       </span>
-                      Visit the official VTU results portal
+                      Visit the official IgniteVidya results portal
                     </li>
                     <li className="flex gap-2">
                       <span className="bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs">
@@ -159,9 +159,9 @@ export default function ResultsPage() {
                   <h4 className="font-semibold mb-3">SMS Method</h4>
                   <div className="space-y-2 text-sm">
                     <p>Send SMS in the following format:</p>
-                    <div className="bg-muted p-3 rounded font-mono text-sm">VTU USN SEMESTER</div>
+                    <div className="bg-muted p-3 rounded font-mono text-sm">IgniteVidya USN SEMESTER</div>
                     <p>
-                      Example: <code className="bg-muted px-1 rounded">VTU 1XX21CS001 4</code>
+                      Example: <code className="bg-muted px-1 rounded">IgniteVidya 1XX21CS001 4</code>
                     </p>
                     <p>
                       Send to: <strong>56263</strong>

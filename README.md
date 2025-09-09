@@ -1,13 +1,13 @@
-# VTU Vault 🎓
+# IgniteVidya Vault 🎓
 
-A comprehensive academic companion application for VTU (Visvesvaraya Technological University) students.
+A comprehensive academic companion application for IgniteVidya (Visvesvaraya Technological University) students.
 
 ## ✨ Features
 
 - **📚 Study Materials**: Access notes, question papers, and lab programs
-- **🧮 CGPA Calculator**: Calculate SGPA and CGPA with VTU's grading system
+- **🧮 CGPA Calculator**: Calculate SGPA and CGPA with IgniteVidya's grading system
 - **💡 Project Ideas**: Browse and discover engineering project concepts
-- **🤖 AI Chat**: Interactive chat with VTU Companion and Afzal
+- **🤖 AI Chat**: Interactive chat with IgniteVidya Companion and Afzal
 - **🔍 Smart Search**: Find content across all sections
 - **📱 Responsive Design**: Works perfectly on mobile and desktop
 
@@ -22,7 +22,7 @@ A comprehensive academic companion application for VTU (Visvesvaraya Technologic
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd vtu-vault
+   cd IgniteVidya-vault
    ```
 
 2. **Install dependencies**
@@ -51,7 +51,7 @@ This application uses a **local JSON database** for data persistence. No externa
 
 ### Database Structure
 - `data/notes.json` - Study notes and materials
-- `data/question-papers.json` - Question papers and VTU official papers
+- `data/question-papers.json` - Question papers and IgniteVidya official papers
 - `data/lab-programs.json` - Programming lab solutions
 - `data/projects.json` - Project ideas and concepts
 
@@ -75,12 +75,12 @@ You can add new content by:
 - `GET /api/projects` - Fetch all projects with optional filters
 - `POST /api/projects` - Add a new project
 
-### VTU Papers
-- `GET /api/vtu-papers` - Fetch VTU official question papers
+### IgniteVidya Papers
+- `GET /api/vtu-papers` - Fetch IgniteVidya official question papers
 
 ### Chat Features
 - `POST /api/chat` - Terminal-style chat
-- `POST /api/vtu-companion` - VTU Companion AI chat
+- `POST /api/vtu-companion` - IgniteVidya Companion AI chat
 - `POST /api/afzal-chat` - Chat with Afzal (the developer)
 
 ## 🎯 Getting Google AI API Key
@@ -92,7 +92,7 @@ You can add new content by:
 ## 📁 Project Structure
 
 ```
-vtu-vault/
+IgniteVidya-vault/
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   ├── notes/             # Notes page
@@ -129,9 +129,9 @@ This project is open source and available under the [MIT License](LICENSE).
 ## 👨‍💻 Author
 
 **Afzal** - CS Student & Developer
-- Building tools for VTU community
+- Building tools for IgniteVidya community
 - Passionate about helping fellow students
 
 ---
 
-**VTU Vault** - Your Academic Companion 🎓 
+**IgniteVidya Vault** - Your Academic Companion 🎓

@@ -49,7 +49,7 @@ export default function LoginPage() {
             <div className="w-20 h-20 rounded-2xl bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center">
               <img 
                 src="/vtu-logo.png" 
-                alt="VTU Logo" 
+                alt="IgniteVidya Logo"
                 className="w-16 h-16 object-contain"
                 onError={(e) => {
                   // Fallback to icon if image fails to load

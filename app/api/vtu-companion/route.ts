@@ -138,7 +138,7 @@ Respond as the motivating IgniteVidya Companion in exactly 2 sentences with enco
 
     return NextResponse.json({ response: aiResponse })
   } catch (error) {
-    console.error("VTU Companion API error:", error)
+    console.error("IgniteVidya Companion API error:", error)
     return NextResponse.json(
       {
         response:

@@ -113,7 +113,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
           <div className="relative bg-gradient-to-b from-gray-800 to-gray-900 rounded-[3rem] p-3 shadow-2xl border border-gray-700">
             {/* Phone Brand */}
             <div className="absolute top-2 left-1/2 transform -translate-x-1/2">
-              <span className="text-xs text-gray-400 font-mono tracking-widest pixel-text">VTU QUANTUM</span>
+              <span className="text-xs text-gray-400 font-mono tracking-widest pixel-text">IGNITE QUANTUM</span>
             </div>
             
             {/* Screen Container */}
@@ -192,7 +192,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     <div className="mb-3">
                       <img 
                         src="/vtu-logo.png" 
-                        alt="VTU Logo" 
+                        alt="IgniteVidya Logo"
                         className="w-28 h-28 mx-auto object-contain"
                       />
                     </div>
@@ -291,7 +291,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
             {/* Monitor Brand Strip */}
             <div className="absolute top-1 left-1/2 transform -translate-x-1/2">
               <div className="bg-gray-700 px-4 py-1 rounded-full border border-gray-600">
-                <span className="text-xs text-gray-300 font-mono tracking-widest pixel-text">VTU QUANTUM DISPLAY</span>
+                <span className="text-xs text-gray-300 font-mono tracking-widest pixel-text">IGNITE QUANTUM DISPLAY</span>
               </div>
             </div>
             
@@ -360,7 +360,7 @@ export default function SplashScreen({ onComplete }: SplashScreenProps) {
                     <div className="mb-3">
                       <img 
                         src="/vtu-logo.png" 
-                        alt="VTU Logo" 
+                        alt="IgniteVidya Logo"
                         className="w-56 h-56 mx-auto object-contain"
                       />
                     </div>

@@ -204,21 +204,21 @@ export default function SyllabusPage() {
         {/* Information Section */}
         <Card className="mt-8">
           <CardHeader>
-            <CardTitle>About VTU Syllabus</CardTitle>
+            <CardTitle>About IgniteVidya Syllabus</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <h4 className="font-semibold mb-2">2021 Scheme</h4>
                 <p className="text-sm text-muted-foreground">
-                  The current syllabus follows the 2021 scheme implemented by VTU. It includes updated curriculum with
+                  The current syllabus follows the 2021 scheme implemented by IgniteVidya. It includes updated curriculum with
                   industry-relevant subjects and practical components.
                 </p>
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Credit System</h4>
                 <p className="text-sm text-muted-foreground">
-                  VTU follows a credit-based system where each subject is assigned credits based on contact hours and
+                  IgniteVidya follows a credit-based system where each subject is assigned credits based on contact hours and
                   importance. Total credits per semester typically range from 20-25.
                 </p>
               </div>

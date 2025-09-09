@@ -53,7 +53,7 @@ export default function Navigation() {
                 <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
                   <img 
                     src="/vtu-logo.png" 
-                    alt="VTU Logo" 
+                    alt="IgniteVita Logo"
                     className="w-full h-full object-contain"
                     onError={(e) => {
                       // Fallback to icon if image fails to load

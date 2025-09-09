@@ -106,7 +106,7 @@ export interface QuestionPaper {
   comments?: Comment[]
 }
 
-export interface VTUPaper {
+export interface IgniteVidyaPaper {
   id: string
   subject_code: string
   subject_name: string
@@ -129,8 +129,8 @@ export function getQuestionPapers(): QuestionPaper[] {
   return data.papers || []
 }
 
-export function getVTUPapers(): VTUPaper[] {
-  const data = readJsonFile<{ vtu_papers: VTUPaper[] }>(PAPERS_FILE)
+export function getIgniteVidyaPapers(): IgniteVidyaPaper[] {
+  const data = readJsonFile<{ vtu_papers: IgniteVidyaPaper[] }>(PAPERS_FILE)
   return data.vtu_papers || []
 }
 
@@ -142,7 +142,7 @@ export function addQuestionPaper(paper: Omit<QuestionPaper, 'id' | 'created_at'>
     created_at: new Date().toISOString().split('T')[0]
   }
   papers.push(newPaper)
-  writeJsonFile(PAPERS_FILE, { papers, vtu_papers: getVTUPapers() })
+  writeJsonFile(PAPERS_FILE, { papers, vtu_papers: getIgniteVidyaPapers() })
   return newPaper
 }
 
