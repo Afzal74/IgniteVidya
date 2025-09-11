@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Rocket, BookOpen, Play, Brain, Target, Star } from "lucide-react"
+import { ArrowLeft, BookOpen, Play, Brain, Target, Star } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
-export default function Grade6Page() {
+export default function Grade7Page() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -24,11 +24,11 @@ export default function Grade6Page() {
   ]
 
   const quickAccess = [
-    { title: "Notes", icon: BookOpen, href: "/notes?grade=6", description: "Study materials" },
-    { title: "Lectures", icon: Play, href: "/lectures?grade=6", description: "Video lessons" },
-    { title: "AI Tutor", icon: Brain, href: "/ai-tutor?grade=6", description: "Smart learning" },
-    { title: "Quiz", icon: Target, href: "/quiz?grade=6", description: "Test yourself" },
-    { title: "Progress", icon: Star, href: "/dashboard?grade=6", description: "Track learning" }
+    { title: "Notes", icon: BookOpen, href: "/notes?grade=7", description: "Study materials" },
+    { title: "Lectures", icon: Play, href: "/lectures?grade=7", description: "Video lessons" },
+    { title: "AI Tutor", icon: Brain, href: "/ai-tutor?grade=7", description: "Smart learning" },
+    { title: "Quiz", icon: Target, href: "/quiz?grade=7", description: "Test yourself" },
+    { title: "Progress", icon: Star, href: "/dashboard?grade=7", description: "Track learning" }
   ]
 
   if (!mounted) return null
@@ -53,15 +53,15 @@ export default function Grade6Page() {
             className="text-center mb-8 md:mb-12"
           >
             <img 
-              src="/6th.png" 
-              alt="Class 6th" 
+              src="/7th.png" 
+              alt="Class 7th" 
               className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 xl:w-44 xl:h-44 object-contain mx-auto mb-4 drop-shadow-2xl"
             />
             <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
-              Explorer • Higher Primary • Begin your STEM adventure
+              Discoverer • Higher Primary • Discover the wonders of science
             </p>
             <div className="flex justify-center gap-2">
-              <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+              <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                 6 Subjects
               </span>
               <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
@@ -98,9 +98,9 @@ export default function Grade6Page() {
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
                 <Link href={
-                  subject.name === 'Mathematics' ? '/grade/6/mathematics' : 
-                  subject.name === 'Science' ? '/grade/6/science' : 
-                  subject.name === 'Social Studies' ? '/grade/6/social-studies' :
+                  subject.name === 'Mathematics' ? '/grade/7/mathematics' : 
+                  subject.name === 'Science' ? '/grade/7/science' : 
+                  subject.name === 'Social Studies' ? '/grade/7/social-studies' :
                   '#'
                 }>
                   <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
@@ -115,6 +115,13 @@ export default function Grade6Page() {
                         <div className="mt-2">
                           <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                             Content Available
+                          </span>
+                        </div>
+                      )}
+                      {!(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
+                        <div className="mt-2">
+                          <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                            Coming Soon
                           </span>
                         </div>
                       )}

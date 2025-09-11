@@ -521,120 +521,282 @@ export default function HomePage() {
           </div>
         </motion.div>
 
+        {/* Brain Rocket Image - Right Side */}
+        <motion.div
+          initial={{ opacity: 0, x: 100, rotate: 10 }}
+          animate={{
+            opacity: 1,
+            x: 0,
+            rotate: [0, 2, -2, 0],
+            y: [0, -15, 0, -15, 0],
+          }}
+          transition={{
+            duration: 2,
+            rotate: {
+              repeat: Infinity,
+              duration: 8,
+              ease: "easeInOut",
+            },
+            y: {
+              repeat: Infinity,
+              duration: 6,
+              ease: "easeInOut",
+            },
+          }}
+          className="absolute right-2 md:right-4 lg:right-8 xl:right-12 top-1/3 transform -translate-y-1/3 z-20 hidden lg:block"
+        >
+          <div className="relative group">
+            {/* Enhanced glow effect with circular shape */}
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-400/30 via-red-500/30 to-yellow-400/20 rounded-full blur-3xl transition-all duration-500 group-hover:blur-[40px] group-hover:scale-110" />
+
+            {/* Brain Rocket image - Right positioned with rounded borders */}
+            <img
+              src="/brain-rocket.png"
+              alt="Brain Rocket"
+              className="relative z-10 w-48 h-48 md:w-56 md:h-56 lg:w-64 lg:h-64 xl:w-72 xl:h-72 object-cover object-center drop-shadow-2xl group-hover:scale-105 transition-transform duration-300 rounded-3xl"
+              style={{
+                objectPosition: "center center",
+              }}
+            />
+
+            {/* Enhanced sparkle effects around the image */}
+            <div className="absolute -inset-4 opacity-70">
+              {[...Array(12)].map((_, i) => {
+                const angle = i * 30 * (Math.PI / 180);
+                const radius = 120 + (i % 3) * 20; // Varying distances
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+
+                return (
+                  <motion.div
+                    key={`sparkle-${i}`}
+                    className={`absolute ${
+                      i % 4 === 0
+                        ? "w-3 h-3 bg-gradient-to-r from-orange-300 to-red-500"
+                        : i % 4 === 1
+                        ? "w-2 h-2 bg-gradient-to-r from-yellow-300 to-orange-500"
+                        : i % 4 === 2
+                        ? "w-2.5 h-2.5 bg-gradient-to-r from-red-300 to-pink-500"
+                        : "w-1.5 h-1.5 bg-gradient-to-r from-amber-300 to-yellow-500"
+                    } rounded-full shadow-lg`}
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                      transform: `translate(${x}px, ${y}px)`,
+                    }}
+                    animate={{
+                      opacity: [0.2, 1, 0.2],
+                      scale: [0.3, 1.2, 0.3],
+                      rotate: [0, 180, 360],
+                      y: [0, -10, 0],
+                    }}
+                    transition={{
+                      duration: 2 + (i % 3),
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: i * 0.3,
+                    }}
+                  />
+                );
+              })}
+
+              {/* Additional floating sparkles */}
+              {[...Array(8)].map((_, i) => {
+                const initialX = (Math.random() - 0.5) * 300;
+                const initialY = (Math.random() - 0.5) * 300;
+
+                return (
+                  <motion.div
+                    key={`float-sparkle-${i}`}
+                    className="absolute w-1 h-1 bg-gradient-to-r from-orange-200 to-red-300 rounded-full"
+                    style={{
+                      left: "50%",
+                      top: "50%",
+                    }}
+                    animate={{
+                      x: [initialX, initialX + 50, initialX - 50, initialX],
+                      y: [initialY, initialY - 30, initialY + 30, initialY],
+                      opacity: [0, 1, 1, 0],
+                      scale: [0, 1, 1, 0],
+                    }}
+                    transition={{
+                      duration: 4 + Math.random() * 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                      delay: i * 0.5,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+
         <div className="relative z-30 w-full flex justify-center">
           <div className="max-w-6xl text-center">
-          {/* Online Users Badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-2"
-          >
-            <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
-            <Users className="h-2 w-2 text-zinc-600 dark:text-zinc-400" />
-            <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-              {onlineUsers.toLocaleString()} online
-            </span>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="mb-4 md:mb-6"
-          >
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-2">
-              <Sparkles className="h-2 w-2 text-zinc-600 dark:text-zinc-400" />
-              <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
-                Your Academic Companion
-              </span>
-            </div>
-
-            <h1 className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-wider mb-3 md:mb-4 font-mono pixel-font">
-              <span className="text-black dark:text-white">IGNITE</span>
-              <span className="text-zinc-400 dark:text-zinc-600">VIDYA</span>
-            </h1>
-
-            <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed px-2">
-              Equal learning for all. Interactive STEM education for grades 6-12
-              with gamification, AI tutoring, and personalized learning paths.
-            </p>
-
-            {/* Rotating Quotes */}
+            {/* Online Users Badge */}
             <motion.div
-              key={currentQuote}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.5 }}
-              className="mt-4 md:mt-6"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-2"
             >
-              <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-500 italic max-w-4xl mx-auto px-2 whitespace-nowrap overflow-hidden text-ellipsis">
-                "{quotes[currentQuote]}"
-              </p>
+              <div className="w-1 h-1 bg-green-500 rounded-full animate-pulse" />
+              <Users className="h-2 w-2 text-zinc-600 dark:text-zinc-400" />
+              <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+                {onlineUsers.toLocaleString()} online
+              </span>
             </motion.div>
-          </motion.div>
 
-          {/* Search Bar */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative max-w-2xl mx-auto mb-6 md:mb-12"
-          >
-            <div className="relative">
-              <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-3 w-3 md:h-4 md:w-4" />
-              <Input
-                ref={searchInputRef}
-                type="text"
-                placeholder="Search subjects, notes, lectures..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (e.target.value.length > 0) {
-                    playTypingSound();
-                  }
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="mb-4 md:mb-6"
+            >
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 mb-2">
+                <Sparkles className="h-2 w-2 text-zinc-600 dark:text-zinc-400" />
+                <span className="text-xs text-zinc-600 dark:text-zinc-400 font-medium">
+                  Your Academic Companion
+                </span>
+              </div>
+
+              <motion.h1
+                className="text-3xl md:text-5xl lg:text-7xl font-bold tracking-wider mb-3 md:mb-4 font-mono pixel-font"
+                animate={{
+                  textShadow: [
+                    "0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
+                    "0 0 15px rgba(147, 51, 234, 0.5), 0 0 30px rgba(147, 51, 234, 0.3)",
+                    "0 0 12px rgba(6, 182, 212, 0.5), 0 0 25px rgba(6, 182, 212, 0.3)",
+                    "0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3)",
+                  ],
                 }}
-                onFocus={() => playSearchSound()}
-                className="pl-8 md:pl-10 py-2 md:py-3 text-sm md:text-base rounded-lg md:rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:border-black dark:focus:border-white transition-colors"
-              />
-            </div>
-            {searchQuery && filteredContent.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute top-full left-0 right-0 mt-1 md:mt-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-lg md:rounded-xl shadow-2xl z-10 max-h-48 md:max-h-64 overflow-y-auto"
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
               >
-                {filteredContent.map((item, index) => (
-                  <div
-                    key={index}
-                    className="p-2 md:p-3 hover:bg-zinc-50 dark:hover:bg-zinc-950 cursor-pointer border-b border-zinc-100 dark:border-zinc-900 last:border-b-0"
-                    onClick={() => {
-                      playClickSound("secondary");
-                      if ("grade" in item) {
-                        window.location.href = `/grade/${item.grade.replace(
-                          /[^0-9]/g,
-                          ""
-                        )}`;
-                      } else {
-                        window.location.href = item.href;
-                      }
-                      setSearchQuery("");
-                    }}
-                    onMouseEnter={() => playHoverSound("card")}
-                  >
-                    <div className="font-medium text-black dark:text-white text-xs md:text-sm">
-                      {"grade" in item ? `Grade ${item.grade}` : item.title}
-                    </div>
-                    <div className="text-xs text-zinc-600 dark:text-zinc-400">
-                      {"subjects" in item
-                        ? `${item.subjects} subjects`
-                        : item.description}
-                    </div>
-                  </div>
-                ))}
+                <motion.span
+                  className="text-black dark:text-white"
+                  animate={{
+                    filter: [
+                      "brightness(1) saturate(1)",
+                      "brightness(1.3) saturate(1.2)",
+                      "brightness(1.1) saturate(1.1)",
+                      "brightness(1) saturate(1)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }}
+                >
+                  IGNITE
+                </motion.span>
+                <motion.span
+                  className="text-zinc-400 dark:text-zinc-600"
+                  animate={{
+                    filter: [
+                      "brightness(1) saturate(1)",
+                      "brightness(1.4) saturate(1.3)",
+                      "brightness(1.2) saturate(1.2)",
+                      "brightness(1) saturate(1)",
+                    ],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: 0.5,
+                  }}
+                >
+                  VIDYA
+                </motion.span>
+              </motion.h1>
+
+              <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed px-2">
+                Equal learning for all. Interactive STEM education for grades
+                6-12 with gamification, AI tutoring, and personalized learning
+                paths.
+              </p>
+
+              {/* Rotating Quotes */}
+              <motion.div
+                key={currentQuote}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.5 }}
+                className="mt-4 md:mt-6"
+              >
+                <p className="text-sm md:text-base text-zinc-500 dark:text-zinc-500 italic max-w-4xl mx-auto px-2 whitespace-nowrap overflow-hidden text-ellipsis">
+                  "{quotes[currentQuote]}"
+                </p>
               </motion.div>
-            )}
-          </motion.div>
+            </motion.div>
+
+            {/* Search Bar */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative max-w-2xl mx-auto mb-6 md:mb-12"
+            >
+              <div className="relative">
+                <Search className="absolute left-2 md:left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 h-3 w-3 md:h-4 md:w-4" />
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search subjects, notes, lectures..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    if (e.target.value.length > 0) {
+                      playTypingSound();
+                    }
+                  }}
+                  onFocus={() => playSearchSound()}
+                  className="pl-8 md:pl-10 py-2 md:py-3 text-sm md:text-base rounded-lg md:rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 focus:border-black dark:focus:border-white transition-colors"
+                />
+              </div>
+              {searchQuery && filteredContent.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="absolute top-full left-0 right-0 mt-1 md:mt-2 bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-lg md:rounded-xl shadow-2xl z-10 max-h-48 md:max-h-64 overflow-y-auto"
+                >
+                  {filteredContent.map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-2 md:p-3 hover:bg-zinc-50 dark:hover:bg-zinc-950 cursor-pointer border-b border-zinc-100 dark:border-zinc-900 last:border-b-0"
+                      onClick={() => {
+                        playClickSound("secondary");
+                        if ("grade" in item) {
+                          window.location.href = `/grade/${item.grade.replace(
+                            /[^0-9]/g,
+                            ""
+                          )}`;
+                        } else {
+                          window.location.href = item.href;
+                        }
+                        setSearchQuery("");
+                      }}
+                      onMouseEnter={() => playHoverSound("card")}
+                    >
+                      <div className="font-medium text-black dark:text-white text-xs md:text-sm">
+                        {"grade" in item ? `Grade ${item.grade}` : item.title}
+                      </div>
+                      <div className="text-xs text-zinc-600 dark:text-zinc-400">
+                        {"subjects" in item
+                          ? `${item.subjects} subjects`
+                          : item.description}
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </motion.div>
           </div>
         </div>
       </section>
