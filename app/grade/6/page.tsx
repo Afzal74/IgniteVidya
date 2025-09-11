@@ -98,7 +98,12 @@ export default function Grade6Page() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
-                <Link href={subject.name === 'Mathematics' ? '/grade/6/mathematics' : subject.name === 'Science' ? '/grade/6/science' : '#'}>
+                <Link href={
+                  subject.name === 'Mathematics' ? '/grade/6/mathematics' : 
+                  subject.name === 'Science' ? '/grade/6/science' : 
+                  subject.name === 'Social Studies' ? '/grade/6/social-studies' :
+                  '#'
+                }>
                   <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
                     <div className="p-4 md:p-6 h-full flex flex-col justify-center">
                       <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
@@ -107,10 +112,10 @@ export default function Grade6Page() {
                       <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
                         {subject.description}
                       </p>
-                      {(subject.name === 'Mathematics' || subject.name === 'Science') && (
+                      {(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
                         <div className="mt-2">
                           <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                            Games Available
+                            Content Available
                           </span>
                         </div>
                       )}

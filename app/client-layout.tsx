@@ -48,39 +48,29 @@ export default function ClientLayout({
   }
 
   if (!mounted) {
-    return (
-      <html lang="en" suppressHydrationWarning>
-        <body className={inter.className}>
-          <div className="min-h-screen bg-black" />
-        </body>
-      </html>
-    )
+    return <div className="min-h-screen bg-black" />
   }
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {showSplash ? (
-            <SplashScreen onComplete={handleSplashComplete} />
-          ) : (
-            <>
-              <Navigation />
-              <main>{children}</main>
-              <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
-              <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
-              <Toaster />
-              {/* Audio Manager - starts after splash screen */}
-              {audioEnabled && (
-                <AudioManager 
-                  autoPlay={true} 
-                  showControls={true}
-                />
-              )}
-            </>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      {showSplash ? (
+        <SplashScreen onComplete={handleSplashComplete} />
+      ) : (
+        <>
+          <Navigation />
+          <main>{children}</main>
+          <TerminalChat isIgniteVidyaCompanionOpen={isIgniteVidyaCompanionOpen} onOpen={handleTerminalOpen} />
+          <IgniteVidyaCompanion isTerminalOpen={isTerminalOpen} onOpen={handleIgniteVidyaCompanionOpen} />
+          <Toaster />
+          {/* Audio Manager - starts after splash screen */}
+          {audioEnabled && (
+            <AudioManager 
+              autoPlay={true} 
+              showControls={true}
+            />
           )}
-        </ThemeProvider>
-      </body>
-    </html>
+        </>
+      )}
+    </ThemeProvider>
   )
 }
