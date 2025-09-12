@@ -1,8 +1,8 @@
-﻿"use client"
+﻿"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Moon,
   Sun,
@@ -19,13 +19,13 @@ import {
   Gamepad2,
   Volume2,
   VolumeX,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useTheme } from "next-themes"
-import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
-import { useState as useNewsState, useEffect } from "react"
-import { useSoundEffects } from "@/hooks/useSoundEffects"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
+import { useState as useNewsState, useEffect } from "react";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -36,13 +36,14 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Star },
   { href: "/calculator", label: "Calculator", icon: Calculator },
   { href: "/projects", label: "Projects", icon: Lightbulb },
-]
+];
 
 export default function Navigation() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const pathname = usePathname()
-  const { soundEnabled, toggleSound, playHoverSound, playClickSound } = useSoundEffects()
+  const [isOpen, setIsOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
+  const { soundEnabled, toggleSound, playHoverSound, playClickSound } =
+    useSoundEffects();
 
   return (
     <>
@@ -54,21 +55,27 @@ export default function Navigation() {
             <div className="flex justify-start">
               <Link href="/" className="flex items-center space-x-3">
                 <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="/vtu-logo.png" 
+                  <img
+                    src="/vtu-logo.png"
                     alt="IgniteVita Logo"
                     className="w-full h-full object-contain"
                     onError={(e) => {
                       // Fallback to icon if image fails to load
-                      e.currentTarget.style.display = 'none';
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                      e.currentTarget.style.display = "none";
+                      e.currentTarget.nextElementSibling?.classList.remove(
+                        "hidden"
+                      );
                     }}
                   />
                   <Brain className="h-6 w-6 text-blue-600 dark:text-blue-400 hidden" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-bold text-black dark:text-white">IgniteVidya</span>
-                  <span className="text-xs text-gray-600 dark:text-gray-400 hidden md:block">Equal learning for all</span>
+                  <span className="text-xl font-bold text-black dark:text-white">
+                    IgniteVidya
+                  </span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400 hidden md:block">
+                    Equal learning for all
+                  </span>
                 </div>
               </Link>
             </div>
@@ -86,12 +93,12 @@ export default function Navigation() {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    playClickSound('secondary')
-                    toggleSound()
+                    playClickSound("secondary");
+                    toggleSound();
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
-                  title={soundEnabled ? 'Disable sounds' : 'Enable sounds'}
+                  title={soundEnabled ? "Disable sounds" : "Enable sounds"}
                 >
                   {soundEnabled ? (
                     <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -100,15 +107,15 @@ export default function Navigation() {
                   )}
                   <span className="sr-only">Toggle sound</span>
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    playClickSound('secondary')
-                    setTheme(theme === "dark" ? "light" : "dark")
+                    playClickSound("secondary");
+                    setTheme(theme === "dark" ? "light" : "dark");
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
                 >
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -116,14 +123,14 @@ export default function Navigation() {
                   <span className="sr-only">Toggle theme</span>
                 </Button>
 
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
-                    playClickSound('navigation')
-                    setIsOpen(!isOpen)
+                    playClickSound("navigation");
+                    setIsOpen(!isOpen);
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
                 >
                   <Menu className="h-5 w-5" />
@@ -136,12 +143,12 @@ export default function Navigation() {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    playClickSound('secondary')
-                    toggleSound()
+                    playClickSound("secondary");
+                    toggleSound();
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
-                  title={soundEnabled ? 'Disable sounds' : 'Enable sounds'}
+                  title={soundEnabled ? "Disable sounds" : "Enable sounds"}
                 >
                   {soundEnabled ? (
                     <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -150,32 +157,36 @@ export default function Navigation() {
                   )}
                   <span className="sr-only">Toggle sound</span>
                 </Button>
-                
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    playClickSound('secondary')
-                    setTheme(theme === "dark" ? "light" : "dark")
+                    playClickSound("secondary");
+                    setTheme(theme === "dark" ? "light" : "dark");
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
                 >
                   <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
                   <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 </Button>
 
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
-                    playClickSound('navigation')
-                    setIsOpen(!isOpen)
+                    playClickSound("navigation");
+                    setIsOpen(!isOpen);
                   }}
-                  onMouseEnter={() => playHoverSound('button')}
+                  onMouseEnter={() => playHoverSound("button")}
                   className="rounded-xl"
                 >
-                  {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  {isOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
                 </Button>
               </div>
             </div>
@@ -206,7 +217,9 @@ export default function Navigation() {
             >
               <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-black dark:text-white mb-4">Navigation</h3>
+                  <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+                    Navigation
+                  </h3>
 
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                     {navItems.map((item) => (
@@ -214,15 +227,15 @@ export default function Navigation() {
                         key={item.href}
                         href={item.href}
                         onClick={() => {
-                          playClickSound('navigation')
-                          setIsOpen(false)
+                          playClickSound("navigation");
+                          setIsOpen(false);
                         }}
-                        onMouseEnter={() => playHoverSound('link')}
+                        onMouseEnter={() => playHoverSound("link")}
                         className={cn(
                           "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
                           pathname === item.href
                             ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300",
+                            : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                         )}
                       >
                         <item.icon className="h-5 w-5" />
@@ -237,13 +250,13 @@ export default function Navigation() {
         )}
       </AnimatePresence>
     </>
-  )
+  );
 }
 
 // News Section Component
 function NewsSection() {
-  const [currentNews, setCurrentNews] = useNewsState(0)
-  
+  const [currentNews, setCurrentNews] = useNewsState(0);
+
   const newsItems = [
     "📢 STEM Education Summit 2024 - Register for free workshops",
     "📢 Mathematics Olympiad results announced - Check winners list",
@@ -256,42 +269,48 @@ function NewsSection() {
     "📢 CBSE Board exam dates announced for Science subjects",
     "📢 Robotics workshop for grades 9-12 - Limited seats available",
     "📢 New NCERT textbooks for Physics and Chemistry released",
-    "📢 Top 100 Engineering colleges ranking published"
-  ]
+    "📢 Top 100 Engineering colleges ranking published",
+  ];
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentNews((prev) => (prev + 1) % newsItems.length)
-    }, 4000) // Change every 4 seconds
-    return () => clearInterval(interval)
-  }, [])
+      setCurrentNews((prev) => (prev + 1) % newsItems.length);
+    }, 4000); // Change every 4 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="hidden lg:block">
       <div className="text-center max-w-lg mx-auto relative">
         {/* Background glow effect */}
-        <div className="absolute inset-0 -inset-y-4 -inset-x-8 bg-red-500/10 dark:bg-red-400/15 rounded-xl blur-xl animate-pulse" />
-        <div className="absolute inset-0 -inset-y-2 -inset-x-4 bg-red-500/20 dark:bg-red-400/25 rounded-lg blur-lg animate-pulse" />
-        
+        <div className="absolute inset-0 -inset-y-4 -inset-x-8 bg-pink-500/8 dark:bg-pink-400/10 rounded-xl blur-xl animate-pulse" />
+        <div className="absolute inset-0 -inset-y-2 -inset-x-4 bg-pink-500/15 dark:bg-pink-400/20 rounded-lg blur-lg animate-pulse" />
+
         <div className="relative z-10">
           <div className="flex items-center justify-center mb-1">
-            <span 
-              className="text-xs font-bold text-red-500 dark:text-red-400 uppercase tracking-wide" 
+            <span
+              className="text-xs font-bold text-pink-600 dark:text-pink-400 uppercase tracking-wide"
               style={{
-                textShadow: '0 0 10px rgba(239, 68, 68, 0.8), 0 0 20px rgba(239, 68, 68, 0.6), 0 0 30px rgba(239, 68, 68, 0.4)'
+                textShadow:
+                  "0 0 8px rgba(236, 72, 153, 0.5), 0 0 16px rgba(236, 72, 153, 0.3), 0 0 24px rgba(236, 72, 153, 0.2)",
               }}
             >
               Latest News
             </span>
-            <div className="ml-2 w-2 h-2 bg-red-500 rounded-full animate-pulse" style={{
-              boxShadow: '0 0 8px rgba(239, 68, 68, 0.8), 0 0 16px rgba(239, 68, 68, 0.6)'
-            }} />
+            <div
+              className="ml-2 w-2 h-2 bg-pink-500 rounded-full animate-pulse"
+              style={{
+                boxShadow:
+                  "0 0 6px rgba(236, 72, 153, 0.6), 0 0 12px rgba(236, 72, 153, 0.4)",
+              }}
+            />
           </div>
           <div className="overflow-hidden">
-            <p 
-              className="text-sm text-red-500 dark:text-red-400 font-semibold transition-all duration-300 whitespace-nowrap text-ellipsis overflow-hidden" 
+            <p
+              className="text-sm text-pink-600 dark:text-pink-400 font-semibold transition-all duration-300 whitespace-nowrap text-ellipsis overflow-hidden"
               style={{
-                textShadow: '0 0 8px rgba(239, 68, 68, 0.7), 0 0 16px rgba(239, 68, 68, 0.5), 0 0 24px rgba(239, 68, 68, 0.3)'
+                textShadow:
+                  "0 0 6px rgba(236, 72, 153, 0.5), 0 0 12px rgba(236, 72, 153, 0.3), 0 0 18px rgba(236, 72, 153, 0.2)",
               }}
             >
               {newsItems[currentNews]}
@@ -300,5 +319,5 @@ function NewsSection() {
         </div>
       </div>
     </div>
-  )
+  );
 }

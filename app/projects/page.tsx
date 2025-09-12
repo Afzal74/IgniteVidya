@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, ExternalLink, Github, Tag } from "lucide-react"
+import { Search, ExternalLink, Github, Youtube, Facebook, Instagram, Tag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -207,8 +207,36 @@ export default function ProjectsPage() {
           </div>
         </div>
 
+        {/* Social Media Section */}
+        <div className="mt-16 py-8 border-t border-zinc-200 dark:border-zinc-800">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold mb-2">Connect with IgniteVidya</h2>
+            <p className="text-muted-foreground">Follow us on social media for updates and more content</p>
+          </div>
+          <div className="flex justify-center gap-4">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="https://www.youtube.com/@ignitevidya" target="_blank">
+                <Youtube className="h-4 w-4 mr-2" />
+                YouTube
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="https://www.facebook.com/ignitevidya" target="_blank">
+                <Facebook className="h-4 w-4 mr-2" />
+                Facebook
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="https://www.instagram.com/ignitevidya" target="_blank">
+                <Instagram className="h-4 w-4 mr-2" />
+                Instagram
+              </Link>
+            </Button>
+          </div>
+        </div>
+
         {/* Copyright Footer */}
-        <footer className="py-3 md:py-6 px-2 md:px-4 border-t border-zinc-200 dark:border-zinc-800 mt-12">
+        <footer className="py-3 md:py-6 px-2 md:px-4 border-t border-zinc-200 dark:border-zinc-800">
           <div className="max-w-6xl mx-auto text-center">
             <p className="text-xs text-zinc-600 dark:text-zinc-400">
               © 2024 VTU Vault. Created by <span className="font-semibold text-black dark:text-white">Afzal</span>. All

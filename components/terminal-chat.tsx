@@ -110,7 +110,9 @@ Mission: Equal learning for all`
     if (cmd === "contact") {
       return `Contact Information:
 Email: support@ignitevidya.com
-GitHub: github.com/ignitevidya
+YouTube: youtube.com/@ignitevidya
+Facebook: facebook.com/ignitevidya
+Instagram: instagram.com/ignitevidya
 Website: ignitevidya.com
 Support: Available 24/7`
     }

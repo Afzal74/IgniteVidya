@@ -12,8 +12,9 @@ import {
   Lightbulb,
   ArrowRight,
   Sparkles,
-  Github,
-  Linkedin,
+  Youtube,
+  Facebook,
+  Instagram,
   Users,
   Zap,
   Shield,
@@ -1161,14 +1162,14 @@ export default function HomePage() {
                 onClick={() => {
                   playClickSound("secondary");
                   window.open(
-                    "https://www.linkedin.com/company/ignitevidya",
+                    "https://www.youtube.com/@ignitevidya",
                     "_blank"
                   );
                 }}
                 onMouseEnter={() => playHoverSound("button")}
               >
-                <Linkedin className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
-                LinkedIn
+                <Youtube className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
+                YouTube
               </Button>
               <Button
                 variant="outline"
@@ -1176,12 +1177,25 @@ export default function HomePage() {
                 className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
                 onClick={() => {
                   playClickSound("secondary");
-                  window.open("https://github.com/ignitevidya", "_blank");
+                  window.open("https://www.facebook.com/ignitevidya", "_blank");
                 }}
                 onMouseEnter={() => playHoverSound("button")}
               >
-                <Github className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
-                GitHub
+                <Facebook className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
+                Facebook
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
+                onClick={() => {
+                  playClickSound("secondary");
+                  window.open("https://www.instagram.com/ignitevidya", "_blank");
+                }}
+                onMouseEnter={() => playHoverSound("button")}
+              >
+                <Instagram className="h-2.5 w-2.5 md:h-3 md:w-3 mr-1" />
+                Instagram
               </Button>
             </div>
           </motion.div>
