@@ -1,13 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, Rocket, BookOpen, Play, Brain, Target, Star } from "lucide-react"
+import { ArrowLeft, BookOpen, Play, Brain, Target, Star } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
 
-export default function Grade6Page() {
+export default function Grade12Page() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -15,20 +15,20 @@ export default function Grade6Page() {
   }, [])
 
   const subjects = [
-    { name: "Mathematics", description: "Numbers, Algebra, Geometry", color: "blue" },
-    { name: "Science", description: "Physics, Chemistry, Biology", color: "green" },
-    { name: "English", description: "Reading, Writing, Grammar", color: "purple" },
-    { name: "Social Studies", description: "History, Geography, Civics", color: "orange" },
-    { name: "Computer Science", description: "Programming, Technology", color: "indigo" },
-    { name: "Environmental Studies", description: "Nature, Ecology", color: "emerald" }
+    { name: "Mathematics", description: "Advanced calculus and statistics", color: "blue" },
+    { name: "Physics", description: "Modern physics and electronics", color: "blue" },
+    { name: "Chemistry", description: "Advanced organic and physical chemistry", color: "green" },
+    { name: "Biology", description: "Molecular biology and biotechnology", color: "emerald" },
+    { name: "English", description: "Advanced literature and composition", color: "purple" },
+    { name: "Computer Science", description: "Data structures and programming", color: "indigo" }
   ]
 
   const quickAccess = [
-    { title: "Notes", icon: BookOpen, href: "/notes?grade=6", description: "Study materials" },
-    { title: "Lectures", icon: Play, href: "/lectures?grade=6", description: "Video lessons" },
-    { title: "AI Tutor", icon: Brain, href: "/ai-tutor?grade=6", description: "Smart learning" },
-    { title: "Quiz", icon: Target, href: "/quiz?grade=6", description: "Test yourself" },
-    { title: "Progress", icon: Star, href: "/dashboard?grade=6", description: "Track learning" }
+    { title: "Notes", icon: BookOpen, href: "/notes?grade=12", description: "Study materials" },
+    { title: "Lectures", icon: Play, href: "/lectures?grade=12", description: "Video lessons" },
+    { title: "AI Tutor", icon: Brain, href: "/ai-tutor?grade=12", description: "Smart learning" },
+    { title: "Quiz", icon: Target, href: "/quiz?grade=12", description: "Test yourself" },
+    { title: "Progress", icon: Star, href: "/dashboard?grade=12", description: "Track learning" }
   ]
 
   if (!mounted) return null
@@ -39,10 +39,10 @@ export default function Grade6Page() {
       <section className="pt-20 md:pt-24 pb-8 px-2 md:px-4">
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
-          <Link href="/level/higher-primary">
+          <Link href="/level/higher-secondary">
             <Button variant="ghost" className="mb-6 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Higher Primary
+              Back to Higher Secondary
             </Button>
           </Link>
 
@@ -53,19 +53,19 @@ export default function Grade6Page() {
             className="text-center mb-8 md:mb-12"
           >
             <img 
-              src="/6th.png" 
-              alt="Class 6th" 
+              src="/12th.png" 
+              alt="Class 12th" 
               className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 xl:w-60 xl:h-60 object-contain mx-auto mb-4 drop-shadow-2xl"
             />
             <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
-              Explorer • Higher Primary • Begin your STEM adventure
+              Leader • Higher Secondary • Lead the STEM revolution
             </p>
             <div className="flex justify-center gap-2">
-              <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+              <span className="text-xs px-3 py-1 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300">
                 6 Subjects
               </span>
               <span className="text-xs px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                Foundation Level
+                NCERT Curriculum
               </span>
             </div>
           </motion.div>
@@ -97,12 +97,7 @@ export default function Grade6Page() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
-                <Link href={
-                  subject.name === 'Mathematics' ? '/grade/6/mathematics' : 
-                  subject.name === 'Science' ? '/grade/6/science' : 
-                  subject.name === 'Social Studies' ? '/grade/6/social-studies' :
-                  '#'
-                }>
+                <Link href="#">
                   <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
                     <div className="p-4 md:p-6 h-full flex flex-col justify-center">
                       <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
@@ -111,13 +106,11 @@ export default function Grade6Page() {
                       <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
                         {subject.description}
                       </p>
-                      {(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
-                        <div className="mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                            Content Available
-                          </span>
-                        </div>
-                      )}
+                      <div className="mt-2">
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                          Coming Soon
+                        </span>
+                      </div>
                     </div>
                   </Card>
                 </Link>

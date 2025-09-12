@@ -55,7 +55,7 @@ export default function Grade7Page() {
             <img 
               src="/7th.png" 
               alt="Class 7th" 
-              className="w-28 h-28 md:w-36 md:h-36 lg:w-40 lg:h-40 xl:w-44 xl:h-44 object-contain mx-auto mb-4 drop-shadow-2xl"
+              className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 xl:w-60 xl:h-60 object-contain mx-auto mb-4 drop-shadow-2xl"
             />
             <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
               Discoverer • Higher Primary • Discover the wonders of science
