@@ -1,7 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Calculator, Play, Brain, Target, Star, Gamepad2, Clock, BookOpen } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Calculator, 
+  Play, 
+  Brain, 
+  Target, 
+  Star, 
+  Gamepad2, 
+  Clock, 
+  BookOpen,
+  Hash,
+  Shapes,
+  Ruler,
+  PieChart,
+  BarChart3,
+  Minus,
+  Plus,
+  Divide,
+  Equal,
+  Triangle,
+  Circle,
+  Square,
+  Activity
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -13,28 +36,157 @@ export default function Grade6MathematicsPage() {
     setMounted(true);
   }, []);
 
-  const resources = [
-    { name: "Study Notes", description: "Comprehensive mathematics notes", color: "green", type: "notes", href: "/notes/grade/6/mathematics" },
-    { name: "Video Lectures", description: "Expert-taught lessons", color: "purple", type: "lectures", href: "/lectures/grade/6/mathematics" },
-    { name: "Practice Worksheets", description: "Exercise sheets and practice", color: "orange", type: "worksheets", href: "/worksheets/grade/6/mathematics" },
-    { name: "Quiz & Tests", description: "Assess your understanding", color: "indigo", type: "quiz", href: "/quiz/grade/6/mathematics" },
-    { name: "AI Mathematics Tutor", description: "Personalized learning assistant", color: "emerald", type: "ai", href: "/ai-tutor/grade/6/mathematics" }
-  ];
-
-  const mathematicsTopics = [
+  // All NCERT Class 6 Mathematics Chapters
+  const mathematicsChapters = [
     {
-      name: "Number Comparison",
-      description: "Interactive learning for number comparison",
-      icon: Calculator,
+      id: 1,
+      name: "Knowing Our Numbers",
+      description: "Learn about large numbers, place value, and number patterns",
+      icon: Hash,
       status: "available",
-      href: "/grade/6/mathematics/comparison-game"
+      href: "/grade/6/mathematics/knowing-our-numbers"
     },
     {
-      name: "Knowing Our Numbers",
-      description: "Interactive learning for knowing our numbers",
+      id: 2,
+      name: "Whole Numbers",
+      description: "Properties and operations on whole numbers",
       icon: Calculator,
       status: "coming-soon",
       href: "#coming-soon"
+    },
+    {
+      id: 3,
+      name: "Playing with Numbers",
+      description: "Factors, multiples, and divisibility rules",
+      icon: Target,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 4,
+      name: "Basic Geometrical Ideas",
+      description: "Points, lines, angles, and shapes",
+      icon: Shapes,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 5,
+      name: "Understanding Elementary Shapes",
+      description: "2D and 3D shapes and their properties",
+      icon: Triangle,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 6,
+      name: "Integers",
+      description: "Positive and negative numbers",
+      icon: Minus,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 7,
+      name: "Fractions",
+      description: "Understanding and operations with fractions",
+      icon: PieChart,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 8,
+      name: "Decimals",
+      description: "Decimal numbers and their applications",
+      icon: Circle,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 9,
+      name: "Data Handling",
+      description: "Collection and representation of data",
+      icon: BarChart3,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 10,
+      name: "Mensuration",
+      description: "Perimeter and area of shapes",
+      icon: Ruler,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 11,
+      name: "Algebra",
+      description: "Introduction to algebraic expressions",
+      icon: Equal,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 12,
+      name: "Ratio and Proportion",
+      description: "Understanding ratios and proportions",
+      icon: Divide,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 13,
+      name: "Symmetry",
+      description: "Lines of symmetry and patterns",
+      icon: Star,
+      status: "coming-soon",
+      href: "#coming-soon"
+    },
+    {
+      id: 14,
+      name: "Practical Geometry",
+      description: "Construction of geometric figures",
+      icon: Square,
+      status: "coming-soon",
+      href: "#coming-soon"
+    }
+  ];
+
+  const quickLinks = [
+    {
+      title: "Library",
+      icon: BookOpen,
+      href: "/notes",
+      description: "Study materials",
+      color: "green"
+    },
+    {
+      title: "Lectures",
+      icon: Play,
+      href: "/lectures",
+      description: "Video lessons",
+      color: "purple"
+    },
+    {
+      title: "AI Tutor",
+      icon: Brain,
+      href: "/ai-tutor",
+      description: "Smart learning",
+      color: "emerald"
+    },
+    {
+      title: "Quiz",
+      icon: Target,
+      href: "/quiz",
+      description: "Test yourself",
+      color: "orange"
+    },
+    {
+      title: "Dashboard",
+      icon: Star,
+      href: "/dashboard",
+      description: "Track progress",
+      color: "indigo"
     }
   ];
 
@@ -53,77 +205,90 @@ export default function Grade6MathematicsPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <div className="min-h-screen bg-black">
       {/* Header */}
-      <section className="pt-20 md:pt-24 pb-8 px-2 md:px-4">
-        <div className="max-w-6xl mx-auto">
+      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6">
+        <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Link href="/grade/6">
-            <Button variant="ghost" className="mb-6 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white">
+            <Button variant="ghost" className="mb-6 text-gray-400 hover:text-white">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Class 6
             </Button>
           </Link>
 
           {/* Page Header */}
-          <div className="text-center mb-8 md:mb-12">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Calculator className="text-white dark:text-black h-8 w-8 md:h-10 md:w-10" />
+          <div className="text-center mb-12">
+            <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-6">
+              <Calculator className="text-white h-10 w-10" />
             </div>
-            <h1 className="text-2xl md:text-4xl font-bold text-black dark:text-white mb-2">
+            <h1 className="text-4xl font-bold text-white mb-2">
               Mathematics - Class 6
             </h1>
-            <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
+            <p className="text-lg text-gray-400">
               NCERT Curriculum • Interactive Learning Resources
             </p>
           </div>
 
-          {/* Topics Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-            {mathematicsTopics.map((topic, index) => {
-              const IconComponent = topic.icon;
-              return (
-                <Card key={index} className="border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer">
-                  <div className="p-4 md:p-6">
-                    <div className="flex items-start gap-3">
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${getColorClasses("blue")} flex items-center justify-center flex-shrink-0`}>
-                        <IconComponent className="text-white h-6 w-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <h3 className="font-semibold text-black dark:text-white text-sm md:text-base">
-                            {topic.name}
-                          </h3>
-                          {topic.status === "available" && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 whitespace-nowrap">
+          {/* Mathematics Chapters Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {mathematicsChapters.map((chapter) => {
+              const IconComponent = chapter.icon;
+              const isAvailable = chapter.status === "available";
+              
+              if (isAvailable) {
+                return (
+                  <Link key={chapter.id} href={chapter.href}>
+                    <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                          <IconComponent className="text-white h-6 w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <h3 className="font-semibold text-white text-base">
+                              {chapter.name}
+                            </h3>
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-white whitespace-nowrap">
                               Available
                             </span>
-                          )}
-                          {topic.status === "coming-soon" && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 whitespace-nowrap">
-                              Coming Soon
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-zinc-600 dark:text-zinc-400 text-xs md:text-sm line-clamp-2">
-                          {topic.description}
-                        </p>
-                        <div className="mt-3">
-                          {topic.status === "available" ? (
-                            <Link href={topic.href}>
-                              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                                <Play className="h-4 w-4 mr-2" />
-                                Start Learning
-                              </Button>
-                            </Link>
-                          ) : (
-                            <Button size="sm" disabled className="bg-gray-300 text-gray-500 cursor-not-allowed">
-                              <Clock className="h-4 w-4 mr-2" />
-                              Coming Soon
-                            </Button>
-                          )}
+                          </div>
+                          <p className="text-gray-400 text-sm mb-4">
+                            {chapter.description}
+                          </p>
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                            <Play className="h-4 w-4 mr-2" />
+                            Start Learning
+                          </Button>
                         </div>
                       </div>
+                    </Card>
+                  </Link>
+                );
+              }
+              
+              return (
+                <Card key={chapter.id} className="bg-zinc-800 border-zinc-700 cursor-not-allowed p-6 opacity-60">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-zinc-600 flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="text-zinc-400 h-6 w-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-300 text-base">
+                          {chapter.name}
+                        </h3>
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-600 text-white whitespace-nowrap">
+                          Coming Soon
+                        </span>
+                      </div>
+                      <p className="text-gray-500 text-sm mb-4">
+                        {chapter.description}
+                      </p>
+                      <Button size="sm" disabled className="bg-zinc-600 text-zinc-400 cursor-not-allowed">
+                        <Clock className="h-4 w-4 mr-2" />
+                        Coming Soon
+                      </Button>
                     </div>
                   </div>
                 </Card>
@@ -131,28 +296,26 @@ export default function Grade6MathematicsPage() {
             })}
           </div>
 
-          {/* Resources Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {resources.map((resource, index) => (
-              <Card key={index} className="border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer">
-                <div className="p-4 md:p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getColorClasses(resource.color)} flex items-center justify-center`}>
-                      <BookOpen className="text-white h-5 w-5" />
+          {/* Quick Links */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {quickLinks.map((link, index) => {
+              const IconComponent = link.icon;
+              return (
+                <Link key={index} href={link.href}>
+                  <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-4 text-center">
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getColorClasses(link.color)} flex items-center justify-center mx-auto mb-3`}>
+                      <IconComponent className="text-white h-5 w-5" />
                     </div>
-                    <h3 className="font-semibold text-black dark:text-white text-sm md:text-base">
-                      {resource.name}
+                    <h3 className="font-semibold text-white text-sm mb-1">
+                      {link.title}
                     </h3>
-                  </div>
-                  <p className="text-zinc-600 dark:text-zinc-400 text-xs md:text-sm mb-4">
-                    {resource.description}
-                  </p>
-                  <Button size="sm" variant="outline" className="w-full">
-                    Access Resource
-                  </Button>
-                </div>
-              </Card>
-            ))}
+                    <p className="text-gray-400 text-xs">
+                      {link.description}
+                    </p>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
