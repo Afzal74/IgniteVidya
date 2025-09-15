@@ -27,7 +27,7 @@ type GameState = {
   combo: number;
   targetSequence: number[];
   currentSequenceIndex: number;
-  sequenceBucket: number[];
+  sequenceBucket: { value: number; isCorrect: boolean }[];
   isAnswered: boolean;
   gameComplete: boolean;
   currentMode: 'ascending' | 'descending';
@@ -103,45 +103,81 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
       targetSequence = [...numbers].sort((a, b) => b - a); // descending
     }
     
-    // Position asteroids within a 700x300 area with proper spacing
-    const gameAreaWidth = 700;
-    const gameAreaHeight = 300;
-    const padding = 50;
-    const asteroidSize = 80;
+    // Responsive asteroid positioning - horizontal layout for mobile
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const isTablet = typeof window !== 'undefined' && window.innerWidth < 1024;
     
-    // Calculate grid dimensions
-    const cols = Math.ceil(Math.sqrt(count));
-    const rows = Math.ceil(count / cols);
+    // Dynamic game area dimensions based on screen size
+    let gameAreaWidth, gameAreaHeight, asteroidSize, padding;
     
-    // Calculate slot dimensions
-    const slotWidth = (gameAreaWidth - 2 * padding) / cols;
-    const slotHeight = (gameAreaHeight - 2 * padding) / rows;
+    if (isMobile) {
+      // Mobile: horizontal scrollable layout
+      gameAreaWidth = Math.max(600, count * 120); // Ensure enough width for all asteroids
+      gameAreaHeight = 256; // Match the h-64 class (16rem = 256px)
+      asteroidSize = 80;
+      padding = 20;
+    } else if (isTablet) {
+      // Tablet: hybrid layout
+      gameAreaWidth = 600;
+      gameAreaHeight = 280;
+      asteroidSize = 85;
+      padding = 30;
+    } else {
+      // Desktop: original layout
+      gameAreaWidth = 700;
+      gameAreaHeight = 300;
+      asteroidSize = 90;
+      padding = 50;
+    }
     
-    // Create asteroids with calculated positions
+    // Create asteroids with responsive positioning
     const newAsteroids: NumberAsteroid[] = numbers.map((num, index) => {
-      const col = index % cols;
-      const row = Math.floor(index / cols);
+      let x, y;
       
-      // Calculate base position for this slot
-      const baseX = padding + col * slotWidth;
-      const baseY = padding + row * slotHeight;
-      
-      // Add randomization within the slot (but ensure asteroid fits)
-      const maxOffsetX = Math.max(0, slotWidth - asteroidSize);
-      const maxOffsetY = Math.max(0, slotHeight - asteroidSize);
-      
-      const x = baseX + Math.random() * maxOffsetX;
-      const y = baseY + Math.random() * maxOffsetY;
-      
-      // Ensure asteroids stay within boundaries
-      const finalX = Math.max(0, Math.min(x, gameAreaWidth - asteroidSize));
-      const finalY = Math.max(0, Math.min(y, gameAreaHeight - asteroidSize));
+      if (isMobile) {
+        // Mobile: Horizontal line layout with slight vertical variation
+        const availableWidth = gameAreaWidth - (2 * padding);
+        const slotWidth = availableWidth / count;
+        
+        x = padding + (index * slotWidth) + (slotWidth - asteroidSize) / 2;
+        y = (gameAreaHeight - asteroidSize) / 2 + (Math.random() - 0.5) * 30; // Small vertical randomization
+        
+        // Ensure asteroids stay within boundaries
+        x = Math.max(padding, Math.min(x, gameAreaWidth - asteroidSize - padding));
+        y = Math.max(20, Math.min(y, gameAreaHeight - asteroidSize - 20));
+      } else {
+        // Desktop/Tablet: Grid layout
+        const cols = Math.ceil(Math.sqrt(count));
+        const rows = Math.ceil(count / cols);
+        
+        const col = index % cols;
+        const row = Math.floor(index / cols);
+        
+        // Calculate slot dimensions
+        const slotWidth = (gameAreaWidth - 2 * padding) / cols;
+        const slotHeight = (gameAreaHeight - 2 * padding) / rows;
+        
+        // Calculate base position for this slot
+        const baseX = padding + col * slotWidth;
+        const baseY = padding + row * slotHeight;
+        
+        // Add randomization within the slot (but ensure asteroid fits)
+        const maxOffsetX = Math.max(0, slotWidth - asteroidSize);
+        const maxOffsetY = Math.max(0, slotHeight - asteroidSize);
+        
+        x = baseX + Math.random() * maxOffsetX;
+        y = baseY + Math.random() * maxOffsetY;
+        
+        // Ensure asteroids stay within boundaries
+        x = Math.max(0, Math.min(x, gameAreaWidth - asteroidSize));
+        y = Math.max(0, Math.min(y, gameAreaHeight - asteroidSize));
+      }
       
       return {
         id: `asteroid-${Date.now()}-${index}`,
         value: num,
-        x: finalX,
-        y: finalY,
+        x,
+        y,
         isShot: false,
         isCorrect: null
       };
@@ -187,8 +223,11 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
     if (targetedAsteroid && rocketPosition.x && rocketPosition.y) {
       const asteroid = asteroids.find(a => a.id === targetedAsteroid);
       if (asteroid) {
-        const asteroidCenterX = asteroid.x + 40;
-        const asteroidCenterY = asteroid.y + 40;
+        // Use responsive sizing for asteroid center calculation
+        const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+        const asteroidSize = isMobile ? 32 : 40; // Half of asteroid width/height for center
+        const asteroidCenterX = asteroid.x + asteroidSize;
+        const asteroidCenterY = asteroid.y + asteroidSize;
         
         // Calculate angle from rocket to asteroid
         const deltaX = asteroidCenterX - rocketPosition.x;
@@ -283,7 +322,12 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
     const neutralColors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7'];
     
     const colors = isCorrect ? correctColors : wrongColors.length > 0 ? wrongColors : neutralColors;
-    const particleCount = isCorrect ? 25 : 20;
+    
+    // Mobile-optimized particle count and physics
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const particleCount = isMobile ? (isCorrect ? 15 : 12) : (isCorrect ? 25 : 20); // Fewer particles on mobile
+    const velocityMultiplier = isMobile ? 0.7 : 1; // Slower particles on mobile
+    const lifespan = isMobile ? (isCorrect ? 80 : 70) : (isCorrect ? 100 : 90); // Shorter lifespan on mobile
     
     const newParticles = [];
     const baseId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
@@ -291,12 +335,12 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
     for (let i = 0; i < particleCount; i++) {
       newParticles.push({
         id: `explosion-${baseId}-${i}`,
-        x: x + (Math.random() - 0.5) * 40,
-        y: y + (Math.random() - 0.5) * 40,
-        vx: (Math.random() - 0.5) * 15,
-        vy: (Math.random() - 0.5) * 15 - 3,
-        life: isCorrect ? 100 : 90,
-        maxLife: isCorrect ? 100 : 90,
+        x: x + (Math.random() - 0.5) * (isMobile ? 30 : 40), // Smaller spread on mobile
+        y: y + (Math.random() - 0.5) * (isMobile ? 30 : 40),
+        vx: (Math.random() - 0.5) * 15 * velocityMultiplier,
+        vy: ((Math.random() - 0.5) * 15 - 3) * velocityMultiplier,
+        life: lifespan,
+        maxLife: lifespan,
         color: colors[Math.floor(Math.random() * colors.length)],
         size: Math.random() * (isCorrect ? 6 : 5) + 2
       });
@@ -318,7 +362,8 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
       createExplosion(asteroid.x + 40, asteroid.y + 40, isCorrect);
     }, 100);
 
-    // Update asteroid as shot
+    // Don't mark asteroid as shot permanently - allow re-shooting after wrong attempts
+    // Only temporarily mark for visual feedback
     setAsteroids(prev => prev.map(a => 
       a.id === asteroid.id 
         ? { ...a, isShot: true, isCorrect }
@@ -326,7 +371,7 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
     ));
 
     if (isCorrect) {
-      const newSequenceBucket = [...gameState.sequenceBucket, asteroid.value];
+      const newSequenceBucket = [...gameState.sequenceBucket, { value: asteroid.value, isCorrect: true }];
       const newIndex = gameState.currentSequenceIndex + 1;
       
       playSound('correct', 1 + newIndex * 0.1);
@@ -388,13 +433,26 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
     } else {
       playSound('wrong');
       
+      // Add wrong number to sequence bucket in red
+      const newSequenceBucket = [...gameState.sequenceBucket, { value: asteroid.value, isCorrect: false }];
+      
       setGameState(prev => ({
         ...prev,
         lives: prev.lives - 1,
         combo: 0,
         streak: 0,
+        sequenceBucket: newSequenceBucket,
         feedback: `❌ Wrong! Expected ${expectedNumber}, got ${asteroid.value}`
       }));
+
+      // Reset asteroid to allow re-shooting after a short delay
+      setTimeout(() => {
+        setAsteroids(prev => prev.map(a => 
+          a.id === asteroid.id 
+            ? { ...a, isShot: false, isCorrect: null }
+            : a
+        ));
+      }, 1500);
 
       // Check game over
       if (gameState.lives <= 1) {
@@ -403,10 +461,6 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
           isPlaying: false,
           gameOver: true
         }));
-      } else {
-        setTimeout(() => {
-          setGameState(prev => ({ ...prev, isAnswered: false }));
-        }, 2000);
       }
     }
   };
@@ -492,65 +546,94 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
         ))}
       </div>
 
-      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6 relative z-10">
+      <section className="pt-16 md:pt-24 pb-6 md:pb-8 px-3 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          {/* Header - Mobile optimization */}
+          <div className="flex flex-col md:flex-row items-center justify-between mb-4 md:mb-8 space-y-2 md:space-y-0">
+            {/* Back button - floating on mobile */}
             <Button 
               onClick={onBackToMainGame}
               variant="ghost" 
-              className="text-gray-300 hover:text-white"
+              className="text-gray-300 hover:text-white self-start absolute top-4 left-4 z-20 bg-slate-800/70 backdrop-blur-sm md:static md:bg-transparent md:backdrop-blur-none rounded-full md:rounded-md p-2 md:p-2 h-10 w-10 md:w-auto md:h-auto"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Game
+              <ArrowLeft className="h-4 w-4 md:mr-2" />
+              <span className="hidden md:inline">Back to Game</span>
             </Button>
             
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-2">
-                🚀 Space Rocket Ascending Order 🚀
+            <div className="text-center flex-1 md:flex-none">
+              <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-1 md:mb-2 flex flex-col md:flex-row items-center gap-1 md:gap-2">
+                <span>🚀 Space Rocket</span>
+                <span className="hidden md:inline">{gameState.currentMode === 'ascending' ? 'Ascending Order' : 'Descending Order'} 🚀</span>
+                <span className="md:hidden text-sm">Game 🚀</span>
               </h1>
-              <p className="text-gray-300">
-                Shoot asteroids in ascending order!
+              <p className="text-gray-300 text-xs md:text-base">
+                Shoot asteroids in <span className="hidden md:inline">{gameState.currentMode}</span><span className="md:hidden">correct</span> order!
               </p>
             </div>
             
-            <div className="w-24"></div>
+            <div className="w-0 md:w-24"></div>
           </div>
 
-          {/* Game Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
+          {/* Game Stats - Compact mobile layout */}
+          <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-5 sm:gap-4 justify-center mb-3 md:mb-8">
+            {/* Mobile: Single row with mini cards */}
+            <div className="flex gap-1 w-full justify-center sm:hidden">
+              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
+                <div className="text-sm font-bold text-blue-400 truncate">{gameState.score}</div>
+                <div className="text-xs text-gray-400">💰</div>
+              </div>
+              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
+                <div className="text-sm font-bold text-purple-400 truncate">{gameState.level}</div>
+                <div className="text-xs text-gray-400">🎮</div>
+              </div>
+              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
+                <div className="text-sm font-bold text-red-400 truncate">{gameState.lives}</div>
+                <div className="text-xs text-gray-400">❤️</div>
+              </div>
+              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
+                <div className="text-sm font-bold text-yellow-400 truncate">{gameState.streak}</div>
+                <div className="text-xs text-gray-400">⚡</div>
+              </div>
+              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
+                <div className="text-sm font-bold text-emerald-400 truncate">{gameState.combo}</div>
+                <div className="text-xs text-gray-400">🔥</div>
+              </div>
+            </div>
+            
+            {/* Desktop: Original larger cards */}
+            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-blue-400">{gameState.score}</div>
               <div className="text-sm text-gray-400">Score</div>
             </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
+            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-purple-400">{gameState.level}</div>
               <div className="text-sm text-gray-400">Level</div>
             </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
+            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-red-400">{gameState.lives}</div>
               <div className="text-sm text-gray-400">Lives</div>
             </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
+            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-yellow-400">{gameState.streak}</div>
               <div className="text-sm text-gray-400">Streak</div>
             </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
+            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-emerald-400">{gameState.combo}</div>
               <div className="text-sm text-gray-400">Combo</div>
             </Card>
           </div>
 
-          {/* Start Game Button */}
+          {/* Start Game Button - Compact mobile version */}
           {!gameState.isPlaying && !gameState.gameOver && !gameState.gameComplete && (
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 md:mb-8">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button 
                   onClick={startGame}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-12 py-4 text-lg font-bold rounded-xl shadow-lg"
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 md:px-12 md:py-4 text-base md:text-lg font-bold rounded-lg md:rounded-xl shadow-lg"
                 >
-                  <Play className="h-6 w-6 mr-3" />
-                  Launch Mission
+                  <Play className="h-4 w-4 md:h-6 md:w-6 mr-2 md:mr-3" />
+                  <span className="hidden sm:inline">Launch Mission</span>
+                  <span className="sm:hidden">Start</span>
                 </Button>
               </motion.div>
             </div>
@@ -560,21 +643,25 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
           {gameState.isPlaying && (
             <div className="space-y-8">
               {/* Sequence Bucket */}
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-white mb-4">🎯 Sequence Bucket:</h3>
-                <div className="flex justify-center gap-2 flex-wrap">
-                  {gameState.sequenceBucket.map((num, index) => (
+              <div className="text-center mb-4 md:mb-6 px-2">
+                <h3 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">🎯 Sequence Bucket:</h3>
+                <div className="flex justify-center gap-1.5 sm:gap-2 flex-wrap max-w-md mx-auto">
+                  {gameState.sequenceBucket.map((item, index) => (
                     <motion.div
                       key={`bucket-${index}`}
                       initial={{ scale: 0, rotate: 180 }}
                       animate={{ scale: 1, rotate: 0 }}
-                      className="w-12 h-12 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg"
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center text-white font-bold shadow-lg text-sm sm:text-base ${
+                        item.isCorrect 
+                          ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' 
+                          : 'bg-gradient-to-br from-red-400 to-red-600'
+                      }`}
                     >
-                      {num}
+                      {item.value}
                     </motion.div>
                   ))}
                   {gameState.currentSequenceIndex < gameState.targetSequence.length && (
-                    <div className="w-12 h-12 border-2 border-dashed border-emerald-400 rounded-lg flex items-center justify-center text-emerald-400 font-bold">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-dashed border-emerald-400 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-sm sm:text-base">
                       ?
                     </div>
                   )}
@@ -583,15 +670,17 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
 
               {/* Space Area with Asteroids */}
               <div 
-                className="relative h-96 bg-gradient-to-b from-indigo-900/30 to-purple-900/30 rounded-3xl border-2 border-slate-700 backdrop-blur overflow-hidden"
+                className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] bg-gradient-to-b from-indigo-900/30 to-purple-900/30 rounded-xl sm:rounded-2xl lg:rounded-3xl border-2 border-slate-700 backdrop-blur mx-1 sm:mx-2 lg:mx-0"
                 style={{ 
-                  backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3), transparent 50%)'
+                  backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3), transparent 50%)',
+                  overflowX: 'auto',
+                  overflowY: 'hidden'
                 }}
               >
-                {/* Rocket at right side center */}
+                {/* Rocket at right side, positioned lower on mobile */}
                 <motion.div
                   ref={rocketRef}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2"
+                  className="absolute right-3 sm:right-4 top-3/4 sm:top-1/2 transform -translate-y-1/2"
                   animate={{ 
                     x: [0, -3, 0],
                     rotate: rocketRotation
@@ -601,54 +690,111 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                     rotate: { duration: 0.3, ease: "easeOut" }
                   }}
                 >
-                  {/* Round background for rocket */}
-                  <div className="relative w-20 h-20 bg-gradient-to-br from-slate-700/80 to-slate-900/80 rounded-full border-2 border-slate-600/50 backdrop-blur-sm shadow-lg flex items-center justify-center">
+                  {/* Round background for rocket - smaller on mobile */}
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-700/80 to-slate-900/80 rounded-full border-2 border-slate-600/50 backdrop-blur-sm shadow-lg flex items-center justify-center">
                     <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 animate-pulse"></div>
                     <img 
                       src="/super-Brain.png" 
                       alt="Super Brain" 
-                      className="w-16 h-16 relative z-10 object-contain drop-shadow-lg"
+                      className="w-12 h-12 sm:w-16 sm:h-16 relative z-10 object-contain drop-shadow-lg"
                     />
                   </div>
                 </motion.div>
 
                 {/* Targeting Line */}
-                {targetedAsteroid && (
-                  <motion.svg
-                    className="absolute inset-0 pointer-events-none"
-                    style={{ width: '100%', height: '100%' }}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <motion.line
-                      x1={rocketPosition.x}
-                      y1={rocketPosition.y}
-                      x2={asteroids.find(a => a.id === targetedAsteroid)?.x! + 40}
-                      y2={asteroids.find(a => a.id === targetedAsteroid)?.y! + 40}
-                      stroke="#FF0000"
-                      strokeWidth="3"
-                      strokeDasharray="0"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: [0.6, 1, 0.6] }}
-                      transition={{ 
-                        pathLength: { duration: 0.3 },
-                        opacity: { duration: 0.8, repeat: Infinity, ease: "easeInOut" }
+                {targetedAsteroid && (() => {
+                  const targetAsteroid = asteroids.find(a => a.id === targetedAsteroid);
+                  if (!targetAsteroid) return null;
+                  
+                  // Calculate responsive asteroid center based on screen size
+                  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+                  const isTablet = typeof window !== 'undefined' && window.innerWidth < 1024;
+                  
+                  // Match the asteroid size calculation from generateAsteroids
+                  let asteroidDisplaySize;
+                  if (isMobile) {
+                    asteroidDisplaySize = 32; // Half of 64px (16*4)
+                  } else if (isTablet) {
+                    asteroidDisplaySize = 40; // Half of 80px (20*4)
+                  } else {
+                    asteroidDisplaySize = 40; // Half of 80px (20*4) for desktop
+                  }
+                  
+                  const asteroidCenterX = targetAsteroid.x + asteroidDisplaySize;
+                  const asteroidCenterY = targetAsteroid.y + asteroidDisplaySize;
+                  
+                  return (
+                    <motion.svg
+                      className="absolute inset-0 pointer-events-none"
+                      style={{ 
+                        width: '100%', 
+                        height: '100%',
+                        overflow: 'visible', // Ensure line isn't clipped
+                        zIndex: 50 // Ensure targeting line appears above asteroids
                       }}
-                      style={{ filter: 'drop-shadow(0 0 8px #FF0000)' }}
-                    />
-                    {/* Laser sight dots */}
-                    <motion.circle
-                      cx={asteroids.find(a => a.id === targetedAsteroid)?.x! + 40}
-                      cy={asteroids.find(a => a.id === targetedAsteroid)?.y! + 40}
-                      r="3"
-                      fill="#FF0000"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: [0, 1, 0] }}
-                      transition={{ duration: 0.5, repeat: Infinity }}
-                    />
-                  </motion.svg>
-                )}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <motion.line
+                        x1={rocketPosition.x}
+                        y1={rocketPosition.y}
+                        x2={asteroidCenterX}
+                        y2={asteroidCenterY}
+                        stroke="#FF0000"
+                        strokeWidth="3"
+                        strokeDasharray="0"
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: [0.6, 1, 0.6] }}
+                        transition={{ 
+                          pathLength: { duration: 0.3 },
+                          opacity: { duration: 0.8, repeat: Infinity, ease: "easeInOut" }
+                        }}
+                        style={{ 
+                          filter: 'drop-shadow(0 0 8px #FF0000)',
+                          vectorEffect: 'non-scaling-stroke' // Maintain stroke width across scaling
+                        }}
+                      />
+                      {/* Laser sight dots */}
+                      <motion.circle
+                        cx={asteroidCenterX}
+                        cy={asteroidCenterY}
+                        r="3"
+                        fill="#FF0000"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: [0, 1, 0] }}
+                        transition={{ duration: 0.5, repeat: Infinity }}
+                        style={{
+                          filter: 'drop-shadow(0 0 4px #FF0000)'
+                        }}
+                      />
+                      {/* Additional targeting circle around asteroid */}
+                      <motion.circle
+                        cx={asteroidCenterX}
+                        cy={asteroidCenterY}
+                        r={asteroidDisplaySize * 0.8}
+                        fill="none"
+                        stroke="#FF0000"
+                        strokeWidth="2"
+                        strokeDasharray="8 4"
+                        initial={{ scale: 0, rotate: 0 }}
+                        animate={{ 
+                          scale: [0.8, 1.2, 0.8],
+                          rotate: 360,
+                          opacity: [0.3, 0.8, 0.3]
+                        }}
+                        transition={{ 
+                          scale: { duration: 1, repeat: Infinity, ease: "easeInOut" },
+                          rotate: { duration: 2, repeat: Infinity, ease: "linear" },
+                          opacity: { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                        }}
+                        style={{
+                          filter: 'drop-shadow(0 0 4px #FF0000)'
+                        }}
+                      />
+                    </motion.svg>
+                  );
+                })()}
 
                 {/* Debug: Show asteroid count */}
                 {asteroids.length > 0 && (
@@ -661,36 +807,42 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                 {asteroids.map((asteroid, index) => {
                   console.log('Rendering asteroid:', asteroid); // Debug log
                   
-                  // Simplified gentle floating movement
-                  const floatX = 2 + (index % 2) * 2; // 2-4px range (smaller movement)
-                  const floatY = 1 + (index % 3) * 1; // 1-3px range (smaller movement)
-                  const floatDuration = 4 + (index % 3) * 2; // 4-8s range (slower movement)
+                  // Mobile-optimized floating movement
+                  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+                  const floatX = isMobile ? 1 + (index % 2) * 1 : 2 + (index % 2) * 2; // Smaller movement on mobile
+                  const floatY = isMobile ? 0.5 + (index % 3) * 0.5 : 1 + (index % 3) * 1; // Smaller movement on mobile
+                  const floatDuration = 5 + (index % 3) * 2; // Consistent slower movement
                   
                   return (
                     <motion.div
                       key={asteroid.id}
-                      className={`absolute cursor-crosshair transform transition-all duration-300 z-40 ${
+                      className={`absolute cursor-pointer transform transition-all duration-300 z-40 ${
                         asteroid.isShot 
                           ? (asteroid.isCorrect ? 'scale-0 opacity-0' : 'scale-150 opacity-50')
-                          : 'hover:scale-110'
+                          : 'active:scale-95 hover:scale-110'
                       }`}
                       style={{
                         left: asteroid.x,
                         top: asteroid.y,
-                        zIndex: 40
+                        zIndex: 40,
+                        // Wider touch zone for mobile
+                        padding: isMobile ? '12px' : '8px',
+                        margin: isMobile ? '-12px' : '-8px',
+                        minWidth: isMobile ? '96px' : '80px',
+                        minHeight: isMobile ? '96px' : '80px'
                       }}
                       initial={{ scale: 1, rotate: 0 }}
                       animate={{ 
                         scale: asteroid.isShot ? (asteroid.isCorrect ? 0 : 1.5) : 1,
-                        rotate: asteroid.isShot ? 360 : 0, // Remove continuous rotation
+                        rotate: asteroid.isShot ? 360 : 0,
                         opacity: asteroid.isShot ? (asteroid.isCorrect ? 0 : 0.5) : 1,
-                        // Gentler floating movement
+                        // Mobile-optimized floating movement
                         x: asteroid.isShot ? 0 : [0, floatX, 0, -floatX, 0],
                         y: asteroid.isShot ? 0 : [0, -floatY, 0, floatY, 0]
                       }}
                       transition={{ 
                         duration: asteroid.isShot ? 0.5 : 4,
-                        rotate: { duration: 0.5 }, // No continuous rotation
+                        rotate: { duration: 0.5 },
                         scale: { duration: 0.3, ease: "easeOut" },
                         x: { 
                           duration: floatDuration, 
@@ -703,12 +855,31 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                           ease: "easeInOut"
                         }
                       }}
+                      // Mobile-friendly interactions
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        if (!asteroid.isShot) {
+                          setTargetedAsteroid(asteroid.id);
+                        }
+                      }}
+                      onTouchEnd={(e) => {
+                        e.preventDefault();
+                        if (!asteroid.isShot) {
+                          shootAsteroid(asteroid);
+                          setTargetedAsteroid(null);
+                        }
+                      }}
                       onMouseEnter={() => !asteroid.isShot && setTargetedAsteroid(asteroid.id)}
                       onMouseLeave={() => setTargetedAsteroid(null)}
-                      onClick={() => !asteroid.isShot && shootAsteroid(asteroid)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!asteroid.isShot) {
+                          shootAsteroid(asteroid);
+                        }
+                      }}
                   >
                     {/* Asteroid with irregular shape */}
-                    <div className={`relative w-20 h-20 flex items-center justify-center text-xl font-bold shadow-2xl ${
+                    <div className={`relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-lg sm:text-xl font-bold shadow-2xl ${
                       asteroid.isCorrect === true ? 'text-white' :
                       asteroid.isCorrect === false ? 'text-white' :
                       'text-white hover:scale-105 transition-transform'
@@ -736,10 +907,10 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                       
                       {/* Asteroid Emoji and Number */}
                       <div className="relative z-10 flex flex-col items-center justify-center">
-                        <div className="text-2xl mb-1">
+                        <div className="text-xl sm:text-2xl mb-0.5 sm:mb-1">
                           {['🪨', '☄️', '🌑', '🌖', '🪨'][index % 5]}
                         </div>
-                        <span className="text-lg font-bold drop-shadow-lg">{asteroid.value}</span>
+                        <span className="text-base sm:text-lg font-bold drop-shadow-lg">{asteroid.value}</span>
                       </div>
                       
                       {/* Glow effect for unshot asteroids */}
@@ -756,16 +927,16 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                 })}
               </div>
 
-              {/* Feedback */}
+              {/* Feedback - Compact for mobile */}
               <AnimatePresence>
                 {gameState.feedback && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="text-center"
+                    className="text-center px-2"
                   >
-                    <div className={`text-xl font-bold p-4 rounded-xl inline-block ${
+                    <div className={`text-sm md:text-xl font-bold p-2 md:p-4 rounded-lg md:rounded-xl inline-block max-w-xs md:max-w-none mx-auto ${
                       gameState.feedback.includes('Complete') || gameState.feedback.includes('LEVEL') 
                         ? 'bg-gradient-to-r from-emerald-500/30 to-blue-500/30 text-emerald-300 border-2 border-emerald-400'
                         : gameState.feedback.includes('Correct') 
@@ -774,7 +945,12 @@ export default function RocketAscendingGame({ onBackToMainGame }: RocketAscendin
                         ? 'bg-red-500/20 text-red-400 border border-red-400'
                         : 'bg-blue-500/20 text-blue-300 border border-blue-400'
                     }`}>
-                      {gameState.feedback}
+                      <span className="block md:hidden text-xs">
+                        {gameState.feedback.length > 50 ? gameState.feedback.substring(0, 50) + '...' : gameState.feedback}
+                      </span>
+                      <span className="hidden md:block">
+                        {gameState.feedback}
+                      </span>
                     </div>
                   </motion.div>
                 )}

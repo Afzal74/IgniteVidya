@@ -207,31 +207,33 @@ export default function Grade6MathematicsPage() {
   return (
     <div className="min-h-screen bg-black">
       {/* Header */}
-      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6">
+      <section className="pt-16 md:pt-20 lg:pt-24 pb-6 md:pb-8 px-3 md:px-4 lg:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Link href="/grade/6">
-            <Button variant="ghost" className="mb-6 text-gray-400 hover:text-white">
+            <Button variant="ghost" className="mb-4 md:mb-6 text-gray-400 hover:text-white text-sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Class 6
+              <span className="hidden sm:inline">Back to Class 6</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           </Link>
 
           {/* Page Header */}
-          <div className="text-center mb-12">
-            <div className="w-20 h-20 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-6">
-              <Calculator className="text-white h-10 w-10" />
+          <div className="text-center mb-8 md:mb-12">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-4 md:mb-6">
+              <Calculator className="text-white h-8 w-8 md:h-10 md:w-10" />
             </div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Mathematics - Class 6
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-2">
+              <span className="block sm:hidden">Math - Class 6</span>
+              <span className="hidden sm:block">Mathematics - Class 6</span>
             </h1>
-            <p className="text-lg text-gray-400">
+            <p className="text-sm md:text-base lg:text-lg text-gray-400 px-4">
               NCERT Curriculum • Interactive Learning Resources
             </p>
           </div>
 
           {/* Mathematics Chapters Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 lg:gap-6 mb-8 md:mb-12">
             {mathematicsChapters.map((chapter) => {
               const IconComponent = chapter.icon;
               const isAvailable = chapter.status === "available";
@@ -239,26 +241,27 @@ export default function Grade6MathematicsPage() {
               if (isAvailable) {
                 return (
                   <Link key={chapter.id} href={chapter.href}>
-                    <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
-                          <IconComponent className="text-white h-6 w-6" />
+                    <Card className="bg-zinc-800 border-zinc-700 hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-4 md:p-6">
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                          <IconComponent className="text-white h-5 w-5 md:h-6 md:w-6" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <h3 className="font-semibold text-white text-base">
+                            <h3 className="font-semibold text-white text-sm md:text-base leading-tight">
                               {chapter.name}
                             </h3>
-                            <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-white whitespace-nowrap">
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-600 text-white whitespace-nowrap flex-shrink-0">
                               Available
                             </span>
                           </div>
-                          <p className="text-gray-400 text-sm mb-4">
+                          <p className="text-gray-400 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
                             {chapter.description}
                           </p>
-                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
-                            <Play className="h-4 w-4 mr-2" />
-                            Start Learning
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto text-xs md:text-sm">
+                            <Play className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                            <span className="hidden sm:inline">Start Learning</span>
+                            <span className="sm:hidden">Start</span>
                           </Button>
                         </div>
                       </div>
@@ -268,25 +271,25 @@ export default function Grade6MathematicsPage() {
               }
               
               return (
-                <Card key={chapter.id} className="bg-zinc-800 border-zinc-700 cursor-not-allowed p-6 opacity-60">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-zinc-600 flex items-center justify-center flex-shrink-0">
-                      <IconComponent className="text-zinc-400 h-6 w-6" />
+                <Card key={chapter.id} className="bg-zinc-800 border-zinc-700 cursor-not-allowed p-4 md:p-6 opacity-60">
+                  <div className="flex items-start gap-3 md:gap-4">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-zinc-600 flex items-center justify-center flex-shrink-0">
+                      <IconComponent className="text-zinc-400 h-5 w-5 md:h-6 md:w-6" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-300 text-base">
+                        <h3 className="font-semibold text-gray-300 text-sm md:text-base leading-tight">
                           {chapter.name}
                         </h3>
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-600 text-white whitespace-nowrap">
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-600 text-white whitespace-nowrap flex-shrink-0">
                           Coming Soon
                         </span>
                       </div>
-                      <p className="text-gray-500 text-sm mb-4">
+                      <p className="text-gray-500 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
                         {chapter.description}
                       </p>
-                      <Button size="sm" disabled className="bg-zinc-600 text-zinc-400 cursor-not-allowed">
-                        <Clock className="h-4 w-4 mr-2" />
+                      <Button size="sm" disabled className="bg-zinc-600 text-zinc-400 cursor-not-allowed w-full sm:w-auto text-xs md:text-sm">
+                        <Clock className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                         Coming Soon
                       </Button>
                     </div>

@@ -508,24 +508,24 @@ export default function ComparingNumbersGame() {
           {/* Game Area */}
           {gameState.isPlaying && (
             <div className="space-y-8">
-              {/* Numbers to Compare */}
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold text-white mb-6">Drag the numbers to the correct buckets:</h2>
-                <div className="flex justify-center gap-8 mb-8">
-                  {numbers.filter(n => !n.isDropped).map((number, index) => (
-                    <motion.div
-                      key={number.id}
-                      className={`
-                        w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-bold cursor-grab active:cursor-grabbing shadow-xl transform transition-all select-none
-                        ${
-                          number.isDragging 
-                            ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-400/50 scale-110 rotate-2' 
-                            : 'bg-gradient-to-br from-white to-gray-100 text-gray-800 hover:shadow-2xl hover:scale-105'
-                        }
-                      `}
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ delay: index * 0.3, type: "spring", stiffness: 200 }}
+          {/* Numbers to Compare */}
+          <div className="text-center mb-4 md:mb-8 px-2">
+            <h2 className="text-lg md:text-2xl font-bold text-white mb-3 md:mb-6">Drag the numbers to the correct buckets:</h2>
+            <div className="flex justify-center gap-3 sm:gap-6 md:gap-8 mb-4 md:mb-8">
+              {numbers.filter(n => !n.isDropped).map((number, index) => (
+                <motion.div
+                  key={number.id}
+                  className={`
+                    w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold cursor-grab active:cursor-grabbing shadow-xl transform transition-all select-none
+                    ${
+                      number.isDragging 
+                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-400/50 scale-110 rotate-2' 
+                        : 'bg-gradient-to-br from-white to-gray-100 text-gray-800 hover:shadow-2xl hover:scale-105'
+                    }
+                  `}
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: index * 0.3, type: "spring", stiffness: 200 }}
                       draggable
                       onDragStart={(e) => {
                         playSound('pickup');
@@ -546,12 +546,12 @@ export default function ComparingNumbersGame() {
               </div>
 
               {/* Bucket Drop Zones */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 px-2">
                 {buckets.map((bucket, index) => (
                   <motion.div
                     key={bucket.id}
                     className={`
-                      relative bg-gradient-to-br min-h-[200px] rounded-3xl border-4 border-dashed p-8 text-center flex flex-col justify-center backdrop-blur transition-all duration-300
+                      relative bg-gradient-to-br min-h-[140px] sm:min-h-[160px] md:min-h-[200px] rounded-2xl sm:rounded-3xl border-2 sm:border-3 md:border-4 border-dashed p-4 sm:p-6 md:p-8 text-center flex flex-col justify-center backdrop-blur transition-all duration-300
                       ${
                         bucket.color === 'emerald'
                           ? 'from-emerald-500/30 to-emerald-600/30 border-emerald-400 hover:border-emerald-300'
@@ -588,9 +588,9 @@ export default function ComparingNumbersGame() {
                     }}
                   >
                     {/* Bucket Icon */}
-                    <div className="mb-4">
+                    <div className="mb-2 sm:mb-3 md:mb-4">
                       <Package 
-                        className={`h-16 w-16 mx-auto ${
+                        className={`h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto ${
                           bucket.color === 'emerald' ? 'text-emerald-400' :
                           bucket.color === 'amber' ? 'text-amber-400' :
                           'text-rose-400'
@@ -599,7 +599,7 @@ export default function ComparingNumbersGame() {
                     </div>
                     
                     {/* Bucket Label */}
-                    <h3 className={`text-2xl font-bold mb-3 ${
+                    <h3 className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 md:mb-3 ${
                       bucket.color === 'emerald' ? 'text-emerald-300' :
                       bucket.color === 'amber' ? 'text-amber-300' :
                       'text-rose-300'
@@ -608,7 +608,7 @@ export default function ComparingNumbersGame() {
                     </h3>
                     
                     {/* Description */}
-                    <p className={`text-sm mb-4 ${
+                    <p className={`text-xs sm:text-sm mb-2 sm:mb-3 md:mb-4 ${
                       bucket.color === 'emerald' ? 'text-emerald-200' :
                       bucket.color === 'amber' ? 'text-amber-200' :
                       'text-rose-200'
@@ -624,7 +624,7 @@ export default function ComparingNumbersGame() {
                         initial={{ scale: 0, rotate: 180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         className={`
-                          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold shadow-2xl
+                          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-bold shadow-2xl
                           ${
                             numbers.find(n => n.value === bucket.droppedNumber)?.isCorrect === true
                               ? 'bg-gradient-to-br from-green-400 to-green-600 text-white'
