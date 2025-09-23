@@ -40,6 +40,7 @@ type GameState = {
   gameComplete: boolean;
   currentMode: "ascending" | "descending";
   completedLevels: number;
+  showDescendingIntro: boolean;
 };
 
 interface RocketAscendingGameProps {
@@ -73,6 +74,7 @@ export default function RocketAscendingGame({
     gameComplete: false,
     currentMode: "ascending",
     completedLevels: 0,
+    showDescendingIntro: false,
   });
 
   const [asteroids, setAsteroids] = useState<NumberAsteroid[]>([]);
@@ -837,13 +839,12 @@ export default function RocketAscendingGame({
             gameState.currentMode === "ascending" &&
             gameState.completedLevels === 0
           ) {
-            // Switch to descending mode
+            // Show descending intro first
             setGameState((prev) => ({
               ...prev,
-              currentMode: "descending",
-              level: 2,
-              feedback: `🎊 Level 1 Complete! Now try DESCENDING order! 🎊`,
-              isAnswered: false,
+              showDescendingIntro: true,
+              isPlaying: false,
+              feedback: `🎊 Level 1 Complete! 🎊`,
             }));
           } else if (
             gameState.currentMode === "descending" &&
@@ -918,6 +919,7 @@ export default function RocketAscendingGame({
       gameComplete: false,
       currentMode: "ascending",
       completedLevels: 0,
+      showDescendingIntro: false,
     });
     setParticles([]);
   };
@@ -939,9 +941,26 @@ export default function RocketAscendingGame({
       gameComplete: false,
       currentMode: "ascending",
       completedLevels: 0,
+      showDescendingIntro: false,
     });
     setAsteroids([]);
     setParticles([]);
+  };
+
+  const startDescendingLevel = () => {
+    setGameState((prev) => ({
+      ...prev,
+      currentMode: "descending",
+      level: 2,
+      isPlaying: true,
+      showDescendingIntro: false,
+      feedback: "",
+      isAnswered: false,
+    }));
+  };
+
+  const skipDescendingIntro = () => {
+    startDescendingLevel();
   };
 
   // Generate and download completion badge
@@ -1087,15 +1106,15 @@ export default function RocketAscendingGame({
             </Button>
 
             <div className="text-center flex-1 md:flex-none">
-              <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-1 md:mb-2 flex flex-col md:flex-row items-center gap-1 md:gap-2">
-                <span>🚀 Space Rocket</span>
+              <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-1 md:mb-2 flex flex-col md:flex-row items-center gap-1 md:gap-2" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '2px', textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000' }}>
+                <span>🚀 SPACE ROCKET</span>
                 <span className="hidden md:inline">
                   {gameState.currentMode === "ascending"
-                    ? "Ascending Order"
-                    : "Descending Order"}{" "}
+                    ? "ASCENDING ORDER"
+                    : "DESCENDING ORDER"}{" "}
                   🚀
                 </span>
-                <span className="md:hidden text-sm">Game 🚀</span>
+                <span className="md:hidden text-sm">GAME 🚀</span>
               </h1>
               <p className="text-gray-300 text-xs md:text-base">
                 Shoot asteroids in{" "}
@@ -1147,28 +1166,28 @@ export default function RocketAscendingGame({
 
             {/* Desktop: Original larger cards */}
             <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-blue-400">
+              <div className="text-2xl font-bold text-blue-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
                 {gameState.score}
               </div>
-              <div className="text-sm text-gray-400">Score</div>
+              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>SCORE</div>
             </Card>
             <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-purple-400">
+              <div className="text-2xl font-bold text-purple-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
                 {gameState.level}
               </div>
-              <div className="text-sm text-gray-400">Level</div>
+              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>LEVEL</div>
             </Card>
             <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-red-400">
+              <div className="text-2xl font-bold text-red-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
                 {gameState.lives}
               </div>
-              <div className="text-sm text-gray-400">Lives</div>
+              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>LIVES</div>
             </Card>
             <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-yellow-400">
+              <div className="text-2xl font-bold text-yellow-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
                 {gameState.streak}
               </div>
-              <div className="text-sm text-gray-400">Streak</div>
+              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>STREAK</div>
             </Card>
             <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
               <div className="text-2xl font-bold text-emerald-400">
@@ -1625,6 +1644,130 @@ export default function RocketAscendingGame({
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset
                   </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Descending Order Introduction */}
+          {gameState.showDescendingIntro && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            >
+              <Card className="bg-gradient-to-br from-slate-900/95 via-indigo-900/90 to-purple-900/95 border-2 border-yellow-400/50 p-8 max-w-2xl mx-auto backdrop-blur-xl shadow-2xl relative overflow-hidden">
+                {/* Background pattern */}
+                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5" />
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(255,215,0,0.1),_transparent_50%),radial-gradient(circle_at_70%_80%,_rgba(59,130,246,0.1),_transparent_50%)]" />
+
+                {/* Content */}
+                <div className="relative z-10 text-center">
+                  {/* Rocket Icon */}
+                  <motion.div
+                    animate={{
+                      rotate: [0, 10, -10, 0],
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                    className="mb-6"
+                  >
+                    <div className="text-6xl mb-4">🚀</div>
+                  </motion.div>
+
+                  <motion.h2
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-4xl font-black text-center mb-4"
+                  >
+                    <span className="bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent drop-shadow-lg">
+                      NOW DESCENDING ORDER!
+                    </span>
+                  </motion.h2>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="space-y-4 mb-8"
+                  >
+                    <h3 className="text-2xl font-bold text-white mb-4">
+                      🔄 New Challenge: Reverse the Order!
+                    </h3>
+
+                    <div className="bg-slate-800/60 p-6 rounded-xl border border-blue-400/30">
+                      <p className="text-slate-200 text-lg mb-4">
+                        Excellent work with ascending order! Now let's try the
+                        opposite direction.
+                      </p>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div className="bg-green-500/20 border border-green-400/30 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">✅</span>
+                            <h4 className="font-bold text-green-300">
+                              Ascending Complete
+                            </h4>
+                          </div>
+                          <p className="text-green-200 text-sm">
+                            Smallest to Largest (1 → 2 → 3)
+                          </p>
+                        </div>
+
+                        <div className="bg-orange-500/20 border border-orange-400/30 p-4 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">🎯</span>
+                            <h4 className="font-bold text-orange-300">
+                              Descending Ready
+                            </h4>
+                          </div>
+                          <p className="text-orange-200 text-sm">
+                            Largest to Smallest (3 → 2 → 1)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-500/20 border border-blue-400/30 p-4 rounded-lg">
+                        <h4 className="font-bold text-blue-300 mb-2">
+                          🔄 New Challenge:
+                        </h4>
+                        <p className="text-blue-200 text-sm">
+                          Shoot asteroids from{" "}
+                          <strong>LARGEST to SMALLEST</strong> numbers. The
+                          sequence will be reversed - start with the biggest
+                          number first!
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="flex flex-col sm:flex-row gap-4 justify-center"
+                  >
+                    <Button
+                      onClick={startDescendingLevel}
+                      className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white font-bold px-8 py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <Star className="h-5 w-5 mr-2" />
+                      Start Descending
+                    </Button>
+
+                    <Button
+                      onClick={skipDescendingIntro}
+                      variant="outline"
+                      className="border-2 border-yellow-400/50 text-yellow-300 hover:bg-yellow-400/10 hover:border-yellow-400 font-bold px-8 py-3 text-lg rounded-xl backdrop-blur transition-all duration-300"
+                    >
+                      Skip Intro
+                    </Button>
+                  </motion.div>
                 </div>
               </Card>
             </motion.div>

@@ -25,7 +25,7 @@ import {
   Globe,
   Lightbulb,
   Rocket,
-  X
+  X,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -89,8 +89,8 @@ export default function KnowingOurNumbersPage() {
       realWorldApplications: [
         "Comparing populations of cities",
         "Comparing distances between planets",
-        "Comparing prices and costs"
-      ]
+        "Comparing prices and costs",
+      ],
     },
     {
       id: 2,
@@ -104,12 +104,16 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [1],
       videoUrl: "/videos/large-numbers.mp4",
       gameUrl: "/games/large-numbers-quiz",
-      concepts: ["Indian number system", "International number system", "Periods and commas"],
+      concepts: [
+        "Indian number system",
+        "International number system",
+        "Periods and commas",
+      ],
       realWorldApplications: [
         "Population counting",
         "Government budgets",
-        "Astronomical distances"
-      ]
+        "Astronomical distances",
+      ],
     },
     {
       id: 3,
@@ -127,13 +131,14 @@ export default function KnowingOurNumbersPage() {
       realWorldApplications: [
         "Reading bank account numbers",
         "Understanding postal codes",
-        "Interpreting measurement readings"
-      ]
+        "Interpreting measurement readings",
+      ],
     },
     {
       id: 4,
       title: "Reading and Writing Large Numbers",
-      description: "Techniques for reading and writing numbers in words and figures",
+      description:
+        "Techniques for reading and writing numbers in words and figures",
       icon: BookOpen,
       status: "locked",
       estimatedTime: "25 min",
@@ -142,12 +147,17 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [3],
       videoUrl: "/videos/reading-writing-numbers.mp4",
       gameUrl: "/games/number-writing-challenge",
-      concepts: ["Number names", "Word form", "Standard form", "Comma placement"],
+      concepts: [
+        "Number names",
+        "Word form",
+        "Standard form",
+        "Comma placement",
+      ],
       realWorldApplications: [
         "Writing checks and money orders",
         "Understanding census data",
-        "Reading scientific measurements"
-      ]
+        "Reading scientific measurements",
+      ],
     },
     {
       id: 5,
@@ -161,12 +171,16 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [4],
       videoUrl: "/videos/ordering-numbers.mp4",
       gameUrl: "/games/number-sorting-race",
-      concepts: ["Ascending order", "Descending order", "Comparison strategies"],
+      concepts: [
+        "Ascending order",
+        "Descending order",
+        "Comparison strategies",
+      ],
       realWorldApplications: [
         "Ranking exam scores",
         "Organizing data sets",
-        "Creating leaderboards"
-      ]
+        "Creating leaderboards",
+      ],
     },
     {
       id: 6,
@@ -180,12 +194,17 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [5],
       videoUrl: "/videos/successor-predecessor.mp4",
       gameUrl: "/games/number-sequence-game",
-      concepts: ["Successor", "Predecessor", "Number line", "Consecutive numbers"],
+      concepts: [
+        "Successor",
+        "Predecessor",
+        "Number line",
+        "Consecutive numbers",
+      ],
       realWorldApplications: [
         "Page numbering",
         "Sequential processes",
-        "Time progression"
-      ]
+        "Time progression",
+      ],
     },
     {
       id: 7,
@@ -199,12 +218,16 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [6],
       videoUrl: "/videos/rounding-numbers.mp4",
       gameUrl: "/games/rounding-challenge",
-      concepts: ["Rounding rules", "Nearest ten/hundred/thousand", "Estimation"],
+      concepts: [
+        "Rounding rules",
+        "Nearest ten/hundred/thousand",
+        "Estimation",
+      ],
       realWorldApplications: [
         "Estimating costs",
         "Population approximations",
-        "Distance calculations"
-      ]
+        "Distance calculations",
+      ],
     },
     {
       id: 8,
@@ -218,12 +241,16 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [7],
       videoUrl: "/videos/estimation-approximation.mp4",
       gameUrl: "/games/estimation-master",
-      concepts: ["Estimation strategies", "Approximation techniques", "Mental math"],
+      concepts: [
+        "Estimation strategies",
+        "Approximation techniques",
+        "Mental math",
+      ],
       realWorldApplications: [
         "Shopping budget planning",
         "Travel time estimation",
-        "Resource allocation"
-      ]
+        "Resource allocation",
+      ],
     },
     {
       id: 9,
@@ -241,8 +268,8 @@ export default function KnowingOurNumbersPage() {
       realWorldApplications: [
         "Mathematical expressions",
         "Formula calculations",
-        "Programming logic"
-      ]
+        "Programming logic",
+      ],
     },
     {
       id: 10,
@@ -256,14 +283,18 @@ export default function KnowingOurNumbersPage() {
       prerequisites: [9],
       videoUrl: "/videos/roman-numerals.mp4",
       gameUrl: "/games/roman-numeral-quest",
-      concepts: ["Roman symbols", "Addition/subtraction rules", "Conversion methods"],
+      concepts: [
+        "Roman symbols",
+        "Addition/subtraction rules",
+        "Conversion methods",
+      ],
       realWorldApplications: [
         "Historical dates",
         "Book chapters",
         "Clock faces",
-        "Movie sequels"
-      ]
-    }
+        "Movie sequels",
+      ],
+    },
   ];
 
   const calculateProgress = () => {
@@ -271,10 +302,15 @@ export default function KnowingOurNumbersPage() {
     setCurrentProgress(progress);
   };
 
-  const getTopicStatus = (topic: Subtopic): "locked" | "available" | "completed" => {
+  const getTopicStatus = (
+    topic: Subtopic
+  ): "locked" | "available" | "completed" => {
     if (completedTopics.includes(topic.id)) return "completed";
     if (topic.id === 1) return "available"; // First topic always available
-    if (topic.prerequisites && topic.prerequisites.every(req => completedTopics.includes(req))) {
+    if (
+      topic.prerequisites &&
+      topic.prerequisites.every((req) => completedTopics.includes(req))
+    ) {
       return "available";
     }
     return "locked";
@@ -283,26 +319,33 @@ export default function KnowingOurNumbersPage() {
   const markTopicComplete = (topicId: number) => {
     if (!completedTopics.includes(topicId)) {
       const newCompleted = [...completedTopics, topicId];
-      const topic = subtopics.find(t => t.id === topicId);
+      const topic = subtopics.find((t) => t.id === topicId);
       const newPoints = totalPoints + (topic?.points || 0);
-      
+
       setCompletedTopics(newCompleted);
       setTotalPoints(newPoints);
-      
+
       // Save to localStorage
-      localStorage.setItem("knowing-our-numbers-progress", JSON.stringify({
-        completed: newCompleted,
-        points: newPoints
-      }));
+      localStorage.setItem(
+        "knowing-our-numbers-progress",
+        JSON.stringify({
+          completed: newCompleted,
+          points: newPoints,
+        })
+      );
     }
   };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Easy": return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "Medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "Hard": return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+      case "Easy":
+        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+      case "Hard":
+        return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
     }
   };
 
@@ -326,7 +369,10 @@ export default function KnowingOurNumbersPage() {
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Link href="/grade/6/mathematics">
-            <Button variant="ghost" className="mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300">
+            <Button
+              variant="ghost"
+              className="mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Mathematics
             </Button>
@@ -339,46 +385,63 @@ export default function KnowingOurNumbersPage() {
               animate={{ y: 0, opacity: 1 }}
               className="mb-4"
             >
-              <img 
-                src="/Knowing_our_numbers.png" 
-                alt="Knowing Our Numbers" 
-                className="mx-auto max-w-md w-full h-auto"
+              <img
+                src="/Knowing_our_numbers.png"
+                alt="Knowing Our Numbers"
+                className="mx-auto w-full h-auto"
+                style={{ maxWidth: "280px" }}
               />
             </motion.div>
-            
-            <motion.p 
+
+            <motion.p
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6"
             >
-              Master the fundamentals of large numbers, place values, and number systems through interactive learning
+              Master the fundamentals of large numbers, place values, and number
+              systems through interactive learning
             </motion.p>
 
             {/* Progress Stats */}
-            <motion.div 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto"
             >
               <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{Math.round(currentProgress)}%</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Complete</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {Math.round(currentProgress)}%
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Complete
+                </div>
               </Card>
               <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalPoints}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Points Earned</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {totalPoints}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Points Earned
+                </div>
               </Card>
               <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">{completedTopics.length}/{subtopics.length}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">Topics Done</div>
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  {completedTopics.length}/{subtopics.length}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Topics Done
+                </div>
               </Card>
             </motion.div>
 
             {/* Progress Bar */}
             <div className="mt-6 max-w-2xl mx-auto">
-              <Progress value={currentProgress} className="h-3 bg-gray-200/60 dark:bg-white/20" />
+              <Progress
+                value={currentProgress}
+                className="h-3 bg-gray-200/60 dark:bg-white/20"
+              />
             </div>
           </div>
 
@@ -398,28 +461,34 @@ export default function KnowingOurNumbersPage() {
                   transition={{ delay: index * 0.1 }}
                   className={`relative ${isLocked ? "opacity-60" : ""}`}
                 >
-                  <Card className={`
+                  <Card
+                    className={`
                     h-full transition-all duration-300 backdrop-blur-sm
-                    ${isCompleted 
-                      ? "bg-blue-50/90 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 hover:bg-blue-100/90 dark:hover:bg-zinc-700" 
-                      : isLocked 
+                    ${
+                      isCompleted
+                        ? "bg-blue-50/90 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 hover:bg-blue-100/90 dark:hover:bg-zinc-700"
+                        : isLocked
                         ? "bg-gray-50/60 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 opacity-60"
                         : "bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 cursor-pointer"
                     }
-                  `}>
+                  `}
+                  >
                     <div className="p-4 h-full flex flex-col">
                       {/* Topic Header */}
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
-                          <div className={`
+                          <div
+                            className={`
                             w-8 h-8 rounded-lg flex items-center justify-center
-                            ${isCompleted 
-                              ? "bg-blue-100 dark:bg-blue-900/50" 
-                              : isLocked 
+                            ${
+                              isCompleted
+                                ? "bg-blue-100 dark:bg-blue-900/50"
+                                : isLocked
                                 ? "bg-gray-100 dark:bg-gray-700"
                                 : "bg-blue-100 dark:bg-blue-800"
                             }
-                          `}>
+                          `}
+                          >
                             {isLocked ? (
                               <Lock className="h-4 w-4 text-gray-400" />
                             ) : isCompleted ? (
@@ -432,25 +501,41 @@ export default function KnowingOurNumbersPage() {
                             Topic {topic.id}
                           </div>
                         </div>
-                        
-                        <Badge className={`text-xs ${getDifficultyColor(topic.difficulty)}`}>
+
+                        <Badge
+                          className={`text-xs ${getDifficultyColor(
+                            topic.difficulty
+                          )}`}
+                        >
                           {topic.difficulty}
                         </Badge>
                       </div>
 
                       {/* Topic Content */}
                       <div className="flex-1">
-                        <h3 className={`
+                        <h3
+                          className={`
                           text-sm font-bold mb-1
-                          ${isCompleted ? "text-blue-700 dark:text-blue-300" : "text-gray-900 dark:text-white"}
-                        `}>
+                          ${
+                            isCompleted
+                              ? "text-blue-700 dark:text-blue-300"
+                              : "text-gray-900 dark:text-white"
+                          }
+                        `}
+                        >
                           {topic.title}
                         </h3>
-                        
-                        <p className={`
+
+                        <p
+                          className={`
                           text-xs mb-3 line-clamp-2
-                          ${isCompleted ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}
-                        `}>
+                          ${
+                            isCompleted
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-gray-600 dark:text-gray-400"
+                          }
+                        `}
+                        >
                           {topic.description}
                         </p>
 
@@ -471,9 +556,12 @@ export default function KnowingOurNumbersPage() {
                         {!isLocked && (
                           <>
                             {topic.id === 1 ? (
-                              <Link href="/games/comparing-numbers" className="flex-1">
-                                <Button 
-                                  size="sm" 
+                              <Link
+                                href="/games/comparing-numbers"
+                                className="flex-1"
+                              >
+                                <Button
+                                  size="sm"
                                   className="w-full bg-blue-600 hover:bg-blue-700"
                                 >
                                   <Play className="h-4 w-4 mr-1" />
@@ -481,8 +569,8 @@ export default function KnowingOurNumbersPage() {
                                 </Button>
                               </Link>
                             ) : (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                                 onClick={() => setSelectedTopic(topic)}
                               >
@@ -490,20 +578,20 @@ export default function KnowingOurNumbersPage() {
                                 Learn
                               </Button>
                             )}
-                            
+
                             {topic.gameUrl && (
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
+                              <Button
+                                size="sm"
+                                variant="outline"
                                 className="border-green-600 text-green-400 hover:bg-green-900/30"
                               >
                                 <Gamepad2 className="h-4 w-4" />
                               </Button>
                             )}
-                            
+
                             {!isCompleted && (
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 variant="outline"
                                 className="border-zinc-600 text-zinc-300 hover:bg-zinc-700"
                                 onClick={() => markTopicComplete(topic.id)}
@@ -513,7 +601,7 @@ export default function KnowingOurNumbersPage() {
                             )}
                           </>
                         )}
-                        
+
                         {isLocked && (
                           <Button size="sm" disabled className="flex-1">
                             <Lock className="h-4 w-4 mr-1" />
@@ -530,7 +618,7 @@ export default function KnowingOurNumbersPage() {
 
           {/* Achievement Section */}
           {completedTopics.length > 1 && (
-            <motion.div 
+            <motion.div
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               className="mt-12 text-center"
@@ -543,7 +631,8 @@ export default function KnowingOurNumbersPage() {
                   </h2>
                 </div>
                 <p className="text-yellow-700 dark:text-yellow-300 mb-4">
-                  You've completed {completedTopics.length} out of {subtopics.length} topics and earned {totalPoints} points!
+                  You've completed {completedTopics.length} out of{" "}
+                  {subtopics.length} topics and earned {totalPoints} points!
                 </p>
                 <div className="flex justify-center gap-4">
                   <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg">
@@ -565,17 +654,17 @@ export default function KnowingOurNumbersPage() {
 
       {/* Topic Detail Modal */}
       {selectedTopic && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           onClick={() => setSelectedTopic(null)}
         >
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white/95 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-6">
               <div>
@@ -598,7 +687,10 @@ export default function KnowingOurNumbersPage() {
               </h3>
               <div className="grid gap-2">
                 {selectedTopic.realWorldApplications.map((app, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400"
+                  >
                     <Zap className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
                     {app}
                   </div>
@@ -612,11 +704,14 @@ export default function KnowingOurNumbersPage() {
                 <Play className="h-4 w-4 mr-2" />
                 Watch Video
               </Button>
-              <Button variant="outline" className="flex-1 border-zinc-600 text-zinc-300 hover:bg-zinc-700">
+              <Button
+                variant="outline"
+                className="flex-1 border-zinc-600 text-zinc-300 hover:bg-zinc-700"
+              >
                 <Gamepad2 className="h-4 w-4 mr-2" />
                 Play Game
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => markTopicComplete(selectedTopic.id)}
                 className="bg-green-900/30 border-green-600 text-green-400 hover:bg-green-800/30"
