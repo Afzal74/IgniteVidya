@@ -323,21 +323,17 @@ export default function KnowingOurNumbersPage() {
 
           {/* Chapter Header */}
           <div className="text-center mb-8">
-            <motion.div 
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-6 shadow-2xl"
-            >
-              <Hash className="text-white h-12 w-12" />
-            </motion.div>
-            
-            <motion.h1 
+            <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              className="text-4xl md:text-5xl font-bold text-white mb-4"
+              className="mb-4"
             >
-              Knowing Our Numbers
-            </motion.h1>
+              <img 
+                src="/Knowing_our_numbers.png" 
+                alt="Knowing Our Numbers" 
+                className="mx-auto max-w-md w-full h-auto"
+              />
+            </motion.div>
             
             <motion.p 
               initial={{ y: 20, opacity: 0 }}

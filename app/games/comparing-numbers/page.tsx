@@ -409,9 +409,139 @@ export default function ComparingNumbersGame() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Animated background particles */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+      {/* Global Animated Background Elements - matching home page */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Animated Grid */}
+        <div className="absolute inset-0 opacity-30 dark:opacity-10">
+          <div className="h-full w-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
+        </div>
+
+        {/* Floating Geometric Shapes */}
+        {[...Array(8)].map((_, i) => {
+          const initialX = Math.random() * 1200;
+          const initialY = Math.random() * 800;
+          const duration = Math.random() * 15 + 10;
+          const delay = Math.random() * 10;
+
+          return (
+            <motion.div
+              key={`bg-shape-${i}`}
+              className={`absolute w-2 h-2 ${
+                i % 3 === 0
+                  ? "bg-blue-400/60 dark:bg-blue-400/20"
+                  : i % 3 === 1
+                  ? "bg-green-400/60 dark:bg-green-400/20"
+                  : "bg-purple-400/60 dark:bg-purple-400/20"
+              } ${i % 2 === 0 ? "rounded-full" : "rotate-45"}`}
+              initial={{
+                x: initialX,
+                y: initialY,
+              }}
+              animate={{
+                y: [initialY, initialY - 200, initialY],
+                x: [initialX, initialX + (Math.random() * 200 - 100), initialX],
+                rotate: [0, 360],
+                opacity: [0.2, 0.6, 0.2],
+              }}
+              transition={{
+                duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
+
+      {/* Floating Particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {[...Array(20)].map((_, i) => {
+          const initialX = Math.random() * 1200;
+          const initialY = Math.random() * 800;
+          const duration = Math.random() * 10 + 10;
+          const delay = Math.random() * 5;
+          const moveX = Math.random() * 100 - 50;
+
+          return (
+            <motion.div
+              key={`particle-${i}`}
+              className="absolute w-1 h-1 bg-blue-400/70 dark:bg-blue-400/30 rounded-full"
+              initial={{
+                x: initialX,
+                y: initialY,
+              }}
+              animate={{
+                y: [initialY, initialY - 100, initialY],
+                x: [initialX, initialX + moveX, initialX],
+                opacity: [0.3, 0.8, 0.3],
+              }}
+              transition={{
+                duration,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay,
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Gradient Orbs */}
+      <div className="absolute inset-0">
+        <motion.div
+          className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/25 to-purple-400/25 dark:from-blue-400/10 dark:to-purple-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.2, 1],
+            x: [0, 50, 0],
+            y: [0, -30, 0],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-green-400/25 to-blue-400/25 dark:from-green-400/10 dark:to-blue-400/10 rounded-full blur-3xl"
+          animate={{
+            scale: [1, 1.3, 1],
+            x: [0, -40, 0],
+            y: [0, 20, 0],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
+        <motion.div
+          className="absolute top-1/2 right-1/3 w-32 h-32 bg-gradient-to-r from-purple-400/35 to-pink-400/35 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-2xl"
+          animate={{
+            scale: [1, 1.4, 1],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "linear",
+            delay: 4,
+          }}
+        />
+      </div>
+
+      {/* Mesh Gradient Overlay */}
+      <div className="absolute inset-0 opacity-40 dark:opacity-30">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.4),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.4),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.4),_transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.3),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.3),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.3),_transparent_50%)] animate-pulse" />
+      </div>
+
+      {/* Game Particles */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-10">
         {particles.map(particle => (
           <div
             key={particle.id}
@@ -434,19 +564,19 @@ export default function ComparingNumbersGame() {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <Link href="/grade/6/mathematics/knowing-our-numbers">
-              <Button variant="ghost" className="text-gray-300 hover:text-white">
+              <Button variant="ghost" className="text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300 relative z-20">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Learning
               </Button>
             </Link>
             
-            <div className="text-center">
-              <h1 className="text-3xl md:text-4xl font-bold text-white mb-2 flex items-center gap-2">
+            <div className="text-center relative z-20">
+              <h1 className="text-3xl md:text-4xl font-bold text-black dark:text-white mb-2 flex items-center gap-2 justify-center">
                 <Sparkles className="h-8 w-8 text-yellow-400" />
                 Number Comparison Challenge
                 <Sparkles className="h-8 w-8 text-yellow-400" />
               </h1>
-              <p className="text-gray-300">
+              <p className="text-zinc-600 dark:text-zinc-400">
                 Drag numbers to their correct category!
               </p>
             </div>
@@ -510,17 +640,17 @@ export default function ComparingNumbersGame() {
             <div className="space-y-8">
           {/* Numbers to Compare */}
           <div className="text-center mb-4 md:mb-8 px-2">
-            <h2 className="text-lg md:text-2xl font-bold text-white mb-3 md:mb-6">Drag the numbers to the correct buckets:</h2>
+            <h2 className="text-lg md:text-2xl font-bold text-black dark:text-white mb-3 md:mb-6 relative z-20">Drag the numbers to the correct buckets:</h2>
             <div className="flex justify-center gap-3 sm:gap-6 md:gap-8 mb-4 md:mb-8">
               {numbers.filter(n => !n.isDropped).map((number, index) => (
                 <motion.div
                   key={number.id}
                   className={`
-                    w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold cursor-grab active:cursor-grabbing shadow-xl transform transition-all select-none
+                    w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold shadow-xl transform transition-all select-none
                     ${
                       number.isDragging 
-                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-400/50 scale-110 rotate-2' 
-                        : 'bg-gradient-to-br from-white to-gray-100 text-gray-800 hover:shadow-2xl hover:scale-105'
+                        ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-400/50 scale-110 rotate-2 cursor-grabbing' 
+                        : 'bg-gradient-to-br from-white to-gray-100 dark:from-gray-700 dark:to-gray-600 text-gray-800 dark:text-white hover:shadow-2xl hover:scale-105 hover:bg-gradient-to-br hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800 dark:hover:to-blue-700 hover:text-blue-800 dark:hover:text-blue-100 cursor-pointer hover:cursor-grab'
                     }
                   `}
                   initial={{ scale: 0, rotate: -180 }}
@@ -551,18 +681,18 @@ export default function ComparingNumbersGame() {
                   <motion.div
                     key={bucket.id}
                     className={`
-                      relative bg-gradient-to-br min-h-[140px] sm:min-h-[160px] md:min-h-[200px] rounded-2xl sm:rounded-3xl border-2 sm:border-3 md:border-4 border-dashed p-4 sm:p-6 md:p-8 text-center flex flex-col justify-center backdrop-blur transition-all duration-300
+                      relative min-h-[140px] sm:min-h-[160px] md:min-h-[200px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 text-center flex flex-col justify-center backdrop-blur transition-all duration-300 overflow-hidden
                       ${
                         bucket.color === 'emerald'
-                          ? 'from-emerald-500/30 to-emerald-600/30 border-emerald-400 hover:border-emerald-300'
+                          ? 'bg-gradient-to-br from-emerald-50/90 to-emerald-100/90 dark:from-emerald-900/40 dark:to-emerald-800/40 border-2 border-emerald-300/50 dark:border-emerald-500/30'
                           : bucket.color === 'amber'
-                          ? 'from-amber-500/30 to-amber-600/30 border-amber-400 hover:border-amber-300'
-                          : 'from-rose-500/30 to-rose-600/30 border-rose-400 hover:border-rose-300'
+                          ? 'bg-gradient-to-br from-amber-50/90 to-amber-100/90 dark:from-amber-900/40 dark:to-amber-800/40 border-2 border-amber-300/50 dark:border-amber-500/30'
+                          : 'bg-gradient-to-br from-rose-50/90 to-rose-100/90 dark:from-rose-900/40 dark:to-rose-800/40 border-2 border-rose-300/50 dark:border-rose-500/30'
                       }
                       ${
                         bucket.isHovered 
-                          ? 'scale-105 shadow-2xl border-solid' 
-                          : 'hover:scale-102'
+                          ? 'scale-105 shadow-lg border-dashed border-4' 
+                          : 'hover:scale-102 shadow-md'
                       }
                     `}
                     initial={{ opacity: 0, y: 50 }}
@@ -587,31 +717,108 @@ export default function ComparingNumbersGame() {
                       }
                     }}
                   >
-                    {/* Bucket Icon */}
-                    <div className="mb-2 sm:mb-3 md:mb-4">
-                      <Package 
-                        className={`h-10 w-10 sm:h-12 sm:w-12 md:h-16 md:w-16 mx-auto ${
+                    {/* Wood Texture Background */}
+                    <div className="absolute inset-0 opacity-10 dark:opacity-5">
+                      <div className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-700 to-amber-900" 
+                           style={{
+                             backgroundImage: `
+                               repeating-linear-gradient(
+                                 90deg,
+                                 transparent,
+                                 transparent 2px,
+                                 rgba(139, 69, 19, 0.1) 2px,
+                                 rgba(139, 69, 19, 0.1) 4px
+                               ),
+                               repeating-linear-gradient(
+                                 0deg,
+                                 transparent,
+                                 transparent 8px,
+                                 rgba(160, 82, 45, 0.1) 8px,
+                                 rgba(160, 82, 45, 0.1) 12px
+                               )
+                             `
+                           }}
+                      />
+                    </div>
+                    {/* Realistic Bucket Icon */}
+                    <div className="mb-2 sm:mb-3 md:mb-4 relative">
+                      <svg 
+                        className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 mx-auto ${
                           bucket.color === 'emerald' ? 'text-emerald-400' :
                           bucket.color === 'amber' ? 'text-amber-400' :
                           'text-rose-400'
-                        }`} 
-                      />
+                        }`}
+                        viewBox="0 0 100 100" 
+                        fill="none" 
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        {/* Bucket Body */}
+                        <path 
+                          d="M20 35 L25 85 Q25 90 30 90 L70 90 Q75 90 75 85 L80 35 Z" 
+                          fill="currentColor" 
+                          opacity="0.8"
+                        />
+                        {/* Bucket Rim */}
+                        <ellipse 
+                          cx="50" 
+                          cy="35" 
+                          rx="30" 
+                          ry="8" 
+                          fill="currentColor"
+                        />
+                        {/* Bucket Handle Left */}
+                        <path 
+                          d="M15 40 Q10 40 10 45 Q10 50 15 50 L20 50" 
+                          stroke="currentColor" 
+                          strokeWidth="3" 
+                          fill="none"
+                          opacity="0.9"
+                        />
+                        {/* Bucket Handle Right */}
+                        <path 
+                          d="M80 50 L85 50 Q90 50 90 45 Q90 40 85 40" 
+                          stroke="currentColor" 
+                          strokeWidth="3" 
+                          fill="none"
+                          opacity="0.9"
+                        />
+                        {/* Bucket Shine */}
+                        <ellipse 
+                          cx="40" 
+                          cy="55" 
+                          rx="8" 
+                          ry="15" 
+                          fill="white" 
+                          opacity="0.3"
+                        />
+                        {/* Bucket Bottom Shadow */}
+                        <ellipse 
+                          cx="50" 
+                          cy="85" 
+                          rx="22" 
+                          ry="4" 
+                          fill="black" 
+                          opacity="0.2"
+                        />
+                      </svg>
+                      
+
                     </div>
                     
                     {/* Bucket Label */}
-                    <h3 className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 md:mb-3 ${
-                      bucket.color === 'emerald' ? 'text-emerald-300' :
-                      bucket.color === 'amber' ? 'text-amber-300' :
-                      'text-rose-300'
+                    <h3 className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 md:mb-3 relative z-10 ${
+                      bucket.color === 'emerald' ? 'text-emerald-700 dark:text-emerald-300' :
+                      bucket.color === 'amber' ? 'text-amber-700 dark:text-amber-300' :
+                      'text-rose-700 dark:text-rose-300'
                     }`}>
                       {bucket.label}
                     </h3>
                     
                     {/* Description */}
-                    <p className={`text-xs sm:text-sm mb-2 sm:mb-3 md:mb-4 ${
-                      bucket.color === 'emerald' ? 'text-emerald-200' :
-                      bucket.color === 'amber' ? 'text-amber-200' :
-                      'text-rose-200'
+                    <p className={`text-xs sm:text-sm mb-2 sm:mb-3 md:mb-4 relative z-10 ${
+                      bucket.color === 'emerald' ? 'text-emerald-600 dark:text-emerald-200' :
+                      bucket.color === 'amber' ? 'text-amber-600 dark:text-amber-200' :
+                      'text-rose-600 dark:text-rose-200'
                     }`}>
                       {bucket.type === 'greater' ? 'For the larger number' :
                        bucket.type === 'equal' ? 'When numbers are the same' :
