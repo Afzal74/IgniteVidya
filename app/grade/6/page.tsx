@@ -90,39 +90,62 @@ export default function Grade6Page() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-12">
-            {subjects.map((subject, index) => (
-              <motion.div
-                key={subject.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-              >
-                <Link href={
-                  subject.name === 'Mathematics' ? '/grade/6/mathematics' : 
-                  subject.name === 'Science' ? '/grade/6/science' : 
-                  subject.name === 'Social Studies' ? '/grade/6/social-studies' :
-                  '#'
-                }>
-                  <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
-                    <div className="p-4 md:p-6 h-full flex flex-col justify-center">
-                      <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
-                        {subject.name}
-                      </h3>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
-                        {subject.description}
-                      </p>
-                      {(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
-                        <div className="mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
-                            Content Available
-                          </span>
+            {subjects.map((subject, index) => {
+              const isAvailable = subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'English';
+              const isComingSoon = subject.name === 'Social Studies' || subject.name === 'Computer Science' || subject.name === 'Environmental Studies';
+              
+              return (
+                <motion.div
+                  key={subject.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 * index }}
+                >
+                  {isAvailable ? (
+                    <Link href={
+                      subject.name === 'Mathematics' ? '/grade/6/mathematics' : 
+                      subject.name === 'Science' ? '/grade/6/science' : 
+                      subject.name === 'English' ? '/grade/6/english' :
+                      '#'
+                    }>
+                      <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
+                        <div className="p-4 md:p-6 h-full flex flex-col justify-center">
+                          <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                            {subject.name}
+                          </h3>
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                            {subject.description}
+                          </p>
+                          <div className="mt-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                              Available
+                            </span>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
+                      </Card>
+                    </Link>
+                  ) : (
+                    <Card className="border-zinc-200 dark:border-zinc-800 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
+                      <div className="p-4 md:p-6 h-full flex flex-col justify-center">
+                        <h3 className="font-bold text-black dark:text-white mb-2 text-lg">
+                          {subject.name}
+                        </h3>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          {subject.description}
+                        </p>
+                        {isComingSoon && (
+                          <div className="mt-2">
+                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                              Coming Soon
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </Card>
+                  )}
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Quick Access */}

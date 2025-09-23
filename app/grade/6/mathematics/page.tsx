@@ -300,12 +300,12 @@ export default function Grade6MathematicsPage() {
 
           {/* Page Header */}
           <div className="text-center mb-8 md:mb-12">
-            <div className="mb-4 md:mb-6">
+            <div className="mb-3 md:mb-4">
               <img 
                 src="/Welcome_to_Maths.png" 
                 alt="Welcome to Maths" 
-                className="mx-auto max-w-xs w-full h-auto border border-solid border-black"
-                style={{ maxWidth: '240px' }}
+                className="mx-auto w-full h-auto"
+                style={{ maxWidth: '180px' }}
               />
             </div>
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-2 relative z-20">
