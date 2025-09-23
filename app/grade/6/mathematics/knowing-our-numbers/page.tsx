@@ -309,13 +309,24 @@ export default function KnowingOurNumbersPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+      {/* Global Animated Background Elements - matching other pages */}
+      <div className="fixed inset-0 pointer-events-none">
+        {/* Animated Grid */}
+        <div className="absolute inset-0 opacity-30 dark:opacity-10">
+          <div className="h-full w-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
+        </div>
+      </div>
+
+      {/* Animated Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
+
       {/* Header */}
-      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6">
+      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Link href="/grade/6/mathematics">
-            <Button variant="ghost" className="mb-6 text-gray-400 hover:text-white">
+            <Button variant="ghost" className="mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Mathematics
             </Button>
@@ -339,7 +350,7 @@ export default function KnowingOurNumbersPage() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-lg text-gray-300 max-w-2xl mx-auto mb-6"
+              className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6"
             >
               Master the fundamentals of large numbers, place values, and number systems through interactive learning
             </motion.p>
@@ -351,23 +362,23 @@ export default function KnowingOurNumbersPage() {
               transition={{ delay: 0.4 }}
               className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto"
             >
-              <Card className="bg-zinc-800 border-zinc-700 text-white p-4">
-                <div className="text-2xl font-bold">{Math.round(currentProgress)}%</div>
-                <div className="text-sm text-gray-400">Complete</div>
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{Math.round(currentProgress)}%</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Complete</div>
               </Card>
-              <Card className="bg-zinc-800 border-zinc-700 text-white p-4">
-                <div className="text-2xl font-bold">{totalPoints}</div>
-                <div className="text-sm text-gray-400">Points Earned</div>
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{totalPoints}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Points Earned</div>
               </Card>
-              <Card className="bg-zinc-800 border-zinc-700 text-white p-4">
-                <div className="text-2xl font-bold">{completedTopics.length}/{subtopics.length}</div>
-                <div className="text-sm text-gray-400">Topics Done</div>
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
+                <div className="text-2xl font-bold text-gray-900 dark:text-white">{completedTopics.length}/{subtopics.length}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">Topics Done</div>
               </Card>
             </motion.div>
 
             {/* Progress Bar */}
             <div className="mt-6 max-w-2xl mx-auto">
-              <Progress value={currentProgress} className="h-3 bg-white/20" />
+              <Progress value={currentProgress} className="h-3 bg-gray-200/60 dark:bg-white/20" />
             </div>
           </div>
 
@@ -388,12 +399,12 @@ export default function KnowingOurNumbersPage() {
                   className={`relative ${isLocked ? "opacity-60" : ""}`}
                 >
                   <Card className={`
-                    h-full transition-all duration-300
+                    h-full transition-all duration-300 backdrop-blur-sm
                     ${isCompleted 
-                      ? "bg-zinc-800 border-zinc-700 hover:bg-zinc-700" 
+                      ? "bg-blue-50/90 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 hover:bg-blue-100/90 dark:hover:bg-zinc-700" 
                       : isLocked 
-                        ? "bg-zinc-800 border-zinc-700 opacity-60"
-                        : "bg-zinc-800 border-zinc-700 hover:bg-zinc-700 cursor-pointer"
+                        ? "bg-gray-50/60 dark:bg-zinc-800 border-gray-300 dark:border-zinc-700 opacity-60"
+                        : "bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 cursor-pointer"
                     }
                   `}>
                     <div className="p-4 h-full flex flex-col">
@@ -563,7 +574,7 @@ export default function KnowingOurNumbersPage() {
           <motion.div 
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-zinc-800 border border-zinc-700 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white/95 dark:bg-zinc-800 border border-gray-300 dark:border-zinc-700 rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-sm"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-6">
