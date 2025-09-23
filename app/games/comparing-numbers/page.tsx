@@ -255,7 +255,17 @@ export default function ComparingNumbersGame() {
       "#96CEB4",
       "#FFEAA7",
     ];
-    const newParticles = [];
+    const newParticles: Array<{
+      id: string;
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      maxLife: number;
+      color: string;
+      size: number;
+    }> = [];
     const baseId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     for (let i = 0; i < 12; i++) {
