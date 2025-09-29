@@ -308,6 +308,11 @@ interface GameState {
   countdownNumber: number;
   showFeedback: boolean;
   isCorrectAnswer: boolean;
+  questionsAnswered: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  gameCompleted: boolean;
+  currentDifficultyIndex: number;
 }
 
 export default function FlappyWordsGame() {
@@ -332,6 +337,11 @@ export default function FlappyWordsGame() {
     countdownNumber: 3,
     showFeedback: false,
     isCorrectAnswer: false,
+    questionsAnswered: 0,
+    totalQuestions: 15,
+    correctAnswers: 0,
+    gameCompleted: false,
+    currentDifficultyIndex: 0,
   });
 
   const [bird, setBird] = useState<Bird>({
@@ -458,9 +468,17 @@ export default function FlappyWordsGame() {
     setParticles((prev) => [...prev, ...newParticles]);
   }, []);
 
+  // Get current difficulty based on questions answered
+  const getCurrentDifficulty = useCallback(() => {
+    if (gameState.questionsAnswered < 5) return "easy";
+    if (gameState.questionsAnswered < 10) return "medium";
+    return "hard";
+  }, [gameState.questionsAnswered]);
+
   // Generate new pipe with vocabulary
   const generatePipe = useCallback(() => {
-    const vocabularySet = VOCABULARY_SETS[gameState.difficulty];
+    const currentDifficulty = getCurrentDifficulty();
+    const vocabularySet = VOCABULARY_SETS[currentDifficulty];
     const randomWord =
       vocabularySet[Math.floor(Math.random() * vocabularySet.length)];
     const topHeight = Math.random() * (GAME_HEIGHT - PIPE_GAP - 100) + 50;
@@ -474,7 +492,7 @@ export default function FlappyWordsGame() {
       definition: randomWord.definition,
       options: randomWord.options,
     };
-  }, [gameState.difficulty]);
+  }, [getCurrentDifficulty]);
 
   // Jump function
   const jump = useCallback(() => {
@@ -812,12 +830,16 @@ export default function FlappyWordsGame() {
     setGameState((prev) => ({
       ...prev,
       gameOver: false,
+      gameCompleted: false,
       score: 0,
       lives: 3,
       showWordChallenge: false,
       currentWord: null,
       showCountdown: true,
       countdownNumber: 3,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      difficulty: "easy",
     }));
 
     setBird({
@@ -853,10 +875,14 @@ export default function FlappyWordsGame() {
       ...prev,
       isPlaying: false,
       gameOver: false,
+      gameCompleted: false,
       score: 0,
       lives: 3,
       showWordChallenge: false,
       currentWord: null,
+      questionsAnswered: 0,
+      correctAnswers: 0,
+      difficulty: "easy",
     }));
 
     setBird({
@@ -909,6 +935,12 @@ export default function FlappyWordsGame() {
     const isCorrect =
       gameState.selectedAnswer === gameState.currentWord.definition;
 
+    const newQuestionsAnswered = gameState.questionsAnswered + 1;
+    const newCorrectAnswers = isCorrect
+      ? gameState.correctAnswers + 1
+      : gameState.correctAnswers;
+    const isGameCompleted = newQuestionsAnswered >= gameState.totalQuestions;
+
     setGameState((prev) => ({
       ...prev,
       showWordChallenge: false,
@@ -917,6 +949,10 @@ export default function FlappyWordsGame() {
       score: isCorrect ? prev.score + 20 : prev.score,
       lives: isCorrect ? prev.lives : prev.lives - 1,
       gameOver: !isCorrect && prev.lives <= 1,
+      questionsAnswered: newQuestionsAnswered,
+      correctAnswers: newCorrectAnswers,
+      gameCompleted: isGameCompleted,
+      difficulty: getCurrentDifficulty(),
     }));
 
     if (isCorrect) {
@@ -928,7 +964,7 @@ export default function FlappyWordsGame() {
   };
 
   const continueFeedback = () => {
-    if (gameState.gameOver) {
+    if (gameState.gameOver || gameState.gameCompleted) {
       setGameState((prev) => ({
         ...prev,
         showFeedback: false,
@@ -941,13 +977,22 @@ export default function FlappyWordsGame() {
   };
 
   const skipWord = () => {
+    const newQuestionsAnswered = gameState.questionsAnswered + 1;
+    const isGameCompleted = newQuestionsAnswered >= gameState.totalQuestions;
+
     setGameState((prev) => ({
       ...prev,
       showWordChallenge: false,
       currentWord: null,
       selectedAnswer: null,
+      questionsAnswered: newQuestionsAnswered,
+      gameCompleted: isGameCompleted,
+      difficulty: getCurrentDifficulty(),
     }));
-    startCountdown();
+
+    if (!isGameCompleted) {
+      startCountdown();
+    }
   };
 
   return (
@@ -1040,9 +1085,9 @@ export default function FlappyWordsGame() {
                 className="text-2xl font-bold text-white"
                 style={{ fontFamily: "Orbitron, monospace" }}
               >
-                {gameState.level}
+                {gameState.questionsAnswered}/{gameState.totalQuestions}
               </div>
-              <div className="text-sm text-blue-100">LEVEL</div>
+              <div className="text-sm text-blue-100">PROGRESS</div>
             </Card>
             <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
               <div
@@ -1055,7 +1100,7 @@ export default function FlappyWordsGame() {
             </Card>
             <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
               <div className="text-sm font-bold text-white uppercase">
-                {gameState.difficulty}
+                {getCurrentDifficulty()}
               </div>
               <div className="text-sm text-blue-100">DIFFICULTY</div>
             </Card>
@@ -1086,8 +1131,90 @@ export default function FlappyWordsGame() {
                 }}
               />
 
+              {/* Game Completion Overlay */}
+              {gameState.gameCompleted && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg"
+                >
+                  <Card className="bg-gradient-to-br from-white to-yellow-50 p-6 text-center max-w-md shadow-2xl border-2 border-yellow-200">
+                    <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                      <Trophy className="h-10 w-10 text-white" />
+                    </div>
+                    <h2
+                      className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                      style={{ fontFamily: "Orbitron, monospace" }}
+                    >
+                      🎉 CONGRATULATIONS! 🎉
+                    </h2>
+
+                    <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl mb-4 border border-yellow-200">
+                      <p
+                        className="text-gray-700 mb-2 text-lg font-semibold"
+                        style={{ fontFamily: "Orbitron, monospace" }}
+                      >
+                        MISSION ACCOMPLISHED!
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="bg-green-100 p-3 rounded-lg border border-green-300">
+                          <div
+                            className="text-2xl font-bold text-green-700"
+                            style={{ fontFamily: "Orbitron, monospace" }}
+                          >
+                            {gameState.correctAnswers}
+                          </div>
+                          <div className="text-xs text-green-600 font-semibold">
+                            CORRECT ANSWERS
+                          </div>
+                        </div>
+                        <div className="bg-blue-100 p-3 rounded-lg border border-blue-300">
+                          <div
+                            className="text-2xl font-bold text-blue-700"
+                            style={{ fontFamily: "Orbitron, monospace" }}
+                          >
+                            {Math.round(
+                              (gameState.correctAnswers /
+                                gameState.totalQuestions) *
+                                100
+                            )}
+                            %
+                          </div>
+                          <div className="text-xs text-blue-600 font-semibold">
+                            ACCURACY
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 p-3 bg-purple-100 rounded-lg border border-purple-300">
+                        <div
+                          className="text-lg font-bold text-purple-700"
+                          style={{ fontFamily: "Orbitron, monospace" }}
+                        >
+                          FINAL SCORE: {gameState.score}
+                        </div>
+                        <div className="text-sm text-purple-600 mt-1">
+                          You completed all 15 vocabulary challenges!
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 justify-center">
+                      <Button
+                        onClick={startGame}
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-6 py-3 text-lg font-semibold shadow-lg"
+                        style={{ fontFamily: "Orbitron, monospace" }}
+                      >
+                        <Play className="h-5 w-5 mr-2" />
+                        PLAY AGAIN
+                      </Button>
+                    </div>
+                  </Card>
+                </motion.div>
+              )}
+
               {/* Game Over Overlay */}
-              {gameState.gameOver && (
+              {gameState.gameOver && !gameState.gameCompleted && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -1165,6 +1292,7 @@ export default function FlappyWordsGame() {
               {/* Start Game Overlay */}
               {!gameState.isPlaying &&
                 !gameState.gameOver &&
+                !gameState.gameCompleted &&
                 !gameState.showCountdown &&
                 !gameState.showWordChallenge && (
                   <motion.div
@@ -1293,43 +1421,43 @@ export default function FlappyWordsGame() {
               exit={{ opacity: 0, scale: 0.8 }}
               className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
             >
-              <Card className="bg-gradient-to-br from-white to-blue-50 p-4 max-w-md mx-auto text-center shadow-2xl border-2 border-blue-200">
-                <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-pink-500 to-blue-600 rounded-full flex items-center justify-center">
-                  <div className="text-lg">🎯</div>
+              <Card className="bg-gradient-to-br from-white to-blue-50 p-3 max-w-sm mx-auto text-center shadow-2xl border-2 border-blue-200">
+                <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-pink-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <div className="text-base">🎯</div>
                 </div>
-                <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h3 className="text-lg font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Vocabulary Challenge!
                 </h3>
-                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-xl mb-4 border border-blue-200">
-                  <h4 className="text-2xl font-bold text-blue-800 mb-3">
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-xl mb-3 border border-blue-200">
+                  <h4 className="text-xl font-bold text-blue-800 mb-2">
                     {gameState.currentWord?.word}
                   </h4>
-                  <p className="text-gray-700 mb-4 font-semibold text-base">
+                  <p className="text-gray-700 mb-3 font-semibold text-sm">
                     What does this word mean?
                   </p>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {gameState.currentWord?.options.map((option, index) => (
                       <button
                         key={`${gameState.currentWord?.word}-${index}`}
                         onClick={() => selectAnswer(option)}
                         disabled={gameState.showFeedback}
-                        className={`w-full p-3 text-left rounded-lg border-2 transition-all duration-300 ${
+                        className={`w-full p-2 text-left rounded-lg border-2 transition-all duration-300 ${
                           gameState.showFeedback
                             ? option === gameState.currentWord?.definition
                               ? "border-green-500 bg-green-200 text-green-900"
                               : option === gameState.selectedAnswer &&
                                 option !== gameState.currentWord?.definition
                               ? "border-red-500 bg-red-200 text-red-900"
-                              : "border-gray-300 bg-gray-100 text-gray-600"
+                              : "border-gray-300 bg-gray-100 text-gray-900"
                             : gameState.selectedAnswer === option
                             ? "border-blue-500 bg-blue-200 text-blue-900 shadow-lg transform scale-105"
-                            : "border-gray-300 hover:border-blue-400 hover:bg-blue-50 bg-white"
+                            : "border-gray-300 hover:border-blue-400 hover:bg-blue-50 bg-white text-gray-900"
                         }`}
                       >
-                        <span className="font-bold text-blue-600 mr-2 text-base">
+                        <span className="font-bold text-blue-600 mr-2 text-sm">
                           {String.fromCharCode(65 + index)}.
                         </span>
-                        <span className="font-medium text-sm">{option}</span>
+                        <span className="font-medium text-sm text-black">{option}</span>
                         {gameState.showFeedback &&
                           option === gameState.currentWord?.definition && (
                             <span className="ml-2 text-green-600">✅</span>
@@ -1405,7 +1533,11 @@ export default function FlappyWordsGame() {
                           : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
                       }`}
                     >
-                      {gameState.gameOver ? "Game Over" : "Continue Flying! 🐦"}
+                      {gameState.gameOver
+                        ? "Game Over"
+                        : gameState.gameCompleted
+                        ? "Complete! 🎉"
+                        : "Continue Flying! 🐦"}
                     </Button>
                   )}
                 </div>
