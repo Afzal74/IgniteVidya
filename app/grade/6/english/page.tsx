@@ -175,6 +175,14 @@ export default function Grade6EnglishPage() {
   // Grammar and Writing Skills
   const grammarTopics = [
     {
+      id: 0,
+      name: "Flappy Words Game",
+      description: "Learn vocabulary while playing this fun flying game!",
+      icon: Star,
+      status: "available",
+      href: "/grade/6/english/flappy-words",
+    },
+    {
       id: 1,
       name: "Grammar Basics",
       description: "Nouns, Pronouns, Verbs, Adjectives, Adverbs",
@@ -502,14 +510,14 @@ export default function Grade6EnglishPage() {
             </p>
           </div>
 
+          {/* Grammar & Writing Skills - Now at the top */}
+          {renderChapterGrid(grammarTopics, "✏️ Grammar & Writing Skills", Edit3)}
+
           {/* Prose Chapters */}
           {renderChapterGrid(proseChapters, "📘 Prose (Chapters)", FileText)}
 
           {/* Poems */}
           {renderChapterGrid(poems, "🔹 Poems", Heart)}
-
-          {/* Grammar & Writing */}
-          {renderChapterGrid(grammarTopics, "✏️ Grammar & Writing Skills", Edit3)}
 
           {/* Quick Links */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
