@@ -511,42 +511,55 @@ export default function KnowingOurNumbersPage() {
                         </Badge>
                       </div>
 
-                      {/* Topic Content */}
-                      <div className="flex-1">
-                        <h3
-                          className={`
-                          text-sm font-bold mb-1
-                          ${
-                            isCompleted
-                              ? "text-blue-700 dark:text-blue-300"
-                              : "text-gray-900 dark:text-white"
-                          }
-                        `}
-                        >
-                          {topic.title}
-                        </h3>
-
-                        <p
-                          className={`
-                          text-xs mb-3 line-clamp-2
-                          ${
-                            isCompleted
-                              ? "text-blue-600 dark:text-blue-400"
-                              : "text-gray-600 dark:text-gray-400"
-                          }
-                        `}
-                        >
-                          {topic.description}
-                        </p>
-
-                        <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {topic.estimatedTime}
+                      {/* Topic Content with Left-side GIF for Comparing Numbers */}
+                      <div className="flex-1 flex items-start gap-3">
+                        {/* Circular GIF Showcase for Comparing Numbers - Left Side */}
+                        {topic.id === 1 && (
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-blue-200 dark:border-blue-700 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900 dark:to-purple-900 flex-shrink-0">
+                            <img
+                              src="/seesaw.gif"
+                              alt="Comparing Numbers Animation"
+                              className="w-full h-full object-cover"
+                            />
                           </div>
-                          <div className="flex items-center gap-1">
-                            <Trophy className="h-3 w-3" />
-                            {topic.points}pts
+                        )}
+
+                        <div className="flex-1 min-w-0">
+                          <h3
+                            className={`
+                            text-sm font-bold mb-1
+                            ${
+                              isCompleted
+                                ? "text-blue-700 dark:text-blue-300"
+                                : "text-gray-900 dark:text-white"
+                            }
+                          `}
+                          >
+                            {topic.title}
+                          </h3>
+
+                          <p
+                            className={`
+                            text-xs mb-3 line-clamp-2
+                            ${
+                              isCompleted
+                                ? "text-blue-600 dark:text-blue-400"
+                                : "text-gray-600 dark:text-gray-400"
+                            }
+                          `}
+                          >
+                            {topic.description}
+                          </p>
+
+                          <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {topic.estimatedTime}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Trophy className="h-3 w-3" />
+                              {topic.points}pts
+                            </div>
                           </div>
                         </div>
                       </div>

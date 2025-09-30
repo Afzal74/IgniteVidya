@@ -327,9 +327,20 @@ export default function Grade6EnglishPage() {
                 <Link key={chapter.id} href={chapter.href}>
                   <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-4 md:p-6 backdrop-blur-sm">
                     <div className="flex items-start gap-3 md:gap-4">
-                      <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
-                        <ChapterIcon className="text-white h-5 w-5 md:h-6 md:w-6" />
-                      </div>
+                      {chapter.name === "Flappy Words Game" ? (
+                        <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 p-1 flex items-center justify-center flex-shrink-0 shadow-lg">
+                          <img
+                            src="/flappy.gif"
+                            alt="Flappy Bird"
+                            className="w-full h-full rounded-full object-cover"
+                            style={{ imageRendering: "pixelated" }}
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg bg-purple-600 flex items-center justify-center flex-shrink-0">
+                          <ChapterIcon className="text-white h-5 w-5 md:h-6 md:w-6" />
+                        </div>
+                      )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base leading-tight">
@@ -347,7 +358,9 @@ export default function Grade6EnglishPage() {
                           className="bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto text-xs md:text-sm"
                         >
                           <Play className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                          <span className="hidden sm:inline">Start Learning</span>
+                          <span className="hidden sm:inline">
+                            Start Learning
+                          </span>
                           <span className="sm:hidden">Start</span>
                         </Button>
                       </div>
@@ -511,7 +524,11 @@ export default function Grade6EnglishPage() {
           </div>
 
           {/* Grammar & Writing Skills - Now at the top */}
-          {renderChapterGrid(grammarTopics, "✏️ Grammar & Writing Skills", Edit3)}
+          {renderChapterGrid(
+            grammarTopics,
+            "✏️ Grammar & Writing Skills",
+            Edit3
+          )}
 
           {/* Prose Chapters */}
           {renderChapterGrid(proseChapters, "📘 Prose (Chapters)", FileText)}
