@@ -802,8 +802,8 @@ export default function FlappyWordsGame() {
       const scaleY = rect.height / GAME_HEIGHT;
 
       const birdElement = birdElementRef.current;
-      birdElement.style.left = `${rect.left + bird.x * scaleX}px`;
-      birdElement.style.top = `${rect.top + bird.y * scaleY}px`;
+      birdElement.style.left = `${bird.x * scaleX}px`;
+      birdElement.style.top = `${bird.y * scaleY}px`;
       birdElement.style.width = `${BIRD_SIZE * scaleX}px`;
       birdElement.style.height = `${BIRD_SIZE * scaleY}px`;
 
@@ -1125,7 +1125,7 @@ export default function FlappyWordsGame() {
                 alt="Flappy Bird"
                 className="absolute pointer-events-none z-10"
                 style={{
-                  position: "fixed",
+                  position: "absolute",
                   transformOrigin: "center center",
                   imageRendering: "pixelated",
                 }}
@@ -1457,7 +1457,9 @@ export default function FlappyWordsGame() {
                         <span className="font-bold text-blue-600 mr-2 text-sm">
                           {String.fromCharCode(65 + index)}.
                         </span>
-                        <span className="font-medium text-sm text-black">{option}</span>
+                        <span className="font-medium text-sm text-black">
+                          {option}
+                        </span>
                         {gameState.showFeedback &&
                           option === gameState.currentWord?.definition && (
                             <span className="ml-2 text-green-600">✅</span>

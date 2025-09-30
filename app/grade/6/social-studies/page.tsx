@@ -68,7 +68,7 @@ export default function Grade6SocialStudiesPage() {
     }
   ]
 
-  const getColorClasses = (color) => {
+  const getColorClasses = (color: string) => {
     switch (color) {
       case "blue": return "from-blue-500 to-blue-700 dark:from-blue-400 dark:to-blue-600"
       case "green": return "from-green-500 to-green-700 dark:from-green-400 dark:to-green-600"
@@ -80,7 +80,7 @@ export default function Grade6SocialStudiesPage() {
     }
   }
 
-  const getIcon = (type) => {
+  const getIcon = (type: string) => {
     switch (type) {
       case "game": return Gamepad2
       case "notes": return Globe
