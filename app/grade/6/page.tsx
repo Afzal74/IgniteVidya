@@ -6,9 +6,11 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import { useSoundEffects } from "@/hooks/useSoundEffects"
 
 export default function Grade6Page() {
   const [mounted, setMounted] = useState(false)
+  const { playHoverSound, playClickSound } = useSoundEffects()
 
   useEffect(() => {
     setMounted(true)
@@ -108,16 +110,31 @@ export default function Grade6Page() {
                       subject.name === 'English' ? '/grade/6/english' :
                       '#'
                     }>
-                      <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
-                        <div className="p-4 md:p-6 h-full flex flex-col justify-center">
-                          <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                      <Card 
+                        className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-500 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-2xl hover:shadow-blue-500/25 transform hover:-translate-y-2 hover:scale-105"
+                        onMouseEnter={() => playHoverSound("card")}
+                        onClick={() => playClickSound("card")}
+                      >
+                        {/* Enhanced Shiny Overlay Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/30 to-transparent dark:via-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        
+                        {/* Animated Background Pattern */}
+                        <div className="absolute inset-0 opacity-5 dark:opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                          <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(59,130,246,0.3)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(59,130,246,0.2)_1px,transparent_0)] bg-[length:12px_12px] group-hover:animate-pulse" />
+                        </div>
+
+                        {/* Glowing Border Effect */}
+                        <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-blue-500/20 via-transparent to-blue-500/20 blur-sm" />
+
+                        <div className="relative p-4 md:p-6 h-full flex flex-col justify-center">
+                          <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                             {subject.name}
                           </h3>
-                          <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                          <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors duration-300 group-hover:font-medium">
                             {subject.description}
                           </p>
                           <div className="mt-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                            <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors duration-300">
                               Available
                             </span>
                           </div>
@@ -125,17 +142,28 @@ export default function Grade6Page() {
                       </Card>
                     </Link>
                   ) : (
-                    <Card className="border-zinc-200 dark:border-zinc-800 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
-                      <div className="p-4 md:p-6 h-full flex flex-col justify-center">
-                        <h3 className="font-bold text-black dark:text-white mb-2 text-lg">
+                    <Card 
+                      className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-yellow-500 dark:hover:border-yellow-400 transition-all duration-500 cursor-not-allowed h-32 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 shadow-lg hover:shadow-xl opacity-75 hover:opacity-90"
+                      onMouseEnter={() => playHoverSound("card")}
+                    >
+                      {/* Subtle Overlay Effect */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-transparent via-yellow/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                      
+                      {/* Subtle Pattern */}
+                      <div className="absolute inset-0 opacity-5 dark:opacity-10">
+                        <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(234,179,8,0.2)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(234,179,8,0.1)_1px,transparent_0)] bg-[length:8px_8px]" />
+                      </div>
+
+                      <div className="relative p-4 md:p-6 h-full flex flex-col justify-center">
+                        <h3 className="font-bold text-gray-600 dark:text-gray-300 mb-2 text-lg group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors duration-300">
                           {subject.name}
                         </h3>
-                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors duration-300">
                           {subject.description}
                         </p>
                         {isComingSoon && (
                           <div className="mt-2">
-                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                            <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300 group-hover:bg-yellow-200 dark:group-hover:bg-yellow-800 transition-colors duration-300">
                               Coming Soon
                             </span>
                           </div>
@@ -169,12 +197,24 @@ export default function Grade6Page() {
                 transition={{ duration: 0.5, delay: 0.5 + 0.1 * index }}
               >
                 <Link href={item.href}>
-                  <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-20">
-                    <div className="p-3 text-center h-full flex flex-col justify-center">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 group-hover:bg-black dark:group-hover:bg-white transition-colors">
-                        <item.icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors" />
+                  <Card 
+                    className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-500 cursor-pointer h-20 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-800 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
+                    onMouseEnter={() => playHoverSound("button")}
+                    onClick={() => playClickSound("button")}
+                  >
+                    {/* Subtle Overlay Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                    
+                    {/* Animated Background Pattern */}
+                    <div className="absolute inset-0 opacity-5 dark:opacity-10 group-hover:opacity-15 transition-opacity duration-500">
+                      <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)] bg-[length:8px_8px] group-hover:animate-pulse" />
+                    </div>
+
+                    <div className="relative p-3 text-center h-full flex flex-col justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 group-hover:bg-black dark:group-hover:bg-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                        <item.icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors duration-300" />
                       </div>
-                      <h4 className="font-semibold text-black dark:text-white text-xs">
+                      <h4 className="font-semibold text-black dark:text-white text-xs group-hover:font-bold transition-all duration-300">
                         {item.title}
                       </h4>
                     </div>

@@ -1,37 +1,88 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { ArrowLeft, BookOpen, Play, Brain, Target, Star } from "lucide-react"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { motion } from "framer-motion"
+import { useState, useEffect } from "react";
+import { ArrowLeft, BookOpen, Play, Brain, Target, Star } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 
 export default function Grade7Page() {
-  const [mounted, setMounted] = useState(false)
+  const [mounted, setMounted] = useState(false);
+  const { playHoverSound, playClickSound } = useSoundEffects();
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
   const subjects = [
-    { name: "Mathematics", description: "Numbers, Algebra, Geometry", color: "blue" },
-    { name: "Science", description: "Physics, Chemistry, Biology", color: "green" },
-    { name: "English", description: "Reading, Writing, Grammar", color: "purple" },
-    { name: "Social Studies", description: "History, Geography, Civics", color: "orange" },
-    { name: "Computer Science", description: "Programming, Technology", color: "indigo" },
-    { name: "Environmental Studies", description: "Nature, Ecology", color: "emerald" }
-  ]
+    {
+      name: "Mathematics",
+      description: "Numbers, Algebra, Geometry",
+      color: "blue",
+    },
+    {
+      name: "Science",
+      description: "Physics, Chemistry, Biology",
+      color: "green",
+    },
+    {
+      name: "English",
+      description: "Reading, Writing, Grammar",
+      color: "purple",
+    },
+    {
+      name: "Social Studies",
+      description: "History, Geography, Civics",
+      color: "orange",
+    },
+    {
+      name: "Computer Science",
+      description: "Programming, Technology",
+      color: "indigo",
+    },
+    {
+      name: "Environmental Studies",
+      description: "Nature, Ecology",
+      color: "emerald",
+    },
+  ];
 
   const quickAccess = [
-    { title: "Notes", icon: BookOpen, href: "/notes?grade=7", description: "Study materials" },
-    { title: "Lectures", icon: Play, href: "/lectures?grade=7", description: "Video lessons" },
-    { title: "AI Tutor", icon: Brain, href: "/ai-tutor?grade=7", description: "Smart learning" },
-    { title: "Quiz", icon: Target, href: "/quiz?grade=7", description: "Test yourself" },
-    { title: "Progress", icon: Star, href: "/dashboard?grade=7", description: "Track learning" }
-  ]
+    {
+      title: "Notes",
+      icon: BookOpen,
+      href: "/notes?grade=7",
+      description: "Study materials",
+    },
+    {
+      title: "Lectures",
+      icon: Play,
+      href: "/lectures?grade=7",
+      description: "Video lessons",
+    },
+    {
+      title: "AI Tutor",
+      icon: Brain,
+      href: "/ai-tutor?grade=7",
+      description: "Smart learning",
+    },
+    {
+      title: "Quiz",
+      icon: Target,
+      href: "/quiz?grade=7",
+      description: "Test yourself",
+    },
+    {
+      title: "Progress",
+      icon: Star,
+      href: "/dashboard?grade=7",
+      description: "Track learning",
+    },
+  ];
 
-  if (!mounted) return null
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-white dark:bg-black">
@@ -40,7 +91,10 @@ export default function Grade7Page() {
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
           <Link href="/level/higher-primary">
-            <Button variant="ghost" className="mb-6 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white">
+            <Button
+              variant="ghost"
+              className="mb-6 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Higher Primary
             </Button>
@@ -52,9 +106,9 @@ export default function Grade7Page() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-8 md:mb-12"
           >
-            <img 
-              src="/7th.png" 
-              alt="Class 7th" 
+            <img
+              src="/7th.png"
+              alt="Class 7th"
               className="w-36 h-36 md:w-44 md:h-44 lg:w-52 lg:h-52 xl:w-60 xl:h-60 object-contain mx-auto mb-4 drop-shadow-2xl"
             />
             <p className="text-sm md:text-lg text-zinc-600 dark:text-zinc-400 mb-4">
@@ -97,28 +151,101 @@ export default function Grade7Page() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 * index }}
               >
-                <Link href={
-                  subject.name === 'Mathematics' ? '/grade/7/mathematics' : 
-                  subject.name === 'Science' ? '/grade/7/science' : 
-                  subject.name === 'Social Studies' ? '/grade/7/social-studies' :
-                  '#'
-                }>
-                  <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-pointer h-32 bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black shadow-lg hover:shadow-xl">
-                    <div className="p-4 md:p-6 h-full flex flex-col justify-center">
-                      <h3 className="font-bold text-black dark:text-white mb-2 text-lg group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors">
+                <Link
+                  href={
+                    subject.name === "Mathematics"
+                      ? "/grade/7/mathematics"
+                      : subject.name === "Science"
+                      ? "/grade/7/science"
+                      : subject.name === "Social Studies"
+                      ? "/grade/7/social-studies"
+                      : "#"
+                  }
+                >
+                  <Card
+                    className={`group relative overflow-hidden border-zinc-200 dark:border-zinc-800 transition-all duration-500 h-32 shadow-lg ${
+                      subject.name === "Mathematics" ||
+                      subject.name === "Science" ||
+                      subject.name === "Social Studies"
+                        ? "hover:border-green-500 dark:hover:border-green-400 cursor-pointer bg-gradient-to-br from-white to-zinc-100 dark:from-zinc-900 dark:to-black hover:shadow-2xl hover:shadow-green-500/25 transform hover:-translate-y-2 hover:scale-105"
+                        : "cursor-not-allowed bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-800 dark:to-zinc-900 opacity-75 hover:opacity-90 hover:border-yellow-500 dark:hover:border-yellow-400"
+                    }`}
+                    onMouseEnter={() => playHoverSound("card")}
+                    onClick={() => {
+                      if (
+                        subject.name === "Mathematics" ||
+                        subject.name === "Science" ||
+                        subject.name === "Social Studies"
+                      ) {
+                        playClickSound("card");
+                      }
+                    }}
+                  >
+                    {/* Conditional Overlay Effects */}
+                    {subject.name === "Mathematics" ||
+                    subject.name === "Science" ||
+                    subject.name === "Social Studies" ? (
+                      <>
+                        {/* Enhanced Shiny Overlay Effect */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/30 to-transparent dark:via-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {/* Animated Background Pattern */}
+                        <div className="absolute inset-0 opacity-5 dark:opacity-10 group-hover:opacity-20 transition-opacity duration-500">
+                          <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(34,197,94,0.3)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(34,197,94,0.2)_1px,transparent_0)] bg-[length:12px_12px] group-hover:animate-pulse" />
+                        </div>
+
+                        {/* Glowing Border Effect */}
+                        <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-green-500/20 via-transparent to-green-500/20 blur-sm" />
+                      </>
+                    ) : (
+                      <>
+                        {/* Subtle Overlay Effect for Coming Soon */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-yellow/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                        {/* Subtle Pattern for Coming Soon */}
+                        <div className="absolute inset-0 opacity-5 dark:opacity-10">
+                          <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(234,179,8,0.2)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(234,179,8,0.1)_1px,transparent_0)] bg-[length:8px_8px]" />
+                        </div>
+                      </>
+                    )}
+
+                    <div className="relative p-4 md:p-6 h-full flex flex-col justify-center">
+                      <h3
+                        className={`font-bold mb-2 text-lg transition-colors duration-300 ${
+                          subject.name === "Mathematics" ||
+                          subject.name === "Science" ||
+                          subject.name === "Social Studies"
+                            ? "text-black dark:text-white group-hover:text-green-600 dark:group-hover:text-green-400"
+                            : "text-gray-600 dark:text-gray-300 group-hover:text-gray-700 dark:group-hover:text-gray-200"
+                        }`}
+                      >
                         {subject.name}
                       </h3>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors">
+                      <p
+                        className={`text-sm transition-colors duration-300 ${
+                          subject.name === "Mathematics" ||
+                          subject.name === "Science" ||
+                          subject.name === "Social Studies"
+                            ? "text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 group-hover:font-medium"
+                            : "text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300"
+                        }`}
+                      >
                         {subject.description}
                       </p>
-                      {(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
+                      {(subject.name === "Mathematics" ||
+                        subject.name === "Science" ||
+                        subject.name === "Social Studies") && (
                         <div className="mt-2">
-                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+                          <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors duration-300">
                             Content Available
                           </span>
                         </div>
                       )}
-                      {!(subject.name === 'Mathematics' || subject.name === 'Science' || subject.name === 'Social Studies') && (
+                      {!(
+                        subject.name === "Mathematics" ||
+                        subject.name === "Science" ||
+                        subject.name === "Social Studies"
+                      ) && (
                         <div className="mt-2">
                           <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
                             Coming Soon
@@ -153,12 +280,24 @@ export default function Grade7Page() {
                 transition={{ duration: 0.5, delay: 0.5 + 0.1 * index }}
               >
                 <Link href={item.href}>
-                  <Card className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-20">
-                    <div className="p-3 text-center h-full flex flex-col justify-center">
-                      <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 group-hover:bg-black dark:group-hover:bg-white transition-colors">
-                        <item.icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors" />
+                  <Card
+                    className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-500 cursor-pointer h-20 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-800 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
+                    onMouseEnter={() => playHoverSound("button")}
+                    onClick={() => playClickSound("button")}
+                  >
+                    {/* Subtle Overlay Effect */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    {/* Animated Background Pattern */}
+                    <div className="absolute inset-0 opacity-5 dark:opacity-10 group-hover:opacity-15 transition-opacity duration-500">
+                      <div className="w-full h-full bg-[radial-gradient(circle_at_1px_1px,rgba(0,0,0,0.1)_1px,transparent_0)] dark:bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.1)_1px,transparent_0)] bg-[length:8px_8px] group-hover:animate-pulse" />
+                    </div>
+
+                    <div className="relative p-3 text-center h-full flex flex-col justify-center">
+                      <div className="w-8 h-8 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 group-hover:bg-black dark:group-hover:bg-white transition-all duration-300 group-hover:scale-110 group-hover:rotate-3">
+                        <item.icon className="h-4 w-4 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors duration-300" />
                       </div>
-                      <h4 className="font-semibold text-black dark:text-white text-xs">
+                      <h4 className="font-semibold text-black dark:text-white text-xs group-hover:font-bold transition-all duration-300">
                         {item.title}
                       </h4>
                     </div>
@@ -170,5 +309,5 @@ export default function Grade7Page() {
         </div>
       </section>
     </div>
-  )
+  );
 }
