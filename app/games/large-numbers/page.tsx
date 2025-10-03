@@ -608,51 +608,63 @@ export default function LargeNumbersGame() {
     }
   }, [collectedValue, targetNumber, gameStarted, playClickSound]);
 
-  // Keyboard controls
+  // Keyboard controls with multi-key support
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (!gameStarted) return;
+    if (!gameStarted) return;
 
-      switch (e.key) {
-        case "ArrowLeft":
-        case "a":
-          setPlayer((prev) => ({
-            ...prev,
-            x: Math.max(0, prev.x - MOVE_SPEED),
-            direction: "left",
-          }));
-          break;
-        case "ArrowRight":
-        case "d":
-          setPlayer((prev) => ({
-            ...prev,
-            x: Math.min(760, prev.x + MOVE_SPEED),
-            direction: "right",
-          }));
-          break;
-        case " ":
-        case "ArrowUp":
-        case "w":
-          e.preventDefault();
-          setPlayer((prev) => {
-            if (prev.isOnGround && !prev.isJumping) {
-              // Enhanced jump physics
-              return {
-                ...prev,
-                velocityY: JUMP_POWER, // Better jump feel
-                isJumping: true,
-                isOnGround: false,
-              };
-            }
-            return prev;
-          });
-          break;
+    const keysPressed = new Set<string>();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysPressed.add(e.key.toLowerCase());
+
+      // Handle jump
+      if (e.key === " " || e.key === "ArrowUp" || e.key.toLowerCase() === "w") {
+        e.preventDefault();
+        setPlayer((prev) => {
+          if (prev.isOnGround && !prev.isJumping) {
+            return {
+              ...prev,
+              velocityY: JUMP_POWER,
+              isJumping: true,
+              isOnGround: false,
+            };
+          }
+          return prev;
+        });
       }
     };
 
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [gameStarted, hasMushroomPower]);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.delete(e.key.toLowerCase());
+    };
+
+    // Movement loop - runs continuously
+    const movementInterval = setInterval(() => {
+      if (keysPressed.has("arrowleft") || keysPressed.has("a")) {
+        setPlayer((prev) => ({
+          ...prev,
+          x: Math.max(0, prev.x - MOVE_SPEED),
+          direction: "left",
+        }));
+      }
+      if (keysPressed.has("arrowright") || keysPressed.has("d")) {
+        setPlayer((prev) => ({
+          ...prev,
+          x: Math.min(760, prev.x + MOVE_SPEED),
+          direction: "right",
+        }));
+      }
+    }, 16); // ~60fps
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      clearInterval(movementInterval);
+    };
+  }, [gameStarted]);
 
   const startGame = () => {
     setGameStarted(true);
