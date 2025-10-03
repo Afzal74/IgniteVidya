@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { ArrowLeft, RotateCcw, Trophy } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  RotateCcw,
+  Trophy,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -61,8 +70,16 @@ export default function LargeNumbersGame() {
   const [quizScore, setQuizScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(7);
 
   const { playClickSound } = useSoundEffects();
+
+  // Timer durations per level
+  const timerDurations = {
+    1: 7, // Level 1: 7 seconds
+    2: 10, // Level 2: 10 seconds
+    3: 15, // Level 3: 15 seconds
+  };
 
   // Detect system/site theme
   const [isDarkTheme, setIsDarkTheme] = useState(true);
@@ -769,17 +786,69 @@ export default function LargeNumbersGame() {
       if (currentQuestionIndex < quizQuestions.length - 1) {
         setCurrentQuestionIndex((prev) => prev + 1);
         setSelectedAnswer(null);
+        setTimeLeft(
+          timerDurations[currentLevel as keyof typeof timerDurations] || 7
+        );
       } else {
         setQuizCompleted(true);
       }
     }, 2000);
   };
 
+  const handleTimeUp = () => {
+    // Time's up - treat as wrong answer
+    setSelectedAnswer(-1);
+    playClickSound("card");
+
+    setTimeout(() => {
+      if (currentQuestionIndex < quizQuestions.length - 1) {
+        setCurrentQuestionIndex((prev) => prev + 1);
+        setSelectedAnswer(null);
+        setTimeLeft(
+          timerDurations[currentLevel as keyof typeof timerDurations] || 7
+        );
+      } else {
+        setQuizCompleted(true);
+      }
+    }, 2000);
+  };
+
+  // Quiz timer
+  useEffect(() => {
+    if (!showQuiz || quizCompleted || selectedAnswer !== null) return;
+
+    setTimeLeft(
+      timerDurations[currentLevel as keyof typeof timerDurations] || 7
+    );
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          handleTimeUp();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [
+    showQuiz,
+    currentQuestionIndex,
+    quizCompleted,
+    selectedAnswer,
+    currentLevel,
+  ]);
+
   const resetQuiz = () => {
     setCurrentQuestionIndex(0);
     setQuizScore(0);
     setSelectedAnswer(null);
     setQuizCompleted(false);
+    setTimeLeft(
+      timerDurations[currentLevel as keyof typeof timerDurations] || 7
+    );
     // Keep showQuiz true so quiz stays visible
     playClickSound("card");
   };
@@ -1055,9 +1124,9 @@ export default function LargeNumbersGame() {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-gradient-to-br from-gray-900 to-black border border-gray-700/50 rounded-2xl p-4 sm:p-6 md:p-8 max-w-2xl w-full my-4 sm:my-8 max-h-[90vh] overflow-y-auto"
+              className="bg-gradient-to-br from-gray-900 to-black border border-gray-700/50 rounded-xl p-3 sm:p-4 md:p-5 max-w-xl w-full my-3 sm:my-4 max-h-[85vh] overflow-y-auto"
             >
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+              <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                 {currentLevel === 1
                   ? "🎮 How to Play"
                   : `🎉 Welcome to Level ${currentLevel}!`}
@@ -1607,6 +1676,96 @@ export default function LargeNumbersGame() {
         </div>
       </div>
 
+      {/* Virtual Controls for Mobile/Touch */}
+      {gameStarted && !gameWon && (
+        <div className="fixed bottom-4 left-4 flex gap-4 z-20 md:hidden">
+          {/* Left Button */}
+          <button
+            onTouchStart={() => {
+              setPlayer((prev) => ({
+                ...prev,
+                x: Math.max(0, prev.x - MOVE_SPEED * 3),
+                direction: "left",
+              }));
+            }}
+            onMouseDown={() => {
+              const interval = setInterval(() => {
+                setPlayer((prev) => ({
+                  ...prev,
+                  x: Math.max(0, prev.x - MOVE_SPEED),
+                  direction: "left",
+                }));
+              }, 16);
+              (window as any).leftInterval = interval;
+            }}
+            onMouseUp={() => clearInterval((window as any).leftInterval)}
+            onMouseLeave={() => clearInterval((window as any).leftInterval)}
+            className="w-16 h-16 bg-blue-500/80 hover:bg-blue-600/80 active:bg-blue-700/80 active:scale-95 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white/30 backdrop-blur-sm transition-all"
+          >
+            <ChevronLeft className="w-8 h-8" strokeWidth={3} />
+          </button>
+
+          {/* Jump Button */}
+          <button
+            onTouchStart={() => {
+              setPlayer((prev) => {
+                if (prev.isOnGround && !prev.isJumping) {
+                  return {
+                    ...prev,
+                    velocityY: JUMP_POWER,
+                    isJumping: true,
+                    isOnGround: false,
+                  };
+                }
+                return prev;
+              });
+            }}
+            onClick={() => {
+              setPlayer((prev) => {
+                if (prev.isOnGround && !prev.isJumping) {
+                  return {
+                    ...prev,
+                    velocityY: JUMP_POWER,
+                    isJumping: true,
+                    isOnGround: false,
+                  };
+                }
+                return prev;
+              });
+            }}
+            className="w-16 h-16 bg-green-500/80 hover:bg-green-600/80 active:bg-green-700/80 active:scale-95 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white/30 backdrop-blur-sm transition-all"
+          >
+            <ChevronUp className="w-8 h-8" strokeWidth={3} />
+          </button>
+
+          {/* Right Button */}
+          <button
+            onTouchStart={() => {
+              setPlayer((prev) => ({
+                ...prev,
+                x: Math.min(760, prev.x + MOVE_SPEED * 3),
+                direction: "right",
+              }));
+            }}
+            onMouseDown={() => {
+              const interval = setInterval(() => {
+                setPlayer((prev) => ({
+                  ...prev,
+                  x: Math.min(760, prev.x + MOVE_SPEED),
+                  direction: "right",
+                }));
+              }, 16);
+              (window as any).rightInterval = interval;
+            }}
+            onMouseUp={() => clearInterval((window as any).rightInterval)}
+            onMouseLeave={() => clearInterval((window as any).rightInterval)}
+            className="w-16 h-16 bg-blue-500/80 hover:bg-blue-600/80 active:bg-blue-700/80 active:scale-95 rounded-full flex items-center justify-center text-white shadow-lg border-2 border-white/30 backdrop-blur-sm transition-all"
+          >
+            <ChevronRight className="w-8 h-8" strokeWidth={3} />
+          </button>
+        </div>
+      )}
+
       {/* Quiz Section */}
       <AnimatePresence>
         {showQuiz && (
@@ -1624,15 +1783,38 @@ export default function LargeNumbersGame() {
               <div className="bg-gradient-to-br from-gray-900/95 to-black/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl p-8 shadow-2xl">
                 {!quizCompleted ? (
                   <>
-                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                         🧠 Knowledge Check
                       </h2>
+                      <Button
+                        onClick={() => {
+                          setShowQuiz(false);
+                          setGameStarted(true);
+                        }}
+                        variant="outline"
+                        className="border-gray-600 text-gray-300 hover:bg-gray-700 px-3 py-2 rounded-lg text-sm"
+                      >
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Back to Game
+                      </Button>
+                    </div>
+
+                    <div className="flex items-center justify-between mb-6">
                       <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 rounded-xl px-4 py-2">
                         <span className="text-blue-300 font-semibold">
                           Question {currentQuestionIndex + 1} of{" "}
                           {quizQuestions.length}
                         </span>
+                      </div>
+                      <div
+                        className={`rounded-xl px-4 py-2 border font-bold text-lg ${
+                          timeLeft <= 3
+                            ? "bg-red-500/20 border-red-500/50 text-red-300 animate-pulse"
+                            : "bg-green-500/20 border-green-500/30 text-green-300"
+                        }`}
+                      >
+                        ⏱️ {timeLeft}s
                       </div>
                     </div>
 
