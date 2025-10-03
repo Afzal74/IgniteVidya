@@ -91,7 +91,8 @@ export default function LargeNumbersGame() {
   const allQuizQuestions = {
     1: [
       {
-        question: "In this level, you collected numbers 1, 2, 3, 4 in order. What is their sum?",
+        question:
+          "In this level, you collected numbers 1, 2, 3, 4 in order. What is their sum?",
         options: ["8", "10", "12", "14"],
         correct: 1,
         explanation: "1 + 2 + 3 + 4 = 10. This is the target for Level 1!",
@@ -104,9 +105,15 @@ export default function LargeNumbersGame() {
       },
       {
         question: "Which is the correct order to collect numbers in this game?",
-        options: ["Any order", "Largest to smallest", "Smallest to largest", "The order shown at top"],
+        options: [
+          "Any order",
+          "Largest to smallest",
+          "Smallest to largest",
+          "The order shown at top",
+        ],
         correct: 3,
-        explanation: "You must collect numbers in the exact order shown at the top of the screen!",
+        explanation:
+          "You must collect numbers in the exact order shown at the top of the screen!",
       },
       {
         question: "What is 1 + 2 + 3?",
@@ -123,7 +130,8 @@ export default function LargeNumbersGame() {
     ],
     2: [
       {
-        question: "In Level 2, you collected 5, 6, 7, 8 in order. What is their sum?",
+        question:
+          "In Level 2, you collected 5, 6, 7, 8 in order. What is their sum?",
         options: ["20", "24", "26", "28"],
         correct: 2,
         explanation: "5 + 6 + 7 + 8 = 26. This is the target for Level 2!",
@@ -132,7 +140,8 @@ export default function LargeNumbersGame() {
         question: "What is the place value of 2 in the number 5,267?",
         options: ["2", "20", "200", "2,000"],
         correct: 2,
-        explanation: "The digit 2 is in the hundreds place, so its value is 200.",
+        explanation:
+          "The digit 2 is in the hundreds place, so its value is 200.",
       },
       {
         question: "How do you write 'Twenty-six' in numbers?",
@@ -150,12 +159,14 @@ export default function LargeNumbersGame() {
         question: "Which number is greater: 26 or 62?",
         options: ["26", "62", "Both equal", "Cannot tell"],
         correct: 1,
-        explanation: "62 is greater than 26 because 6 tens is more than 2 tens.",
+        explanation:
+          "62 is greater than 26 because 6 tens is more than 2 tens.",
       },
     ],
     3: [
       {
-        question: "In Level 3, you collected 10, 12, 14, 14. What is their sum?",
+        question:
+          "In Level 3, you collected 10, 12, 14, 14. What is their sum?",
         options: ["40", "45", "50", "55"],
         correct: 2,
         explanation: "10 + 12 + 14 + 14 = 50. This is the target for Level 3!",
@@ -164,7 +175,8 @@ export default function LargeNumbersGame() {
         question: "What is the place value of 5 in the number 52,847?",
         options: ["5", "50", "5,000", "50,000"],
         correct: 3,
-        explanation: "The digit 5 is in the ten-thousands place, so its value is 50,000.",
+        explanation:
+          "The digit 5 is in the ten-thousands place, so its value is 50,000.",
       },
       {
         question: "How do you write 'Fifty thousand' in Indian number system?",
@@ -187,7 +199,9 @@ export default function LargeNumbersGame() {
     ],
   };
 
-  const quizQuestions = allQuizQuestions[currentLevel as keyof typeof allQuizQuestions] || allQuizQuestions[1];
+  const quizQuestions =
+    allQuizQuestions[currentLevel as keyof typeof allQuizQuestions] ||
+    allQuizQuestions[1];
 
   // Generate and download completion badge
   const downloadCompletionBadge = () => {
@@ -647,15 +661,24 @@ export default function LargeNumbersGame() {
   };
 
   const resetGame = () => {
+    // Reset to Level 1
+    setCurrentLevel(1);
     setGameStarted(false);
     setGameWon(false);
     setCollectedValue(0);
     setLives(3);
     setHasMushroomPower(false);
-    setNextToCollect(levels[currentLevel - 1]?.numbers[0] || 1);
+    setScore(0);
+    setShowQuiz(false);
+    setCurrentQuestionIndex(0);
+    setQuizScore(0);
+    setSelectedAnswer(null);
+    setQuizCompleted(false);
+    setShowInstructions(true);
+    setNextToCollect(1);
     setPlayer({
       x: 20,
-      y: 222, // Standing exactly ON TOP of stone platform
+      y: 222,
       width: 64,
       height: 64,
       velocityY: 0,
@@ -663,7 +686,6 @@ export default function LargeNumbersGame() {
       isOnGround: true,
       direction: "right",
     });
-    generateCollectibles();
     playClickSound("card");
   };
 
@@ -742,11 +764,12 @@ export default function LargeNumbersGame() {
   };
 
   const resetQuiz = () => {
-    setShowQuiz(false);
     setCurrentQuestionIndex(0);
     setQuizScore(0);
     setSelectedAnswer(null);
     setQuizCompleted(false);
+    // Keep showQuiz true so quiz stays visible
+    playClickSound("card");
   };
 
   if (!mounted) return null;
@@ -1023,9 +1046,11 @@ export default function LargeNumbersGame() {
               className="bg-gradient-to-br from-gray-900 to-black border border-gray-700/50 rounded-2xl p-4 sm:p-6 md:p-8 max-w-2xl w-full my-4 sm:my-8 max-h-[90vh] overflow-y-auto"
             >
               <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-center bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                {currentLevel === 1 ? '🎮 How to Play' : `🎉 Welcome to Level ${currentLevel}!`}
+                {currentLevel === 1
+                  ? "🎮 How to Play"
+                  : `🎉 Welcome to Level ${currentLevel}!`}
               </h2>
-              
+
               {currentLevel > 1 && (
                 <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl p-4 mb-4">
                   <p className="text-green-300 font-bold text-lg mb-2">
