@@ -97,13 +97,13 @@ export default function KnowingOurNumbersPage() {
       title: "Large Numbers in Practice",
       description: "Understanding large numbers like thousands, lakhs, crores",
       icon: Calculator,
-      status: "locked",
+      status: "available",
       estimatedTime: "20 min",
       difficulty: "Easy",
       points: 150,
       prerequisites: [1],
       videoUrl: "/videos/large-numbers.mp4",
-      gameUrl: "/games/large-numbers-quiz",
+      gameUrl: "/games/large-numbers",
       concepts: [
         "Indian number system",
         "International number system",
@@ -511,7 +511,7 @@ export default function KnowingOurNumbersPage() {
                         </Badge>
                       </div>
 
-                      {/* Topic Content with Left-side GIF for Comparing Numbers */}
+                      {/* Topic Content with Left-side GIF for Comparing Numbers and Large Numbers */}
                       <div className="flex-1 flex items-start gap-3">
                         {/* Circular GIF Showcase for Comparing Numbers - Left Side */}
                         {topic.id === 1 && (
@@ -519,6 +519,17 @@ export default function KnowingOurNumbersPage() {
                             <img
                               src="/seesaw.gif"
                               alt="Comparing Numbers Animation"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Circular GIF Showcase for Large Numbers - Left Side */}
+                        {topic.id === 2 && (
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-200 dark:border-orange-700 bg-gradient-to-br from-orange-100 to-yellow-100 dark:from-orange-900 dark:to-yellow-900 flex-shrink-0">
+                            <img
+                              src="/Numbers.gif"
+                              alt="Large Numbers Animation"
                               className="w-full h-full object-cover"
                             />
                           </div>
@@ -579,6 +590,19 @@ export default function KnowingOurNumbersPage() {
                                 >
                                   <Play className="h-4 w-4 mr-1" />
                                   Play Game
+                                </Button>
+                              </Link>
+                            ) : topic.id === 2 ? (
+                              <Link
+                                href="/games/large-numbers"
+                                className="flex-1"
+                              >
+                                <Button
+                                  size="sm"
+                                  className="w-full bg-orange-600 hover:bg-orange-700"
+                                >
+                                  <Play className="h-4 w-4 mr-1" />
+                                  Number Adventure
                                 </Button>
                               </Link>
                             ) : (
