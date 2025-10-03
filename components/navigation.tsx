@@ -31,10 +31,10 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/notes", label: "Library", icon: BookOpen },
   { href: "/lectures", label: "Lectures", icon: Play },
+  { href: "/smart-calculator", label: "Smart Calculator", icon: Calculator, badge: "New~AI" },
   { href: "/ai-tutor", label: "AI Tutor", icon: Brain },
   { href: "/quiz", label: "Quiz", icon: Target },
   { href: "/dashboard", label: "Dashboard", icon: Star },
-  { href: "/calculator", label: "Calculator", icon: Calculator },
   { href: "/projects", label: "Projects", icon: Lightbulb },
 ];
 
@@ -232,7 +232,7 @@ export default function Navigation() {
                         }}
                         onMouseEnter={() => playHoverSound("link")}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
                           pathname === item.href
                             ? "bg-black dark:bg-white text-white dark:text-black"
                             : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
@@ -240,6 +240,12 @@ export default function Navigation() {
                       >
                         <item.icon className="h-5 w-5" />
                         <span className="font-medium">{item.label}</span>
+                        {item.badge && (
+                          <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-500 text-black shadow-lg relative overflow-hidden">
+                            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></span>
+                            {item.badge}
+                          </span>
+                        )}
                       </Link>
                     ))}
                   </div>
