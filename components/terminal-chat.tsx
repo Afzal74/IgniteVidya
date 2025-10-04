@@ -74,7 +74,6 @@ export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: Ter
 • about - About IgniteVidya
 • notes - Access study notes
 • lectures - View video lessons
-• games - Interactive STEM games
 • ai-tutor - Smart learning assistant
 • quiz - Test your knowledge
 • dashboard - Track your progress
@@ -130,11 +129,10 @@ F: Below 40% - Fail
 Track your progress with 'dashboard' command!`
     }
 
-    if (["notes", "lectures", "games", "ai-tutor", "quiz", "dashboard"].includes(cmd)) {
+    if (["notes", "lectures", "ai-tutor", "quiz", "dashboard"].includes(cmd)) {
       const routes = {
         notes: "/notes",
         lectures: "/lectures",
-        games: "/games",
         "ai-tutor": "/ai-tutor",
         quiz: "/quiz",
         dashboard: "/dashboard",
