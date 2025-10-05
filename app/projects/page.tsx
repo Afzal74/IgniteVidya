@@ -28,29 +28,9 @@ export default function ProjectsPage() {
   const stemProjects: STEMProject[] = [
     // Grade 6-8 Science
     {
-      id: "virtual-lab",
-      title: "Virtual Science Lab",
-      description: "Simulate chemistry and physics experiments safely in a virtual environment",
-      category: "Science",
-      gradeLevel: "6-8",
-      difficulty: "Beginner",
-      icon: Beaker,
-      comingSoon: true,
-    },
-    {
-      id: "solar-system",
-      title: "Solar System Explorer",
-      description: "Interactive 3D model of planets with facts and orbital mechanics",
-      category: "Science",
-      gradeLevel: "6-8",
-      difficulty: "Beginner",
-      icon: Rocket,
-      comingSoon: true,
-    },
-    {
-      id: "water-cycle",
-      title: "Water Cycle Simulator",
-      description: "Animated water cycle with interactive elements and climate effects",
+      id: "photosynthesis",
+      title: "The Green Adventure",
+      description: "Explore how plants make food through photosynthesis in an interactive journey",
       category: "Science",
       gradeLevel: "6-8",
       difficulty: "Beginner",
@@ -124,37 +104,7 @@ export default function ProjectsPage() {
       comingSoon: true,
     },
 
-    // Grade 9-12 Science
-    {
-      id: "chemistry-lab",
-      title: "Chemistry Lab Simulator",
-      description: "Complex chemical reactions, equations, and lab safety procedures",
-      category: "Science",
-      gradeLevel: "9-12",
-      difficulty: "Advanced",
-      icon: Beaker,
-      comingSoon: true,
-    },
-    {
-      id: "physics-playground",
-      title: "Physics Playground",
-      description: "Projectile motion, forces, energy, and momentum simulations",
-      category: "Science",
-      gradeLevel: "9-12",
-      difficulty: "Advanced",
-      icon: Rocket,
-      comingSoon: true,
-    },
-    {
-      id: "dna-sequencer",
-      title: "DNA Sequencer",
-      description: "Learn about genetics, DNA structure, and genetic engineering",
-      category: "Science",
-      gradeLevel: "9-12",
-      difficulty: "Advanced",
-      icon: Microscope,
-      comingSoon: true,
-    },
+
 
     // Grade 9-12 Technology
     {
