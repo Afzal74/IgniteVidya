@@ -199,8 +199,8 @@ export default function Grade6Page() {
                 <Link href={item.href}>
                   <Card 
                     className="group relative overflow-hidden border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-500 cursor-pointer h-20 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-800 shadow-md hover:shadow-xl transform hover:-translate-y-1 hover:scale-105"
-                    onMouseEnter={() => playHoverSound("button")}
-                    onClick={() => playClickSound("button")}
+                    onMouseEnter={() => playHoverSound("card")}
+                    onClick={() => playClickSound("card")}
                   >
                     {/* Subtle Overlay Effect */}
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent dark:via-white/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />

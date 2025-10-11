@@ -32,7 +32,7 @@ const navItems = [
   { href: "/notes", label: "Library", icon: BookOpen },
   { href: "/lectures", label: "Lectures", icon: Play },
   { href: "/smart-calculator", label: "Smart Calculator", icon: Calculator, badge: "New~AI" },
-  { href: "/ai-tutor", label: "AI Tutor", icon: Brain },
+  { href: "/ai-tutor", label: "AI Tutor", icon: Brain, badge: "Coming Soon" },
   { href: "/quiz", label: "Quiz", icon: Target },
   { href: "/dashboard", label: "Dashboard", icon: Star },
   { href: "/projects", label: "Projects", icon: Lightbulb },
@@ -223,30 +223,49 @@ export default function Navigation() {
 
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                     {navItems.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => {
-                          playClickSound("navigation");
-                          setIsOpen(false);
-                        }}
-                        onMouseEnter={() => playHoverSound("link")}
-                        className={cn(
-                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
-                          pathname === item.href
-                            ? "bg-black dark:bg-white text-white dark:text-black"
-                            : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
-                        )}
-                      >
-                        <item.icon className="h-5 w-5" />
-                        <span className="font-medium">{item.label}</span>
-                        {item.badge && (
-                          <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-500 text-black shadow-lg relative overflow-hidden">
-                            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></span>
+                      item.badge === "Coming Soon" ? (
+                        <div
+                          key={item.href}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            alert("AI Tutor is coming soon! Stay tuned for updates.");
+                            playClickSound("navigation");
+                          }}
+                          onMouseEnter={() => playHoverSound("link")}
+                          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative cursor-not-allowed opacity-75 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span className="font-medium">{item.label}</span>
+                          <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-600 dark:text-blue-400">
                             {item.badge}
                           </span>
-                        )}
-                      </Link>
+                        </div>
+                      ) : (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => {
+                            playClickSound("navigation");
+                            setIsOpen(false);
+                          }}
+                          onMouseEnter={() => playHoverSound("link")}
+                          className={cn(
+                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
+                            pathname === item.href
+                              ? "bg-black dark:bg-white text-white dark:text-black"
+                              : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                          )}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span className="font-medium">{item.label}</span>
+                          {item.badge && (
+                            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-500 text-black shadow-lg relative overflow-hidden">
+                              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></span>
+                              {item.badge}
+                            </span>
+                          )}
+                        </Link>
+                      )
                     ))}
                   </div>
                 </div>

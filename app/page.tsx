@@ -129,6 +129,7 @@ export default function HomePage() {
       icon: Rocket,
       color: "blue",
       href: "/level/higher-primary",
+      hasGames: true,
     },
     {
       level: "High School",
@@ -139,6 +140,7 @@ export default function HomePage() {
       icon: Microscope,
       color: "green",
       href: "/level/high-school",
+      hasGames: false,
     },
     {
       level: "Higher Secondary",
@@ -149,6 +151,7 @@ export default function HomePage() {
       icon: Crown,
       color: "purple",
       href: "/level/higher-secondary",
+      hasGames: false,
     },
   ];
 
@@ -230,6 +233,7 @@ export default function HomePage() {
       icon: Brain,
       href: "/ai-tutor",
       description: "Smart learning",
+      badge: "Coming Soon",
     },
     {
       title: "Quiz",
@@ -850,6 +854,14 @@ export default function HomePage() {
                     </div>
 
                     <div className="relative p-4 md:p-6 text-center h-full flex flex-col justify-center">
+                      {/* Games Available Badge */}
+                      {level.hasGames && (
+                        <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 border border-green-500/40 backdrop-blur-sm animate-pulse">
+                          <Gamepad2 className="h-3 w-3 text-green-500" />
+                          <span className="text-xs font-bold text-green-500">Games</span>
+                        </div>
+                      )}
+
                       {/* Hero Badge with Icon - Enhanced Shiny Effect */}
                       <div
                         className={`w-12 h-12 md:w-16 md:h-16 rounded-xl bg-gradient-to-br ${
@@ -934,15 +946,23 @@ export default function HomePage() {
                     : "md:mt-8" // Outer cards - lowest
                 }`}
               >
-                <Link href={shortcut.href}>
+                {shortcut.badge ? (
                   <Card
-                    className="group border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-full"
-                    onClick={() => playClickSound("card")}
+                    className="group relative border-zinc-200 dark:border-zinc-800 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 cursor-not-allowed h-full opacity-75"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      alert("AI Tutor is coming soon! Stay tuned for updates.");
+                    }}
                     onMouseEnter={() => playHoverSound("card")}
                   >
+                    <div className="absolute top-0.5 right-0.5 px-1 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center group-hover:bg-blue-500/30 group-hover:border-blue-500/60 transition-all duration-300 group-hover:scale-110">
+                      <span className="text-[7px] md:text-[9px] font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap group-hover:text-blue-700 dark:group-hover:text-blue-300">
+                        {shortcut.badge}
+                      </span>
+                    </div>
                     <div className="p-2 md:p-4 text-center">
-                      <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 md:mb-2 group-hover:bg-black dark:group-hover:bg-white transition-colors">
-                        <shortcut.icon className="h-3 w-3 md:h-5 md:w-5 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors" />
+                      <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 md:mb-2 group-hover:bg-blue-500 dark:group-hover:bg-blue-500 transition-colors">
+                        <shortcut.icon className="h-3 w-3 md:h-5 md:w-5 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-white transition-colors" />
                       </div>
                       <h3 className="font-semibold text-black dark:text-white mb-0.5 text-xs md:text-sm">
                         {shortcut.title}
@@ -952,7 +972,27 @@ export default function HomePage() {
                       </p>
                     </div>
                   </Card>
-                </Link>
+                ) : (
+                  <Link href={shortcut.href}>
+                    <Card
+                      className="group relative border-zinc-200 dark:border-zinc-800 hover:border-black dark:hover:border-white transition-all duration-300 cursor-pointer h-full"
+                      onClick={() => playClickSound("card")}
+                      onMouseEnter={() => playHoverSound("card")}
+                    >
+                      <div className="p-2 md:p-4 text-center">
+                        <div className="w-6 h-6 md:w-10 md:h-10 rounded-lg bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mx-auto mb-1 md:mb-2 group-hover:bg-black dark:group-hover:bg-white transition-colors">
+                          <shortcut.icon className="h-3 w-3 md:h-5 md:w-5 text-zinc-600 dark:text-zinc-400 group-hover:text-white dark:group-hover:text-black transition-colors" />
+                        </div>
+                        <h3 className="font-semibold text-black dark:text-white mb-0.5 text-xs md:text-sm">
+                          {shortcut.title}
+                        </h3>
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                          {shortcut.description}
+                        </p>
+                      </div>
+                    </Card>
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>
@@ -1120,20 +1160,12 @@ export default function HomePage() {
             className="space-y-3 md:space-y-4"
           >
             <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-gray-800 flex items-center justify-center">
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-2 border-zinc-200 dark:border-zinc-800 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
                 <img
-                  src="/ignitevidya-logo.png"
-                  alt="IgniteVidya Logo"
-                  className="w-8 h-8 md:w-12 md:h-12 object-contain"
-                  onError={(e) => {
-                    // Fallback to icon if image fails to load
-                    e.currentTarget.style.display = "none";
-                    e.currentTarget.nextElementSibling?.classList.remove(
-                      "hidden"
-                    );
-                  }}
+                  src="/superBrain.png"
+                  alt="IgniteVidya SuperBrain"
+                  className="w-full h-full object-cover"
                 />
-                <Brain className="h-6 w-6 md:h-8 md:w-8 text-blue-600 dark:text-blue-400 hidden" />
               </div>
               <div className="text-center md:text-left">
                 <h3 className="text-sm md:text-lg font-bold text-black dark:text-white">

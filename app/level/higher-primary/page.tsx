@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Rocket, Microscope } from "lucide-react";
+import { ArrowLeft, Rocket, Microscope, Gamepad2, Sparkles } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -25,6 +25,8 @@ export default function HigherPrimaryPage() {
       icon: Rocket,
       color: "blue",
       href: "/grade/6",
+      hasGames: true,
+      features: ["Interactive Games", "Video Lessons", "Practice Tests"],
     },
     {
       grade: "7th",
@@ -34,6 +36,8 @@ export default function HigherPrimaryPage() {
       icon: Microscope,
       color: "green",
       href: "/grade/7",
+      hasGames: false,
+      features: ["Coming Soon"],
     },
   ];
 
@@ -126,13 +130,34 @@ export default function HigherPrimaryPage() {
                     <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-r from-blue-500/20 via-transparent to-blue-500/20 blur-sm" />
 
                     <div className="relative p-4 md:p-6 text-center h-full flex flex-col justify-center">
+                      {/* Games Available Badge */}
+                      {grade.hasGames && (
+                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 border border-green-500/40 backdrop-blur-sm">
+                          <Gamepad2 className="h-3 w-3 text-green-500" />
+                          <span className="text-xs font-bold text-green-500">Games</span>
+                        </div>
+                      )}
+
                       <h3 className="font-bold text-black dark:text-white mb-2 text-xl md:text-2xl group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                         Class {grade.grade}
                       </h3>
 
-                      <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors duration-300 mb-1 group-hover:font-medium">
+                      <p className="text-sm md:text-base text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-300 transition-colors duration-300 mb-2 group-hover:font-medium">
                         {grade.subjects} Subjects Available
                       </p>
+
+                      {/* Features List */}
+                      <div className="flex flex-wrap items-center justify-center gap-2 mb-2">
+                        {grade.features.map((feature, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400"
+                          >
+                            <Sparkles className="h-3 w-3 text-blue-500" />
+                            <span>{feature}</span>
+                          </div>
+                        ))}
+                      </div>
 
                       <p className="text-xs md:text-sm text-zinc-500 dark:text-zinc-500 font-medium group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
                         {grade.theme} • {grade.description}
