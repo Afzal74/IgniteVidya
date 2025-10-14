@@ -62,7 +62,8 @@ interface Room {
 
 export default function QuizPage() {
   const [currentScreen, setCurrentScreen] = useState<Screen>("home")
-  const [tabletMode, setTabletMode] = useState<"join" | "create">("join")
+  // Students can only join rooms, not create them
+  const tabletMode = "join"
   const [playerName, setPlayerName] = useState("")
   const [roomCode, setRoomCode] = useState("")
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null)
@@ -227,25 +228,18 @@ export default function QuizPage() {
           </p>
         </div>
         
-        <div className="flex justify-center gap-4 mb-16">
-          <Button 
-            onClick={() => setTabletMode("create")}
-            size="lg"
-            className={`px-6 md:px-8 py-3 md:py-4 rounded-xl text-base md:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 ${tabletMode === 'create' ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-800 text-gray-200 hover:bg-gray-700'}`}
-          >
-            <UserPlus className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-            Create Room
-          </Button>
-          
-          <Button 
-            onClick={() => setTabletMode("join")}
-            size="lg"
-            variant="outline"
-            className={`border-2 px-6 md:px-8 py-3 md:py-4 rounded-xl text-base md:text-lg font-semibold transition-all duration-300 ${tabletMode === 'join' ? 'border-purple-500 text-white bg-gray-800' : 'border-gray-600 text-white hover:bg-gray-800'}`}
-          >
-            <ArrowRight className="mr-2 h-4 w-4 md:h-5 md:w-5" />
-            Join Room
-          </Button>
+        {/* Students can only join rooms - removed create button */}
+        <div className="flex justify-center mb-16">
+          <div className="text-center">
+            <p className="text-gray-400 text-sm mb-4">Students: Join a quiz room created by your teacher</p>
+            <Button 
+              size="lg"
+              className="px-8 md:px-12 py-4 md:py-5 rounded-xl text-lg md:text-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+            >
+              <ArrowRight className="mr-2 h-5 w-5 md:h-6 md:w-6" />
+              Join Quiz Room
+            </Button>
+          </div>
         </div>
         
         <div className="flex justify-center items-center gap-8">
@@ -287,10 +281,11 @@ export default function QuizPage() {
               </div>
               
               <h2 className="text-2xl md:text-3xl font-bold text-white mb-8 text-center">
-                {tabletMode === 'join' ? 'Join a STEM Quiz Room' : 'Create a New Quiz Room'}
+                Join a STEM Quiz Room
               </h2>
               
-              {tabletMode === 'join' ? (
+              {/* Only show join interface for students */}
+              {true ? (
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Left Column */}
                 <div className="space-y-6">

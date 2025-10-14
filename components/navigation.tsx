@@ -19,6 +19,10 @@ import {
   Gamepad2,
   Volume2,
   VolumeX,
+  GraduationCap,
+  User,
+  LogOut,
+  LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -26,6 +30,9 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState as useNewsState, useEffect } from "react";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
@@ -40,10 +47,38 @@ const navItems = [
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [teacherProfile, setTeacherProfile] = useState<any>(null);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const { soundEnabled, toggleSound, playHoverSound, playClickSound } =
     useSoundEffects();
+
+  useEffect(() => {
+    if (user) {
+      fetchTeacherProfile();
+    } else {
+      setTeacherProfile(null);
+    }
+  }, [user]);
+
+  const fetchTeacherProfile = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('teacher_profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    setTeacherProfile(data);
+  };
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    setTeacherProfile(null);
+    playClickSound("secondary");
+    router.push('/');
+  };
 
   return (
     <>
@@ -89,6 +124,36 @@ export default function Navigation() {
             <div className="flex justify-end">
               {/* Desktop Actions */}
               <div className="hidden md:flex items-center space-x-2">
+                {teacherProfile ? (
+                  <Link href="/teacher/dashboard">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => playClickSound("secondary")}
+                      onMouseEnter={() => playHoverSound("button")}
+                      className="rounded-xl"
+                      title="Teacher Dashboard"
+                    >
+                      <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span className="sr-only">Teacher Dashboard</span>
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/teacher/login">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => playClickSound("secondary")}
+                      onMouseEnter={() => playHoverSound("button")}
+                      className="rounded-xl"
+                      title="Teacher Login"
+                    >
+                      <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span className="sr-only">Teacher Login</span>
+                    </Button>
+                  </Link>
+                )}
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -139,6 +204,36 @@ export default function Navigation() {
 
               {/* Mobile Actions */}
               <div className="md:hidden flex items-center space-x-2">
+                {teacherProfile ? (
+                  <Link href="/teacher/dashboard">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => playClickSound("secondary")}
+                      onMouseEnter={() => playHoverSound("button")}
+                      className="rounded-xl"
+                      title="Teacher Dashboard"
+                    >
+                      <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span className="sr-only">Teacher Dashboard</span>
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/teacher/login">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => playClickSound("secondary")}
+                      onMouseEnter={() => playHoverSound("button")}
+                      className="rounded-xl"
+                      title="Teacher Login"
+                    >
+                      <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <span className="sr-only">Teacher Login</span>
+                    </Button>
+                  </Link>
+                )}
+
                 <Button
                   variant="ghost"
                   size="icon"
@@ -217,9 +312,53 @@ export default function Navigation() {
             >
               <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-                    Navigation
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-black dark:text-white">
+                      Navigation
+                    </h3>
+                    {teacherProfile && (
+                      <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
+                        <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                          {teacherProfile.first_name}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {teacherProfile && (
+                    <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border border-blue-200 dark:border-blue-800">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">Logged in as Teacher</p>
+                      <div className="flex gap-2">
+                        <Link href="/teacher/dashboard" className="flex-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() => {
+                              playClickSound("navigation");
+                              setIsOpen(false);
+                            }}
+                          >
+                            <LayoutDashboard className="h-3 w-3 mr-1" />
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                          onClick={() => {
+                            handleSignOut();
+                            setIsOpen(false);
+                          }}
+                        >
+                          <LogOut className="h-3 w-3 mr-1" />
+                          Sign Out
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
                     {navItems.map((item) => (

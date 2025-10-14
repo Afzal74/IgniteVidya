@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  ArrowLeft,
-  BookOpen,
-  Play,
-  Brain,
-  Target,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, BookOpen, Play, Brain, Target, Star } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
