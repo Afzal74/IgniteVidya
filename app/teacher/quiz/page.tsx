@@ -42,9 +42,15 @@ export default function TeacherQuizPage() {
   }
 
   const fetchRooms = async (teacherId: string) => {
-    // This would fetch from a quiz_rooms table
-    // For now, just placeholder
-    setRooms([])
+    const { data } = await supabase
+      .from('quiz_rooms')
+      .select('*, quiz_participants(count)')
+      .eq('teacher_id', teacherId)
+      .order('created_at', { ascending: false })
+    
+    if (data) {
+      setRooms(data)
+    }
   }
 
   const generateRoomCode = () => {
@@ -52,10 +58,8 @@ export default function TeacherQuizPage() {
   }
 
   const handleCreateRoom = () => {
-    const roomCode = generateRoomCode()
-    alert(`Room created! Room Code: ${roomCode}\nShare this code with your students.`)
-    setShowCreateForm(false)
-    // Here you would save to database and redirect to room
+    // Navigate to question creation page
+    router.push('/teacher/quiz/create')
   }
 
   if (loading) {
@@ -240,18 +244,36 @@ export default function TeacherQuizPage() {
               ) : (
                 <div className="space-y-4">
                   {rooms.map((room) => (
-                    <div key={room.id} className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div key={room.id} className="p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold text-black dark:text-white">{room.name}</h3>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-black dark:text-white">{room.room_name}</h3>
                           <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                            Code: {room.code} • {room.players} players
+                            Code: {room.room_code} • {room.question_count} questions • {room.status}
                           </p>
                         </div>
-                        <Button size="sm" variant="outline">
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy Code
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              navigator.clipboard.writeText(room.room_code)
+                              alert('Room code copied!')
+                            }}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Copy Code
+                          </Button>
+                          {room.status === 'waiting' && (
+                            <Button 
+                              size="sm"
+                              onClick={() => router.push(`/teacher/quiz/lobby/${room.id}`)}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              Start Quiz
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
