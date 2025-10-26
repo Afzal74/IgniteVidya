@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Clock, Trophy, ArrowLeft, Loader2, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { RealtimeStatusIndicator } from '@/components/realtime-status-indicator'
 
 export default function StudentLobbyPage() {
   const params = useParams()
@@ -16,6 +17,7 @@ export default function StudentLobbyPage() {
   const [participants, setParticipants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [participantName, setParticipantName] = useState('')
+  const [realtimeStatus, setRealtimeStatus] = useState<'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED' | 'CONNECTING'>('CONNECTING')
 
   useEffect(() => {
     // Get participant name from localStorage
@@ -26,9 +28,14 @@ export default function StudentLobbyPage() {
 
     fetchRoomData()
     
-    // Subscribe to real-time updates
+    // Subscribe to real-time updates with better error handling
     const channel = supabase
-      .channel(`student-room-${roomId}`)
+      .channel(`student-room-${roomId}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: roomId }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -37,7 +44,8 @@ export default function StudentLobbyPage() {
           table: 'quiz_participants',
           filter: `room_id=eq.${roomId}`
         },
-        () => {
+        (payload) => {
+          console.log('Participant change:', payload)
           fetchParticipants()
         }
       )
@@ -50,18 +58,25 @@ export default function StudentLobbyPage() {
           filter: `id=eq.${roomId}`
         },
         (payload) => {
+          console.log('Room update:', payload)
           // Check if quiz has started
           if (payload.new.status === 'active') {
             router.push(`/quiz/play/${roomId}`)
           }
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+        setRealtimeStatus(status as any)
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to real-time updates')
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [roomId])
+  }, [roomId, router])
 
   const fetchRoomData = async () => {
     const { data: roomData } = await supabase
@@ -149,6 +164,7 @@ export default function StudentLobbyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20 relative overflow-hidden">
+      <RealtimeStatusIndicator status={realtimeStatus} />
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(20)].map((_, i) => (

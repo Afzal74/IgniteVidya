@@ -166,9 +166,9 @@ export default function QuizPage() {
     try {
       // Find the room by code
       const { data: room, error: roomError } = await supabase
-        .from('quiz_rooms')
-        .select('*')
-        .eq('room_code', roomCode.toUpperCase())
+        .from("quiz_rooms")
+        .select("*")
+        .eq("room_code", roomCode.toUpperCase())
         .single();
 
       if (roomError || !room) {
@@ -178,7 +178,7 @@ export default function QuizPage() {
       }
 
       // Check if room is still waiting (not started or completed)
-      if (room.status !== 'waiting') {
+      if (room.status !== "waiting") {
         setError("This quiz has already started or ended.");
         setJoining(false);
         return;
@@ -186,9 +186,9 @@ export default function QuizPage() {
 
       // Check if room is full
       const { data: participants } = await supabase
-        .from('quiz_participants')
-        .select('id')
-        .eq('room_id', room.id);
+        .from("quiz_participants")
+        .select("id")
+        .eq("room_id", room.id);
 
       if (participants && participants.length >= room.max_players) {
         setError("This room is full.");
@@ -198,12 +198,12 @@ export default function QuizPage() {
 
       // Join the room
       const { data: participant, error: joinError } = await supabase
-        .from('quiz_participants')
+        .from("quiz_participants")
         .insert({
           room_id: room.id,
           student_name: playerName.trim(),
           score: 0,
-          answers_submitted: 0
+          answers_submitted: 0,
         })
         .select()
         .single();
@@ -215,9 +215,9 @@ export default function QuizPage() {
       }
 
       // Store participant info in localStorage
-      localStorage.setItem('quiz_participant_id', participant.id);
-      localStorage.setItem('quiz_participant_name', playerName.trim());
-      localStorage.setItem('quiz_room_id', room.id);
+      localStorage.setItem("quiz_participant_id", participant.id);
+      localStorage.setItem("quiz_participant_name", playerName.trim());
+      localStorage.setItem("quiz_room_id", room.id);
 
       // Redirect to student lobby
       router.push(`/quiz/lobby/${room.id}`);
@@ -275,12 +275,12 @@ export default function QuizPage() {
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="pt-16 px-4"
+        className="pt-8 md:pt-16 px-4"
       >
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push('/')}
+          onClick={() => router.push("/")}
           className="border-gray-700 hover:bg-gray-800"
         >
           <ArrowRight className="h-3 w-3 mr-1 rotate-180" />
@@ -293,15 +293,15 @@ export default function QuizPage() {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        className="text-center mb-6 pt-4 md:pt-6"
+        className="text-center mb-4 md:mb-6 pt-2 md:pt-6"
       >
-        <div className="mb-8 px-4 md:px-8">
-          <div className="mb-4">
-            <span className="px-4 py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-semibold">
+        <div className="mb-6 md:mb-8 px-4 md:px-8">
+          <div className="mb-3 md:mb-4">
+            <span className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs md:text-sm font-semibold">
               STEM-Based Real-Time Quiz
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold leading-tight text-white">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white">
             Ready for Your Quiz?
           </h1>
         </div>
@@ -312,14 +312,14 @@ export default function QuizPage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3 }}
-        className="max-w-xl mx-auto"
+        className="max-w-xl mx-auto px-4"
       >
-        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-10 md:p-12 border border-gray-700 shadow-2xl">
-          <h2 className="text-2xl font-bold text-white mb-6 text-center">
+        <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 md:p-10 lg:p-12 border border-gray-700 shadow-2xl">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-5 md:mb-6 text-center">
             Join Quiz Room
           </h2>
 
-          <div className="space-y-5">
+          <div className="space-y-4 md:space-y-5">
             {/* Room Code */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -389,32 +389,46 @@ export default function QuizPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
-        className="max-w-3xl mx-auto mt-8 px-4"
+        className="max-w-3xl mx-auto mt-6 md:mt-8 px-4 pb-8"
       >
-        <h3 className="text-xl font-bold text-white mb-4 text-center">How to Play</h3>
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 text-center">
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">1️⃣</span>
+        <h3 className="text-lg md:text-xl font-bold text-white mb-4 text-center">
+          How to Play
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-gray-700 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2 md:mb-3">
+              <span className="text-xl md:text-2xl">1️⃣</span>
             </div>
-            <h4 className="text-white font-semibold mb-2">Get Room Code</h4>
-            <p className="text-gray-400 text-sm">Your teacher will share a 6-character room code</p>
+            <h4 className="text-white font-semibold mb-1.5 md:mb-2 text-sm md:text-base">
+              Get Room Code
+            </h4>
+            <p className="text-gray-400 text-xs md:text-sm">
+              Your teacher will share a 6-character room code
+            </p>
           </div>
-          
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 text-center">
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">2️⃣</span>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-gray-700 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2 md:mb-3">
+              <span className="text-xl md:text-2xl">2️⃣</span>
             </div>
-            <h4 className="text-white font-semibold mb-2">Join & Wait</h4>
-            <p className="text-gray-400 text-sm">Enter the code and wait for your teacher to start</p>
+            <h4 className="text-white font-semibold mb-1.5 md:mb-2 text-sm md:text-base">
+              Join & Wait
+            </h4>
+            <p className="text-gray-400 text-xs md:text-sm">
+              Enter the code and wait for your teacher to start
+            </p>
           </div>
-          
-          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 text-center">
-            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">3️⃣</span>
+
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-4 md:p-6 border border-gray-700 text-center">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2 md:mb-3">
+              <span className="text-xl md:text-2xl">3️⃣</span>
             </div>
-            <h4 className="text-white font-semibold mb-2">Answer & Win</h4>
-            <p className="text-gray-400 text-sm">Answer questions quickly to earn points and top the leaderboard</p>
+            <h4 className="text-white font-semibold mb-1.5 md:mb-2 text-sm md:text-base">
+              Answer & Win
+            </h4>
+            <p className="text-gray-400 text-xs md:text-sm">
+              Answer questions quickly to earn points and top the leaderboard
+            </p>
           </div>
         </div>
       </motion.div>

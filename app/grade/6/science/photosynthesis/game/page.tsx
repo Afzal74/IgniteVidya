@@ -56,7 +56,7 @@ export default function PhotosynthesisGame() {
   const handleDrop = (slotIndex: number) => {
     if (draggedItem) {
       const newSlots = [...slots];
-      
+
       // Remove item from its previous slot if it was already placed
       const previousSlotIndex = newSlots.indexOf(draggedItem);
       if (previousSlotIndex !== -1) {

@@ -1,27 +1,30 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useRef, useEffect } from "react"
-import { Terminal, X, Minimize2, Maximize2, Send } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { motion, AnimatePresence } from "framer-motion"
+import type React from "react";
+import { useState, useRef, useEffect } from "react";
+import { Terminal, X, Minimize2, Maximize2, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
-  id: string
-  text: string
-  isUser: boolean
-  timestamp: Date
+  id: string;
+  text: string;
+  isUser: boolean;
+  timestamp: Date;
 }
 
 interface TerminalChatProps {
-  isIgniteVidyaCompanionOpen: boolean
-  onOpen: () => void
+  isIgniteVidyaCompanionOpen: boolean;
+  onOpen: () => void;
 }
 
-export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: TerminalChatProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
+export default function TerminalChat({
+  isIgniteVidyaCompanionOpen,
+  onOpen,
+}: TerminalChatProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -29,42 +32,42 @@ export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: Ter
       isUser: false,
       timestamp: new Date(),
     },
-  ])
-  const [inputValue, setInputValue] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [commandHistory, setCommandHistory] = useState<string[]>([])
-  const [historyIndex, setHistoryIndex] = useState(-1)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
-  const inputRef = useRef<HTMLInputElement>(null)
+  ]);
+  const [inputValue, setInputValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+    scrollToBottom();
+  }, [messages]);
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
-      inputRef.current?.focus()
+      inputRef.current?.focus();
     }
-  }, [isOpen, isMinimized])
+  }, [isOpen, isMinimized]);
 
   // Close terminal when IgniteVidya Companion opens
   useEffect(() => {
     if (isIgniteVidyaCompanionOpen && isOpen) {
-      setIsOpen(false)
+      setIsOpen(false);
     }
-  }, [isIgniteVidyaCompanionOpen, isOpen])
+  }, [isIgniteVidyaCompanionOpen, isOpen]);
 
   const handleOpen = () => {
-    onOpen() // This will close IgniteVidya Companion
-    setIsOpen(true)
-  }
+    onOpen(); // This will close IgniteVidya Companion
+    setIsOpen(true);
+  };
 
   const processCommand = async (command: string) => {
-    const cmd = command.toLowerCase().trim()
+    const cmd = command.toLowerCase().trim();
 
     // Built-in commands
     if (cmd === "help") {
@@ -78,7 +81,7 @@ export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: Ter
 • quiz - Test your knowledge
 • dashboard - Track your progress
 • contact - Contact information
-• version - Show version info`
+• version - Show version info`;
     }
 
     if (cmd === "clear") {
@@ -89,8 +92,8 @@ export default function TerminalChat({ isIgniteVidyaCompanionOpen, onOpen }: Ter
           isUser: false,
           timestamp: new Date(),
         },
-      ])
-      return ""
+      ]);
+      return "";
     }
 
     if (cmd === "about") {
@@ -99,11 +102,11 @@ Version: 1.0.0
 Built for: STEM Students (Grades 6-12)
 Features: Notes, Lectures, Games, AI Tutor, Quiz, Dashboard
 Developer: IgniteVidya Team
-Mission: Equal learning for all`
+Mission: Equal learning for all`;
     }
 
     if (cmd === "version") {
-      return "IgniteVidya Terminal v1.0.0\nBuilt with Next.js, React, TypeScript, and Framer Motion"
+      return "IgniteVidya Terminal v1.0.0\nBuilt with Next.js, React, TypeScript, and Framer Motion";
     }
 
     if (cmd === "contact") {
@@ -113,7 +116,7 @@ YouTube: youtube.com/@ignitevidya
 Facebook: facebook.com/ignitevidya
 Instagram: instagram.com/ignitevidya
 Website: ignitevidya.com
-Support: Available 24/7`
+Support: Available 24/7`;
     }
 
     if (cmd === "grades") {
@@ -126,7 +129,7 @@ C+: 50-59% - Average
 C: 40-49% - Pass
 F: Below 40% - Fail
 
-Track your progress with 'dashboard' command!`
+Track your progress with 'dashboard' command!`;
     }
 
     if (["notes", "lectures", "ai-tutor", "quiz", "dashboard"].includes(cmd)) {
@@ -136,11 +139,13 @@ Track your progress with 'dashboard' command!`
         "ai-tutor": "/ai-tutor",
         quiz: "/quiz",
         dashboard: "/dashboard",
-      }
+      };
       setTimeout(() => {
-        window.location.href = routes[cmd as keyof typeof routes]
-      }, 1000)
-      return `Opening ${cmd}... Redirecting to ${routes[cmd as keyof typeof routes]}`
+        window.location.href = routes[cmd as keyof typeof routes];
+      }, 1000);
+      return `Opening ${cmd}... Redirecting to ${
+        routes[cmd as keyof typeof routes]
+      }`;
     }
 
     // AI-powered responses for other queries
@@ -149,33 +154,36 @@ Track your progress with 'dashboard' command!`
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: command }),
-      })
-      const data = await response.json()
-      return data.response || "Command not recognized. Type 'help' for available commands."
+      });
+      const data = await response.json();
+      return (
+        data.response ||
+        "Command not recognized. Type 'help' for available commands."
+      );
     } catch (error) {
-      return "Error: Unable to process command. Please try again.\nType 'help' for available commands."
+      return "Error: Unable to process command. Please try again.\nType 'help' for available commands.";
     }
-  }
+  };
 
   const sendMessage = async () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       text: inputValue,
       isUser: true,
       timestamp: new Date(),
-    }
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setCommandHistory((prev) => [inputValue, ...prev.slice(0, 49)]) // Keep last 50 commands
-    setHistoryIndex(-1)
+    setMessages((prev) => [...prev, userMessage]);
+    setCommandHistory((prev) => [inputValue, ...prev.slice(0, 49)]); // Keep last 50 commands
+    setHistoryIndex(-1);
 
-    const command = inputValue
-    setInputValue("")
-    setIsLoading(true)
+    const command = inputValue;
+    setInputValue("");
+    setIsLoading(true);
 
-    const response = await processCommand(command)
+    const response = await processCommand(command);
 
     if (response) {
       const botMessage: Message = {
@@ -183,40 +191,44 @@ Track your progress with 'dashboard' command!`
         text: response,
         isUser: false,
         timestamp: new Date(),
-      }
-      setMessages((prev) => [...prev, botMessage])
+      };
+      setMessages((prev) => [...prev, botMessage]);
     }
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      e.preventDefault()
-      sendMessage()
+      e.preventDefault();
+      sendMessage();
     } else if (e.key === "ArrowUp") {
-      e.preventDefault()
+      e.preventDefault();
       if (historyIndex < commandHistory.length - 1) {
-        const newIndex = historyIndex + 1
-        setHistoryIndex(newIndex)
-        setInputValue(commandHistory[newIndex])
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInputValue(commandHistory[newIndex]);
       }
     } else if (e.key === "ArrowDown") {
-      e.preventDefault()
+      e.preventDefault();
       if (historyIndex > 0) {
-        const newIndex = historyIndex - 1
-        setHistoryIndex(newIndex)
-        setInputValue(commandHistory[newIndex])
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInputValue(commandHistory[newIndex]);
       } else if (historyIndex === 0) {
-        setHistoryIndex(-1)
-        setInputValue("")
+        setHistoryIndex(-1);
+        setInputValue("");
       }
     }
-  }
+  };
 
   if (!isOpen) {
     return (
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="fixed bottom-6 right-6 z-40">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        className="fixed bottom-6 right-6 z-40"
+      >
         <Button
           onClick={handleOpen}
           className="h-14 w-14 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200 shadow-2xl font-mono"
@@ -225,7 +237,7 @@ Track your progress with 'dashboard' command!`
           <Terminal className="h-6 w-6" />
         </Button>
       </motion.div>
-    )
+    );
   }
 
   return (
@@ -248,7 +260,9 @@ Track your progress with 'dashboard' command!`
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
               </div>
-              <span className="text-zinc-300 text-xs ml-4">ignitevidya-terminal</span>
+              <span className="text-zinc-300 text-xs ml-4">
+                ignitevidya-terminal
+              </span>
             </div>
             <div className="flex items-center space-x-1">
               <Button
@@ -257,7 +271,11 @@ Track your progress with 'dashboard' command!`
                 onClick={() => setIsMinimized(!isMinimized)}
                 className="h-6 w-6 text-zinc-400 hover:text-white hover:bg-zinc-700"
               >
-                {isMinimized ? <Maximize2 className="h-3 w-3" /> : <Minimize2 className="h-3 w-3" />}
+                {isMinimized ? (
+                  <Maximize2 className="h-3 w-3" />
+                ) : (
+                  <Minimize2 className="h-3 w-3" />
+                )}
               </Button>
               <Button
                 variant="ghost"
@@ -283,7 +301,9 @@ Track your progress with 'dashboard' command!`
                           <span className="text-white">{message.text}</span>
                         </div>
                       ) : (
-                        <div className="whitespace-pre-line text-green-400 pl-4">{message.text}</div>
+                        <div className="whitespace-pre-line text-green-400 pl-4">
+                          {message.text}
+                        </div>
                       )}
                     </div>
                   ))}
@@ -334,5 +354,5 @@ Track your progress with 'dashboard' command!`
         </div>
       </motion.div>
     </AnimatePresence>
-  )
+  );
 }

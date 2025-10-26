@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Play, Copy, CheckCircle, Clock, Trophy, ArrowLeft } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { RealtimeStatusIndicator } from '@/components/realtime-status-indicator'
 
 export default function QuizLobbyPage() {
   const params = useParams()
@@ -16,13 +17,19 @@ export default function QuizLobbyPage() {
   const [participants, setParticipants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [copied, setCopied] = useState(false)
+  const [realtimeStatus, setRealtimeStatus] = useState<'SUBSCRIBED' | 'CHANNEL_ERROR' | 'TIMED_OUT' | 'CLOSED' | 'CONNECTING'>('CONNECTING')
 
   useEffect(() => {
     fetchRoomData()
     
-    // Subscribe to real-time participant updates
+    // Subscribe to real-time participant updates with better error handling
     const channel = supabase
-      .channel(`room-${roomId}`)
+      .channel(`teacher-room-${roomId}`, {
+        config: {
+          broadcast: { self: true },
+          presence: { key: roomId }
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -31,11 +38,18 @@ export default function QuizLobbyPage() {
           table: 'quiz_participants',
           filter: `room_id=eq.${roomId}`
         },
-        () => {
+        (payload) => {
+          console.log('Participant change:', payload)
           fetchParticipants()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log('Subscription status:', status)
+        setRealtimeStatus(status as any)
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to real-time updates')
+        }
+      })
 
     return () => {
       supabase.removeChannel(channel)
@@ -122,6 +136,7 @@ export default function QuizLobbyPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-cyan-50 dark:from-gray-900 dark:via-purple-900/20 dark:to-blue-900/20 relative overflow-hidden">
+      <RealtimeStatusIndicator status={realtimeStatus} />
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none">
         {[...Array(20)].map((_, i) => (
