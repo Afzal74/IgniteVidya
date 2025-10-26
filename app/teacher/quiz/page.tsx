@@ -8,14 +8,28 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Users, Copy, Settings, Trophy, ArrowLeft } from 'lucide-react'
+import { Plus, Users, Copy, Settings, Trophy, ArrowLeft, Trash2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { DeleteConfirmationModal } from '@/components/delete-confirmation-modal'
+import { ToastNotification } from '@/components/toast-notification'
 
 export default function TeacherQuizPage() {
   const [user, setUser] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [rooms, setRooms] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [deletingRoomId, setDeletingRoomId] = useState<string | null>(null)
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; roomId: string; roomName: string }>({
+    isOpen: false,
+    roomId: '',
+    roomName: ''
+  })
+  const [toast, setToast] = useState<{ isOpen: boolean; type: 'success' | 'error' | 'warning' | 'info'; title: string; message?: string }>({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: ''
+  })
   const [formData, setFormData] = useState({
     room_name: '',
     category: 'mathematics',
@@ -60,6 +74,79 @@ export default function TeacherQuizPage() {
   const handleCreateRoom = () => {
     // Navigate to question creation page
     router.push('/teacher/quiz/create')
+  }
+
+  const openDeleteModal = (roomId: string, roomName: string) => {
+    setDeleteModal({ isOpen: true, roomId, roomName })
+  }
+
+  const closeDeleteModal = () => {
+    setDeleteModal({ isOpen: false, roomId: '', roomName: '' })
+  }
+
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info', title: string, message?: string) => {
+    setToast({ isOpen: true, type, title, message })
+  }
+
+  const handleDeleteRoom = async () => {
+    const { roomId, roomName } = deleteModal
+    setDeletingRoomId(roomId)
+
+    try {
+      // First, try to delete associated images from storage
+      try {
+        const { data: questions } = await supabase
+          .from('quiz_questions')
+          .select('image_url')
+          .eq('room_id', roomId)
+        
+        if (questions && questions.length > 0) {
+          const imagePaths = questions
+            .filter(q => q.image_url)
+            .map(q => {
+              const url = new URL(q.image_url)
+              return url.pathname.split('/').slice(-2).join('/')
+            })
+          
+          if (imagePaths.length > 0) {
+            await supabase.storage
+              .from('quiz-images')
+              .remove(imagePaths)
+          }
+        }
+      } catch (storageError) {
+        console.error('Error deleting images:', storageError)
+      }
+
+      // Delete the room (cascade will delete questions and participants)
+      const { error } = await supabase
+        .from('quiz_rooms')
+        .delete()
+        .eq('id', roomId)
+
+      if (error) {
+        console.error('Delete error:', error)
+        throw error
+      }
+
+      // Refresh the rooms list
+      if (user) {
+        await fetchRooms(user.id)
+      }
+
+      closeDeleteModal()
+      showToast('success', 'Quiz Deleted!', `"${roomName}" has been permanently deleted.`)
+    } catch (error: any) {
+      console.error('Error deleting room:', error)
+      showToast('error', 'Delete Failed', error.message || 'Please make sure you have permission to delete this quiz.')
+    } finally {
+      setDeletingRoomId(null)
+    }
+  }
+
+  const handleCopyCode = (roomCode: string) => {
+    navigator.clipboard.writeText(roomCode)
+    showToast('success', 'Code Copied!', `Room code "${roomCode}" copied to clipboard.`)
   }
 
   if (loading) {
@@ -251,15 +338,15 @@ export default function TeacherQuizPage() {
                           <p className="text-sm text-zinc-600 dark:text-zinc-400">
                             Code: {room.room_code} • {room.question_count} questions • {room.status}
                           </p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+                            Created: {new Date(room.created_at).toLocaleDateString()}
+                          </p>
                         </div>
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => {
-                              navigator.clipboard.writeText(room.room_code)
-                              alert('Room code copied!')
-                            }}
+                            onClick={() => handleCopyCode(room.room_code)}
                           >
                             <Copy className="h-4 w-4 mr-2" />
                             Copy Code
@@ -273,6 +360,19 @@ export default function TeacherQuizPage() {
                               Start Quiz
                             </Button>
                           )}
+                          <Button 
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => openDeleteModal(room.id, room.room_name)}
+                            disabled={deletingRoomId === room.id}
+                            className="bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+                          >
+                            {deletingRoomId === room.id ? (
+                              <span className="animate-spin">⏳</span>
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -283,6 +383,25 @@ export default function TeacherQuizPage() {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={closeDeleteModal}
+        onConfirm={handleDeleteRoom}
+        title="Delete Quiz Room?"
+        itemName={deleteModal.roomName}
+        isDeleting={deletingRoomId === deleteModal.roomId}
+      />
+
+      {/* Toast Notification */}
+      <ToastNotification
+        isOpen={toast.isOpen}
+        onClose={() => setToast({ ...toast, isOpen: false })}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+      />
     </div>
   )
 }

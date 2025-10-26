@@ -1,10 +1,15 @@
 ﻿import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Press_Start_2P } from "next/font/google"
 import "./globals.css"
 import ClientLayout from "./client-layout"
 
 const inter = Inter({ subsets: ["latin"] })
+const pressStart2P = Press_Start_2P({ 
+  weight: '400',
+  subsets: ["latin"],
+  variable: '--font-press-start'
+})
 
 export const metadata: Metadata = {
   title: "IgniteVidya - STEM Learning Platform",
@@ -26,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className} suppressHydrationWarning>
+      <body className={`${inter.className} ${pressStart2P.variable}`} suppressHydrationWarning>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

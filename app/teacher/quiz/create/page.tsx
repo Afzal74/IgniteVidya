@@ -9,8 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Plus, Trash2, ArrowLeft, Save, CheckCircle } from 'lucide-react'
+import { Plus, Trash2, ArrowLeft, Save, CheckCircle, Image as ImageIcon, X } from 'lucide-react'
 import { motion } from 'framer-motion'
+import Image from 'next/image'
 
 interface Question {
   id: string
@@ -21,6 +22,8 @@ interface Question {
   option_d: string
   correct_answer: 'A' | 'B' | 'C' | 'D'
   points: number
+  image_url?: string
+  image_file?: File
 }
 
 export default function CreateQuizPage() {
@@ -75,6 +78,53 @@ export default function CreateQuizPage() {
     return Math.random().toString(36).substring(2, 8).toUpperCase()
   }
 
+  const handleImageUpload = (questionId: string, file: File) => {
+    // Validate file
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      alert('Image size must be less than 5MB')
+      return
+    }
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file)
+    
+    setQuestions(questions.map(q => 
+      q.id === questionId ? { ...q, image_file: file, image_url: previewUrl } : q
+    ))
+  }
+
+  const removeImage = (questionId: string) => {
+    setQuestions(questions.map(q => {
+      if (q.id === questionId && q.image_url) {
+        URL.revokeObjectURL(q.image_url)
+        return { ...q, image_file: undefined, image_url: undefined }
+      }
+      return q
+    }))
+  }
+
+  const uploadImage = async (file: File, roomId: string, questionIndex: number): Promise<string> => {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${roomId}/question-${questionIndex}.${fileExt}`
+    
+    const { error: uploadError } = await supabase.storage
+      .from('quiz-images')
+      .upload(fileName, file, { upsert: true })
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage
+      .from('quiz-images')
+      .getPublicUrl(fileName)
+
+    return data.publicUrl
+  }
+
   const handleSaveQuiz = async () => {
     // Validate
     if (!roomData.room_name) {
@@ -120,18 +170,34 @@ export default function CreateQuizPage() {
 
       if (roomError) throw roomError
 
-      // Create questions
-      const questionsToInsert = questions.map((q, index) => ({
-        room_id: room.id,
-        question_text: q.question_text,
-        option_a: q.option_a,
-        option_b: q.option_b,
-        option_c: q.option_c,
-        option_d: q.option_d,
-        correct_answer: q.correct_answer,
-        points: q.points,
-        order_number: index + 1
-      }))
+      // Upload images and create questions
+      const questionsToInsert = await Promise.all(
+        questions.map(async (q, index) => {
+          let imageUrl = null
+          
+          // Upload image if exists
+          if (q.image_file) {
+            try {
+              imageUrl = await uploadImage(q.image_file, room.id, index + 1)
+            } catch (error) {
+              console.error('Error uploading image:', error)
+            }
+          }
+
+          return {
+            room_id: room.id,
+            question_text: q.question_text,
+            option_a: q.option_a,
+            option_b: q.option_b,
+            option_c: q.option_c,
+            option_d: q.option_d,
+            correct_answer: q.correct_answer,
+            points: q.points,
+            order_number: index + 1,
+            image_url: imageUrl
+          }
+        })
+      )
 
       const { error: questionsError } = await supabase
         .from('quiz_questions')
@@ -140,7 +206,7 @@ export default function CreateQuizPage() {
       if (questionsError) throw questionsError
 
       alert(`Quiz created successfully!\n\nRoom Code: ${roomCode}\n\nShare this code with your students.`)
-      router.push('/teacher/quiz')
+      router.push(`/teacher/quiz/lobby/${room.id}`)
     } catch (error: any) {
       alert('Error creating quiz: ' + error.message)
     } finally {
@@ -349,6 +415,57 @@ export default function CreateQuizPage() {
                           onChange={(e) => updateQuestion(question.id, 'points', parseInt(e.target.value))}
                         />
                       </div>
+                    </div>
+
+                    {/* Image Upload */}
+                    <div className="space-y-2">
+                      <Label>Question Image (Optional)</Label>
+                      {question.image_url ? (
+                        <div className="relative">
+                          <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-zinc-200 dark:border-zinc-800">
+                            <Image
+                              src={question.image_url}
+                              alt="Question image"
+                              fill
+                              className="object-contain"
+                            />
+                          </div>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => removeImage(question.id)}
+                            className="absolute top-2 right-2"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Remove
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="border-2 border-dashed border-zinc-300 dark:border-zinc-700 rounded-lg p-6 text-center hover:border-blue-500 transition-colors">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) handleImageUpload(question.id, file)
+                            }}
+                            className="hidden"
+                            id={`image-upload-${question.id}`}
+                          />
+                          <label
+                            htmlFor={`image-upload-${question.id}`}
+                            className="cursor-pointer flex flex-col items-center"
+                          >
+                            <ImageIcon className="h-12 w-12 text-zinc-400 mb-2" />
+                            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">
+                              Click to upload an image
+                            </p>
+                            <p className="text-xs text-zinc-500">
+                              PNG, JPG, GIF up to 5MB
+                            </p>
+                          </label>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
