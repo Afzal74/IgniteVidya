@@ -858,7 +858,9 @@ export default function HomePage() {
                       {level.hasGames && (
                         <div className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-full bg-green-500/20 border border-green-500/40 backdrop-blur-sm animate-pulse">
                           <Gamepad2 className="h-3 w-3 text-green-500" />
-                          <span className="text-xs font-bold text-green-500">Games</span>
+                          <span className="text-xs font-bold text-green-500">
+                            Games
+                          </span>
                         </div>
                       )}
 
@@ -1193,10 +1195,7 @@ export default function HomePage() {
                 className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
                 onClick={() => {
                   playClickSound("secondary");
-                  window.open(
-                    "https://www.youtube.com/@ignitevidya",
-                    "_blank"
-                  );
+                  window.open("https://www.youtube.com/@ignitevidya", "_blank");
                 }}
                 onMouseEnter={() => playHoverSound("button")}
               >
@@ -1222,7 +1221,10 @@ export default function HomePage() {
                 className="rounded-lg border-zinc-200 dark:border-zinc-800 bg-transparent text-xs px-2 py-1 md:px-3 md:py-2"
                 onClick={() => {
                   playClickSound("secondary");
-                  window.open("https://www.instagram.com/ignitevidya", "_blank");
+                  window.open(
+                    "https://www.instagram.com/ignitevidya",
+                    "_blank"
+                  );
                 }}
                 onMouseEnter={() => playHoverSound("button")}
               >

@@ -35,6 +35,17 @@ export default function TeacherLogin() {
           throw new Error('Please fill in all fields')
         }
 
+        // Check if email is already registered as a student
+        const { data: existingStudent } = await supabase
+          .from('student_profiles')
+          .select('email')
+          .eq('email', email)
+          .single()
+
+        if (existingStudent) {
+          throw new Error('This email is already registered as a student. Please use a different email or login as a student.')
+        }
+
         // Sign up the user
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -83,12 +94,36 @@ export default function TeacherLogin() {
           setPassword('')
         }
       } else {
+        // First check if this email is registered as a student
+        const { data: studentCheck } = await supabase
+          .from('student_profiles')
+          .select('email')
+          .eq('email', email)
+          .single()
+
+        if (studentCheck) {
+          throw new Error('This email is registered as a student. Please use the student login page.')
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password
         })
         if (error) throw error
+        
         if (data.user) {
+          // Verify the user has a teacher profile
+          const { data: teacherProfile } = await supabase
+            .from('teacher_profiles')
+            .select('id')
+            .eq('user_id', data.user.id)
+            .single()
+
+          if (!teacherProfile) {
+            await supabase.auth.signOut()
+            throw new Error('No teacher profile found. Please sign up as a teacher first.')
+          }
+
           router.push('/teacher/dashboard')
         }
       }

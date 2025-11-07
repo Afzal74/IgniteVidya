@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -38,7 +38,12 @@ const navItems = [
   { href: "/", label: "Home", icon: Home },
   { href: "/notes", label: "Library", icon: BookOpen },
   { href: "/lectures", label: "Lectures", icon: Play },
-  { href: "/smart-calculator", label: "Smart Calculator", icon: Calculator, badge: "New~AI" },
+  {
+    href: "/smart-calculator",
+    label: "Smart Calculator",
+    icon: Calculator,
+    badge: "New~AI",
+  },
   { href: "/ai-tutor", label: "AI Tutor", icon: Brain, badge: "Coming Soon" },
   { href: "/quiz", label: "Quiz", icon: Target },
   { href: "/dashboard", label: "Dashboard", icon: Star },
@@ -48,6 +53,7 @@ const navItems = [
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [teacherProfile, setTeacherProfile] = useState<any>(null);
+  const [studentProfile, setStudentProfile] = useState<any>(null);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const { user, loading } = useAuth();
@@ -57,27 +63,44 @@ export default function Navigation() {
 
   useEffect(() => {
     if (user) {
-      fetchTeacherProfile();
+      fetchProfiles();
     } else {
       setTeacherProfile(null);
+      setStudentProfile(null);
     }
   }, [user]);
 
-  const fetchTeacherProfile = async () => {
+  const fetchProfiles = async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('teacher_profiles')
-      .select('*')
-      .eq('user_id', user.id)
+
+    // Check for teacher profile
+    const { data: teacherData } = await supabase
+      .from("teacher_profiles")
+      .select("*")
+      .eq("user_id", user.id)
       .single();
-    setTeacherProfile(data);
+    setTeacherProfile(teacherData);
+
+    // Check for student profile
+    const { data: studentData } = await supabase
+      .from("student_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+    setStudentProfile(studentData);
+
+    console.log("Navigation profiles:", {
+      teacherData: !!teacherData,
+      studentData: !!studentData,
+    });
   };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setTeacherProfile(null);
+    setStudentProfile(null);
     playClickSound("secondary");
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -138,20 +161,49 @@ export default function Navigation() {
                       <span className="sr-only">Teacher Dashboard</span>
                     </Button>
                   </Link>
-                ) : (
-                  <Link href="/teacher/login">
+                ) : studentProfile ? (
+                  <Link href="/dashboard">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => playClickSound("secondary")}
                       onMouseEnter={() => playHoverSound("button")}
                       className="rounded-xl"
-                      title="Teacher Login"
+                      title="Student Dashboard"
                     >
-                      <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <span className="sr-only">Teacher Login</span>
+                      <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <span className="sr-only">Student Dashboard</span>
                     </Button>
                   </Link>
+                ) : (
+                  <>
+                    <Link href="/student/login">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playClickSound("secondary")}
+                        onMouseEnter={() => playHoverSound("button")}
+                        className="rounded-xl"
+                        title="Student Login"
+                      >
+                        <User className="h-5 w-5 text-green-600 dark:text-green-400" />
+                        <span className="sr-only">Student Login</span>
+                      </Button>
+                    </Link>
+                    <Link href="/teacher/login">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playClickSound("secondary")}
+                        onMouseEnter={() => playHoverSound("button")}
+                        className="rounded-xl"
+                        title="Teacher Login"
+                      >
+                        <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        <span className="sr-only">Teacher Login</span>
+                      </Button>
+                    </Link>
+                  </>
                 )}
 
                 <Button
@@ -328,7 +380,9 @@ export default function Navigation() {
 
                   {teacherProfile && (
                     <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border border-blue-200 dark:border-blue-800">
-                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">Logged in as Teacher</p>
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                        Logged in as Teacher
+                      </p>
                       <div className="flex gap-2">
                         <Link href="/teacher/dashboard" className="flex-1">
                           <Button
@@ -360,14 +414,56 @@ export default function Navigation() {
                     </div>
                   )}
 
+                  {studentProfile && (
+                    <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border border-green-200 dark:border-green-800">
+                      <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
+                        Logged in as Student
+                      </p>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-500 mb-2">
+                        {studentProfile.first_name} {studentProfile.last_name} •
+                        Grade {studentProfile.grade}
+                      </p>
+                      <div className="flex gap-2">
+                        <Link href="/dashboard" className="flex-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs"
+                            onClick={() => {
+                              playClickSound("navigation");
+                              setIsOpen(false);
+                            }}
+                          >
+                            <User className="h-3 w-3 mr-1" />
+                            Dashboard
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                          onClick={() => {
+                            handleSignOut();
+                            setIsOpen(false);
+                          }}
+                        >
+                          <LogOut className="h-3 w-3 mr-1" />
+                          Sign Out
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    {navItems.map((item) => (
+                    {navItems.map((item) =>
                       item.badge === "Coming Soon" ? (
                         <div
                           key={item.href}
                           onClick={(e) => {
                             e.preventDefault();
-                            alert("AI Tutor is coming soon! Stay tuned for updates.");
+                            alert(
+                              "AI Tutor is coming soon! Stay tuned for updates."
+                            );
                             playClickSound("navigation");
                           }}
                           onMouseEnter={() => playHoverSound("link")}
@@ -405,7 +501,7 @@ export default function Navigation() {
                           )}
                         </Link>
                       )
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
