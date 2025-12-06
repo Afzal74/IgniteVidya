@@ -331,6 +331,15 @@ export default function TeacherLiveClassRoomPage() {
           if (payload.oderId === myId.current) return
           setTimeout(() => sendOffer(payload.oderId), 300)
         })
+        .on('broadcast', { event: 'video-toggle' }, ({ payload }) => {
+          // Remote user toggled their video - force refresh the stream display
+          console.log('Video toggle from:', payload.oderId, 'enabled:', payload.videoEnabled)
+          // Force re-render by creating new Map reference
+          setRemoteStreams(prev => {
+            const newMap = new Map(prev)
+            return newMap
+          })
+        })
         .subscribe(async (status) => {
           console.log('Channel status:', status)
           if (status === 'SUBSCRIBED') {
@@ -451,6 +460,12 @@ export default function TeacherLiveClassRoomPage() {
         if (sender) sender.replaceTrack(null)
       })
       setIsVideoEnabled(false)
+      // Notify others
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'video-toggle',
+        payload: { oderId: myId.current, videoEnabled: false }
+      })
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true })
@@ -467,6 +482,12 @@ export default function TeacherLiveClassRoomPage() {
           } else {
             pc.addTrack(track, localStreamRef.current!)
           }
+        })
+        // Notify others
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'video-toggle',
+          payload: { oderId: myId.current, videoEnabled: true }
         })
       } catch (e) {
         setMediaError('Could not enable camera')

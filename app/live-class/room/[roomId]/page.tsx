@@ -314,6 +314,15 @@ export default function LiveClassRoomPage() {
         alert('The class has ended.')
         router.push('/live-class')
       })
+      .on('broadcast', { event: 'video-toggle' }, ({ payload }) => {
+        // Remote user toggled their video - force refresh
+        console.log('Video toggle from:', payload.oderId, 'enabled:', payload.videoEnabled)
+        if (payload.oderId.startsWith('teacher-')) {
+          setTeacherStream(prev => prev ? new MediaStream(prev.getTracks()) : null)
+        } else {
+          setRemoteStreams(prev => new Map(prev))
+        }
+      })
       .subscribe((status) => {
         console.log('WebRTC channel status:', status)
         if (status === 'SUBSCRIBED') {
@@ -479,6 +488,12 @@ export default function LiveClassRoomPage() {
       if (participantId) {
         await supabase.from('live_class_participants').update({ is_video_enabled: false }).eq('id', participantId)
       }
+      // Notify others that video is off
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'video-toggle',
+        payload: { oderId: myId.current, videoEnabled: false }
+      })
     } else {
       // Turn ON - get new video stream
       try {
@@ -511,6 +526,12 @@ export default function LiveClassRoomPage() {
         if (participantId) {
           await supabase.from('live_class_participants').update({ is_video_enabled: true }).eq('id', participantId)
         }
+        // Notify others that video is on
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'video-toggle',
+          payload: { oderId: myId.current, videoEnabled: true }
+        })
       } catch (e: any) {
         if (e.name === 'NotReadableError') {
           setMediaError('Camera is busy. Close other apps using it.')
