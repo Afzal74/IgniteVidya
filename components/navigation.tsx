@@ -23,6 +23,7 @@ import {
   User,
   LogOut,
   LayoutDashboard,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
@@ -47,6 +48,7 @@ const getNavItems = (studentGrade?: number) => {
     },
     { href: "/ai-tutor", label: "AI Tutor", icon: Brain, badge: "Coming Soon" },
     { href: "/quiz", label: "Quiz", icon: Target },
+    { href: "/live-class", label: "Live Class", icon: Video },
     { href: "/dashboard", label: "Dashboard", icon: Star },
     { href: "/projects", label: "Projects", icon: Lightbulb },
   ];

@@ -1,58 +1,66 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, BookOpen, FileText, Plus, Calendar } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, BookOpen, FileText, Plus, Calendar, Video } from "lucide-react";
 
 export default function TeacherDashboard() {
-  const [user, setUser] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [studentCount, setStudentCount] = useState(0)
-  const router = useRouter()
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [studentCount, setStudentCount] = useState(0);
+  const router = useRouter();
 
   useEffect(() => {
-    checkUser()
-  }, [])
+    checkUser();
+  }, []);
 
   const checkUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
-      router.push('/teacher/login')
+      router.push("/teacher/login");
     } else {
       // Fetch teacher profile
       const { data: profile } = await supabase
-        .from('teacher_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      
-      setUser({ ...user, profile })
-      
+        .from("teacher_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      setUser({ ...user, profile });
+
       // Fetch student count
       const { count } = await supabase
-        .from('students')
-        .select('*', { count: 'exact', head: true })
-        .eq('teacher_id', user.id)
-      
-      setStudentCount(count || 0)
+        .from("students")
+        .select("*", { count: "exact", head: true })
+        .eq("teacher_id", user.id);
+
+      setStudentCount(count || 0);
     }
-    setLoading(false)
-  }
+    setLoading(false);
+  };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.push('/teacher/login')
-  }
+    await supabase.auth.signOut();
+    router.push("/teacher/login");
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p>Loading...</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -70,32 +78,43 @@ export default function TeacherDashboard() {
           <div className="mb-8">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
-                {user?.profile?.first_name?.[0]}{user?.profile?.last_name?.[0]}
+                {user?.profile?.first_name?.[0]}
+                {user?.profile?.last_name?.[0]}
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-black dark:text-white">
-                  Welcome, {user?.profile?.first_name} {user?.profile?.last_name}
+                  Welcome, {user?.profile?.first_name}{" "}
+                  {user?.profile?.last_name}
                 </h1>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                  {user?.profile?.school_name} • {user?.profile?.role?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                  {user?.profile?.school_name} •{" "}
+                  {user?.profile?.role
+                    ?.replace("_", " ")
+                    .replace(/\b\w/g, (l: string) => l.toUpperCase())}
                 </p>
               </div>
             </div>
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-black dark:text-white flex items-center gap-2">
                   <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                   Students
                 </CardTitle>
-                <CardDescription className="text-zinc-600 dark:text-zinc-400">Manage your students</CardDescription>
+                <CardDescription className="text-zinc-600 dark:text-zinc-400">
+                  Manage your students
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-4xl font-bold text-black dark:text-white">{studentCount}</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Total students</p>
+                <p className="text-4xl font-bold text-black dark:text-white">
+                  {studentCount}
+                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Total students
+                </p>
               </CardContent>
             </Card>
 
@@ -105,34 +124,69 @@ export default function TeacherDashboard() {
                   <BookOpen className="h-5 w-5 text-green-600 dark:text-green-400" />
                   Classes
                 </CardTitle>
-                <CardDescription className="text-zinc-600 dark:text-zinc-400">Your active classes</CardDescription>
+                <CardDescription className="text-zinc-600 dark:text-zinc-400">
+                  Your active classes
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-4xl font-bold text-black dark:text-white">0</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Active classes</p>
+                <p className="text-4xl font-bold text-black dark:text-white">
+                  0
+                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Active classes
+                </p>
               </CardContent>
             </Card>
 
-            <Card 
+            <Card
               className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => router.push('/teacher/quiz')}
+              onClick={() => router.push("/teacher/quiz")}
             >
               <CardHeader>
                 <CardTitle className="text-black dark:text-white flex items-center gap-2">
                   <FileText className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   Quiz Rooms
                 </CardTitle>
-                <CardDescription className="text-zinc-600 dark:text-zinc-400">Create quiz rooms</CardDescription>
+                <CardDescription className="text-zinc-600 dark:text-zinc-400">
+                  Create quiz rooms
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-4xl font-bold text-black dark:text-white">0</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Active rooms</p>
+                <p className="text-4xl font-bold text-black dark:text-white">
+                  0
+                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Active rooms
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card
+              className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:shadow-lg transition-shadow cursor-pointer"
+              onClick={() => router.push("/teacher/live-class")}
+            >
+              <CardHeader>
+                <CardTitle className="text-black dark:text-white flex items-center gap-2">
+                  <Video className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  Live Classes
+                </CardTitle>
+                <CardDescription className="text-zinc-600 dark:text-zinc-400">
+                  Host video classes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-4xl font-bold text-black dark:text-white">
+                  0
+                </p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Active classes
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-black dark:text-white flex items-center gap-2">
@@ -144,9 +198,9 @@ export default function TeacherDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
+                <Button
                   className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                  onClick={() => router.push('/teacher/students')}
+                  onClick={() => router.push("/teacher/students")}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Manage Students
@@ -165,9 +219,9 @@ export default function TeacherDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
+                <Button
                   className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                  onClick={() => router.push('/teacher/quiz')}
+                  onClick={() => router.push("/teacher/quiz")}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Create Quiz Room
@@ -186,12 +240,33 @@ export default function TeacherDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button 
+                <Button
                   className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                  onClick={() => router.push('/teacher/attendance')}
+                  onClick={() => router.push("/teacher/attendance")}
                 >
                   <Calendar className="h-4 w-4 mr-2" />
                   Mark Attendance
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <CardTitle className="text-black dark:text-white flex items-center gap-2">
+                  <Video className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  Live Classes
+                </CardTitle>
+                <CardDescription className="text-zinc-600 dark:text-zinc-400">
+                  Host real-time video classes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200"
+                  onClick={() => router.push("/teacher/live-class")}
+                >
+                  <Video className="h-4 w-4 mr-2" />
+                  Start Live Class
                 </Button>
               </CardContent>
             </Card>
@@ -216,13 +291,15 @@ export default function TeacherDashboard() {
               {studentCount === 0 ? (
                 <div className="text-center py-12">
                   <Users className="h-16 w-16 text-zinc-300 dark:text-zinc-700 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-black dark:text-white mb-2">No students yet</h3>
+                  <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
+                    No students yet
+                  </h3>
                   <p className="text-zinc-600 dark:text-zinc-400 mb-6">
                     Start by adding students to track their progress
                   </p>
-                  <Button 
+                  <Button
                     className="bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-200"
-                    onClick={() => router.push('/teacher/students')}
+                    onClick={() => router.push("/teacher/students")}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Your First Student
@@ -232,18 +309,23 @@ export default function TeacherDashboard() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between p-4 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
                     <div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Students</p>
-                      <p className="text-2xl font-bold text-black dark:text-white">{studentCount}</p>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Total Students
+                      </p>
+                      <p className="text-2xl font-bold text-black dark:text-white">
+                        {studentCount}
+                      </p>
                     </div>
-                    <Button 
+                    <Button
                       variant="outline"
-                      onClick={() => router.push('/teacher/students')}
+                      onClick={() => router.push("/teacher/students")}
                     >
                       View All Students
                     </Button>
                   </div>
                   <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    Click "View All Students" to manage your student list, add new students, or track their progress.
+                    Click "View All Students" to manage your student list, add
+                    new students, or track their progress.
                   </p>
                 </div>
               )}
@@ -252,5 +334,5 @@ export default function TeacherDashboard() {
         </div>
       </div>
     </div>
-  )
+  );
 }
