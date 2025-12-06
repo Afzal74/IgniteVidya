@@ -781,11 +781,25 @@ export default function TeacherLiveClassRoomPage() {
       )}
 
       <div className="flex-1 flex overflow-hidden relative z-10">
-        {/* Main Layout: Host center, students on left */}
-        <div className="flex-1 p-2 flex gap-2">
-          {/* Students column on left - bigger thumbnails, no scroll */}
+        {/* Main Layout: Mobile = column, Desktop = row with students on left */}
+        <div className="flex-1 p-2 flex flex-col md:flex-row gap-2">
+          {/* Host (Teacher) - Large video - Shows first on mobile */}
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2">
+            {sortedVideos.filter(v => v.isTeacher).map((v) => (
+              <HostVideoTile 
+                key={v.streamKey} 
+                stream={v.stream} 
+                name={v.name} 
+                isLocal={v.isLocal}
+                isSpeaking={v.isSpeaking}
+                isActiveSpeaker={v.isActiveSpeaker}
+              />
+            ))}
+          </div>
+          
+          {/* Students - Below on mobile, left column on desktop */}
           {sortedVideos.filter(v => !v.isTeacher).length > 0 && (
-            <div className="flex flex-col gap-2 w-40 flex-shrink-0">
+            <div className="flex flex-row md:flex-col gap-2 w-full md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-1 md:pb-0">
               {sortedVideos.filter(v => !v.isTeacher).map((v, i) => (
                 <StudentThumbnail 
                   key={v.streamKey} 
@@ -800,26 +814,12 @@ export default function TeacherLiveClassRoomPage() {
               ))}
             </div>
           )}
-          
-          {/* Host (Teacher) - Large center video */}
-          <div className="flex-1 flex items-center justify-center">
-            {sortedVideos.filter(v => v.isTeacher).map((v) => (
-              <HostVideoTile 
-                key={v.streamKey} 
-                stream={v.stream} 
-                name={v.name} 
-                isLocal={v.isLocal}
-                isSpeaking={v.isSpeaking}
-                isActiveSpeaker={v.isActiveSpeaker}
-              />
-            ))}
-          </div>
         </div>
 
-        {/* Participants Sidebar */}
+        {/* Participants Sidebar - Hidden on mobile */}
         <AnimatePresence>
           {showParticipants && (
-            <motion.div initial={{ width: 0 }} animate={{ width: 200 }} exit={{ width: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#00d4ff] overflow-hidden">
+            <motion.div initial={{ width: 0 }} animate={{ width: 200 }} exit={{ width: 0 }} className="hidden md:block bg-[#1a1a3e] border-l-4 border-[#00d4ff] overflow-hidden">
               <div className="p-2 h-full flex flex-col w-[200px]">
                 <h3 className="text-[#00ff41] text-[8px] font-bold mb-2"><Users className="h-3 w-3 inline mr-1" />STUDENTS ({participants.length})</h3>
                 {raisedHands.length > 0 && (
@@ -857,21 +857,21 @@ export default function TeacherLiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
-      {/* Control Bar - Compact */}
-      <div className="bg-[#1a1a3e] border-t-4 border-[#00ff41] px-4 py-2 relative z-10 flex-shrink-0">
-        <div className="flex items-center justify-center gap-2">
-          <button onClick={toggleAudio} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isAudioEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
-            {isAudioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+      {/* Control Bar - Mobile responsive */}
+      <div className="bg-[#1a1a3e] border-t-2 md:border-t-4 border-[#00ff41] px-2 md:px-4 py-1.5 md:py-2 relative z-10 flex-shrink-0">
+        <div className="flex items-center justify-center gap-1.5 md:gap-2">
+          <button onClick={toggleAudio} className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${isAudioEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
+            {isAudioEnabled ? <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <MicOff className="h-3.5 w-3.5 md:h-4 md:w-4" />}
           </button>
-          <button onClick={toggleVideo} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isVideoEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
-            {isVideoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+          <button onClick={toggleVideo} className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${isVideoEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
+            {isVideoEnabled ? <Video className="h-3.5 w-3.5 md:h-4 md:w-4" /> : <VideoOff className="h-3.5 w-3.5 md:h-4 md:w-4" />}
           </button>
-          <button onClick={toggleScreenShare} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isScreenSharing ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}>
+          <button onClick={toggleScreenShare} className={`hidden md:flex w-10 h-10 border-2 items-center justify-center transition-colors ${isScreenSharing ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}>
             {isScreenSharing ? <ScreenShareOff className="h-4 w-4" /> : <ScreenShare className="h-4 w-4" />}
           </button>
-          <div className="w-0.5 h-6 bg-[#00ff41] mx-1" />
-          <button onClick={endClass} className="px-3 h-10 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[8px] font-bold flex items-center gap-1 hover:bg-[#0f0f23] hover:text-[#ff0000] transition-colors">
-            <PhoneOff className="h-4 w-4" />END
+          <div className="w-0.5 h-5 md:h-6 bg-[#00ff41] mx-0.5 md:mx-1" />
+          <button onClick={endClass} className="px-2 md:px-3 h-9 md:h-10 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[7px] md:text-[8px] font-bold flex items-center gap-0.5 md:gap-1 hover:bg-[#0f0f23] hover:text-[#ff0000] transition-colors">
+            <PhoneOff className="h-3.5 w-3.5 md:h-4 md:w-4" />END
           </button>
         </div>
       </div>
@@ -1038,7 +1038,7 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
   }, [stream])
 
   return (
-    <div className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
+    <div className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1048,25 +1048,25 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
       />
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
-          <div className={`w-24 h-24 bg-[#ffff00] border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+          <div className={`w-16 h-16 md:w-24 md:h-24 bg-[#ffff00] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl md:text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             👑
           </div>
-          <p className="text-[#ffff00] text-sm mt-4">{name}</p>
+          <p className="text-[#ffff00] text-xs md:text-sm mt-2 md:mt-4">{name}</p>
         </div>
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-3 left-3 flex items-center gap-2 bg-[#0f0f23]/80 px-2 py-1 border border-[#00ff41]">
+        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex items-center gap-1 md:gap-2 bg-[#0f0f23]/80 px-1.5 md:px-2 py-0.5 md:py-1 border border-[#00ff41]">
           <div className="flex gap-0.5">
-            <div className="w-1 h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '0ms' }} />
-            <div className="w-1 h-6 bg-[#00ff41] animate-pulse" style={{ animationDelay: '150ms' }} />
-            <div className="w-1 h-3 bg-[#00ff41] animate-pulse" style={{ animationDelay: '300ms' }} />
-            <div className="w-1 h-5 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+            <div className="w-0.5 md:w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '0ms' }} />
+            <div className="w-0.5 md:w-1 h-4 md:h-6 bg-[#00ff41] animate-pulse" style={{ animationDelay: '150ms' }} />
+            <div className="w-0.5 md:w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" style={{ animationDelay: '300ms' }} />
+            <div className="w-0.5 md:w-1 h-3 md:h-5 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
           </div>
-          <span className="text-[8px] text-[#00ff41]">LIVE</span>
+          <span className="text-[6px] md:text-[8px] text-[#00ff41]">LIVE</span>
         </div>
       )}
-      <div className="absolute bottom-3 left-3 px-3 py-1 bg-[#0f0f23] border-2 border-[#ffff00] text-[#ffff00] text-[10px] flex items-center gap-2">
+      <div className="absolute bottom-2 md:bottom-3 left-2 md:left-3 px-2 md:px-3 py-0.5 md:py-1 bg-[#0f0f23] border md:border-2 border-[#ffff00] text-[#ffff00] text-[8px] md:text-[10px] flex items-center gap-1 md:gap-2">
         <span>👑</span>{name}
       </div>
     </div>
@@ -1114,7 +1114,7 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
   const borderColor = isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_10px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : pixelColors[colorIndex % 4]
 
   return (
-    <div className={`relative w-full aspect-video bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
+    <div className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1123,33 +1123,33 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
       />
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
-          <div className={`w-12 h-12 ${avatarColors[colorIndex % 4]} border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-lg font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+          <div className={`w-8 h-8 md:w-12 md:h-12 ${avatarColors[colorIndex % 4]} border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-sm md:text-lg font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             {name[0]?.toUpperCase() || '?'}
           </div>
         </div>
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-1 left-1 flex gap-0.5">
-          <div className="w-1 h-3 bg-[#00ff41] animate-pulse" />
-          <div className="w-1 h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
-          <div className="w-1 h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '200ms' }} />
+        <div className="absolute top-0.5 md:top-1 left-0.5 md:left-1 flex gap-0.5">
+          <div className="w-0.5 md:w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" />
+          <div className="w-0.5 md:w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+          <div className="w-0.5 md:w-1 h-1.5 md:h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '200ms' }} />
         </div>
       )}
       {/* Name label */}
-      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[8px] text-[#00ff41] truncate">
+      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[6px] md:text-[8px] text-[#00ff41] truncate">
         {name}
       </div>
       {/* Hand raised */}
       {isHandRaised && (
-        <div className="absolute top-1 right-1 w-5 h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
-          <Hand className="h-3 w-3 text-white" />
+        <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
+          <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
         </div>
       )}
-      {/* Remove button on hover */}
+      {/* Remove button on hover - desktop only */}
       <button 
         onClick={onRemove}
-        className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff0000] items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden group-hover:flex"
+        className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff0000] items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden md:group-hover:flex"
       >
         <UserX className="h-2 w-2 text-white" />
       </button>

@@ -929,12 +929,21 @@ export default function LiveClassRoomPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 p-2 flex gap-2">
-          {/* Students column on left - Your video + other students */}
-          <div className="flex flex-col gap-2 w-40 flex-shrink-0">
+        <div className="flex-1 p-2 flex flex-col md:flex-row gap-2">
+          {/* Teacher Video - Large center - Shows first on mobile */}
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2">
+            <TeacherVideoTile
+              stream={teacherStream}
+              isSpeaking={speakingUsers.has("teacher")}
+              isActiveSpeaker={activeSpeaker === "teacher"}
+            />
+          </div>
+
+          {/* Students column - Below on mobile, left on desktop */}
+          <div className="flex flex-row md:flex-col gap-2 w-full md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-1 md:pb-0">
             {/* Your Video */}
             <div
-              className={`relative w-full aspect-video bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+              className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
                 speakingUsers.has(participantId)
                   ? "ring-2 ring-green-400 shadow-[0_0_8px_rgba(74,222,128,0.4)]"
                   : "ring-1 ring-blue-500"
@@ -956,7 +965,7 @@ export default function LiveClassRoomPage() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div
-                    className={`w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold ${
+                    className={`w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm md:text-lg font-bold ${
                       speakingUsers.has(participantId) ? "animate-pulse" : ""
                     }`}
                   >
@@ -965,29 +974,29 @@ export default function LiveClassRoomPage() {
                 </div>
               )}
               {speakingUsers.has(participantId) && (
-                <div className="absolute top-1 left-1 flex gap-0.5">
-                  <div className="w-1 h-3 bg-green-400 animate-pulse" />
+                <div className="absolute top-0.5 md:top-1 left-0.5 md:left-1 flex gap-0.5">
+                  <div className="w-0.5 md:w-1 h-2 md:h-3 bg-green-400 animate-pulse" />
                   <div
-                    className="w-1 h-4 bg-green-400 animate-pulse"
+                    className="w-0.5 md:w-1 h-3 md:h-4 bg-green-400 animate-pulse"
                     style={{ animationDelay: "100ms" }}
                   />
                   <div
-                    className="w-1 h-2 bg-green-400 animate-pulse"
+                    className="w-0.5 md:w-1 h-1.5 md:h-2 bg-green-400 animate-pulse"
                     style={{ animationDelay: "200ms" }}
                   />
                 </div>
               )}
-              <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[10px] text-white truncate flex items-center gap-1">
+              <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[8px] md:text-[10px] text-white truncate flex items-center gap-1">
                 {isAudioEnabled ? (
-                  <Mic className="h-2.5 w-2.5 text-green-400" />
+                  <Mic className="h-2 w-2 md:h-2.5 md:w-2.5 text-green-400" />
                 ) : (
-                  <MicOff className="h-2.5 w-2.5 text-red-400" />
+                  <MicOff className="h-2 w-2 md:h-2.5 md:w-2.5 text-red-400" />
                 )}
                 You
               </div>
               {isHandRaised && (
-                <div className="absolute top-1 right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
-                  <Hand className="h-3 w-3 text-white" />
+                <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
+                  <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
                 </div>
               )}
             </div>
@@ -1010,25 +1019,16 @@ export default function LiveClassRoomPage() {
               );
             })}
           </div>
-
-          {/* Teacher Video - Large center */}
-          <div className="flex-1 flex items-center justify-center">
-            <TeacherVideoTile
-              stream={teacherStream}
-              isSpeaking={speakingUsers.has("teacher")}
-              isActiveSpeaker={activeSpeaker === "teacher"}
-            />
-          </div>
         </div>
 
-        {/* Sidebar - Compact participant list */}
+        {/* Sidebar - Hidden on mobile */}
         <AnimatePresence>
           {showParticipants && (
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: 180 }}
               exit={{ width: 0 }}
-              className="bg-gray-800 border-l border-gray-700 overflow-hidden"
+              className="hidden md:block bg-gray-800 border-l border-gray-700 overflow-hidden"
             >
               <div className="p-2 h-full flex flex-col w-[180px]">
                 <h3 className="text-white text-xs font-semibold mb-2">
@@ -1122,57 +1122,57 @@ export default function LiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
-      {/* Controls - Compact */}
-      <div className="bg-gray-800 border-t border-gray-700 px-4 py-2">
-        <div className="flex items-center justify-center gap-3">
+      {/* Controls - Mobile responsive */}
+      <div className="bg-gray-800 border-t border-gray-700 px-2 md:px-4 py-1.5 md:py-2">
+        <div className="flex items-center justify-center gap-2 md:gap-3">
           <Button
             onClick={toggleAudio}
             size="sm"
-            className={`rounded-full w-10 h-10 ${
+            className={`rounded-full w-9 h-9 md:w-10 md:h-10 ${
               isAudioEnabled
                 ? "bg-gray-700 hover:bg-gray-600"
                 : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {isAudioEnabled ? (
-              <Mic className="h-4 w-4" />
+              <Mic className="h-3.5 w-3.5 md:h-4 md:w-4" />
             ) : (
-              <MicOff className="h-4 w-4" />
+              <MicOff className="h-3.5 w-3.5 md:h-4 md:w-4" />
             )}
           </Button>
           <Button
             onClick={toggleVideo}
             size="sm"
-            className={`rounded-full w-10 h-10 ${
+            className={`rounded-full w-9 h-9 md:w-10 md:h-10 ${
               isVideoEnabled
                 ? "bg-gray-700 hover:bg-gray-600"
                 : "bg-red-600 hover:bg-red-700"
             }`}
           >
             {isVideoEnabled ? (
-              <Video className="h-4 w-4" />
+              <Video className="h-3.5 w-3.5 md:h-4 md:w-4" />
             ) : (
-              <VideoOff className="h-4 w-4" />
+              <VideoOff className="h-3.5 w-3.5 md:h-4 md:w-4" />
             )}
           </Button>
           <Button
             onClick={toggleHandRaise}
             size="sm"
-            className={`rounded-full w-10 h-10 ${
+            className={`rounded-full w-9 h-9 md:w-10 md:h-10 ${
               isHandRaised
                 ? "bg-yellow-600 hover:bg-yellow-700"
                 : "bg-gray-700 hover:bg-gray-600"
             }`}
           >
-            <Hand className="h-4 w-4" />
+            <Hand className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
-          <div className="w-px h-6 bg-gray-700 mx-1" />
+          <div className="w-px h-5 md:h-6 bg-gray-700 mx-0.5 md:mx-1" />
           <Button
             onClick={leaveClass}
             size="sm"
-            className="rounded-full w-10 h-10 bg-red-600 hover:bg-red-700"
+            className="rounded-full w-9 h-9 md:w-10 md:h-10 bg-red-600 hover:bg-red-700"
           >
-            <PhoneOff className="h-4 w-4" />
+            <PhoneOff className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
         </div>
       </div>
@@ -1220,10 +1220,10 @@ function TeacherVideoTile({
 
   return (
     <div
-      className={`w-full max-w-4xl aspect-video bg-gray-800 rounded-xl overflow-hidden relative transition-all duration-300 ${
+      className={`w-full max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 ${
         isSpeaking
-          ? "ring-4 ring-green-400 shadow-[0_0_30px_rgba(74,222,128,0.5)]"
-          : "ring-2 ring-yellow-400"
+          ? "ring-2 md:ring-4 ring-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)] md:shadow-[0_0_30px_rgba(74,222,128,0.5)]"
+          : "ring-1 md:ring-2 ring-yellow-400"
       }`}
     >
       <video
@@ -1235,43 +1235,45 @@ function TeacherVideoTile({
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
           <div
-            className={`w-24 h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-4xl mb-3 ${
+            className={`w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-2xl md:text-4xl mb-2 md:mb-3 ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
             👑
           </div>
-          <p className="text-yellow-400 text-lg font-medium">Teacher</p>
-          <p className="text-gray-500 text-sm">
+          <p className="text-yellow-400 text-sm md:text-lg font-medium">
+            Teacher
+          </p>
+          <p className="text-gray-500 text-xs md:text-sm">
             {stream ? "Video paused" : "Waiting..."}
           </p>
         </div>
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/70 px-2 py-1 rounded">
+        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex items-center gap-1 md:gap-2 bg-black/70 px-1.5 md:px-2 py-0.5 md:py-1 rounded">
           <div className="flex gap-0.5">
             <div
-              className="w-1 h-4 bg-green-400 animate-pulse"
+              className="w-0.5 md:w-1 h-3 md:h-4 bg-green-400 animate-pulse"
               style={{ animationDelay: "0ms" }}
             />
             <div
-              className="w-1 h-6 bg-green-400 animate-pulse"
+              className="w-0.5 md:w-1 h-4 md:h-6 bg-green-400 animate-pulse"
               style={{ animationDelay: "150ms" }}
             />
             <div
-              className="w-1 h-3 bg-green-400 animate-pulse"
+              className="w-0.5 md:w-1 h-2 md:h-3 bg-green-400 animate-pulse"
               style={{ animationDelay: "300ms" }}
             />
             <div
-              className="w-1 h-5 bg-green-400 animate-pulse"
+              className="w-0.5 md:w-1 h-3 md:h-5 bg-green-400 animate-pulse"
               style={{ animationDelay: "100ms" }}
             />
           </div>
-          <span className="text-xs text-green-400">LIVE</span>
+          <span className="text-[10px] md:text-xs text-green-400">LIVE</span>
         </div>
       )}
-      <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/70 rounded text-white text-sm flex items-center gap-2">
+      <div className="absolute bottom-2 md:bottom-3 left-2 md:left-3 px-1.5 md:px-2 py-0.5 md:py-1 bg-black/70 rounded text-white text-xs md:text-sm flex items-center gap-1 md:gap-2">
         <span className="text-yellow-400">👑</span>Teacher (Host)
       </div>
     </div>
@@ -1333,7 +1335,7 @@ function StudentThumbnailView({
 
   return (
     <div
-      className={`relative w-full aspect-video bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+      className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
         isActiveSpeaker
           ? "ring-2 ring-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
           : isSpeaking
@@ -1350,9 +1352,9 @@ function StudentThumbnailView({
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center">
           <div
-            className={`w-12 h-12 rounded-full bg-gradient-to-br ${
+            className={`w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${
               colors[colorIndex % 4]
-            } flex items-center justify-center text-white text-lg font-bold ${
+            } flex items-center justify-center text-white text-sm md:text-lg font-bold ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
@@ -1362,31 +1364,31 @@ function StudentThumbnailView({
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-1 left-1 flex gap-0.5">
-          <div className="w-1 h-3 bg-green-400 animate-pulse" />
+        <div className="absolute top-0.5 md:top-1 left-0.5 md:left-1 flex gap-0.5">
+          <div className="w-0.5 md:w-1 h-2 md:h-3 bg-green-400 animate-pulse" />
           <div
-            className="w-1 h-4 bg-green-400 animate-pulse"
+            className="w-0.5 md:w-1 h-3 md:h-4 bg-green-400 animate-pulse"
             style={{ animationDelay: "100ms" }}
           />
           <div
-            className="w-1 h-2 bg-green-400 animate-pulse"
+            className="w-0.5 md:w-1 h-1.5 md:h-2 bg-green-400 animate-pulse"
             style={{ animationDelay: "200ms" }}
           />
         </div>
       )}
       {/* Name label */}
-      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[10px] text-white truncate flex items-center gap-1">
+      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[8px] md:text-[10px] text-white truncate flex items-center gap-1">
         {isAudioEnabled ? (
-          <Mic className="h-2.5 w-2.5 text-green-400" />
+          <Mic className="h-2 w-2 md:h-2.5 md:w-2.5 text-green-400" />
         ) : (
-          <MicOff className="h-2.5 w-2.5 text-red-400" />
+          <MicOff className="h-2 w-2 md:h-2.5 md:w-2.5 text-red-400" />
         )}
         {name}
       </div>
       {/* Hand raised */}
       {isHandRaised && (
-        <div className="absolute top-1 right-1 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
-          <Hand className="h-3 w-3 text-white" />
+        <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
+          <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
         </div>
       )}
     </div>
