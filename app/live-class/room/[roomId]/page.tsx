@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -18,10 +18,19 @@ interface Participant {
   is_hand_raised: boolean
 }
 
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+  ]
+}
+
 export default function LiveClassRoomPage() {
   const params = useParams()
   const roomId = params.roomId as string
   const router = useRouter()
+  const myId = useRef('')
   
   const [room, setRoom] = useState<any>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -33,6 +42,8 @@ export default function LiveClassRoomPage() {
   const [isVideoEnabled, setIsVideoEnabled] = useState(false)
   const [isHandRaised, setIsHandRaised] = useState(false)
   const [localStream, setLocalStream] = useState<MediaStream | null>(null)
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map())
+  const [teacherStream, setTeacherStream] = useState<MediaStream | null>(null)
   const [mediaError, setMediaError] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showParticipants, setShowParticipants] = useState(true)
@@ -40,26 +51,228 @@ export default function LiveClassRoomPage() {
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const localStreamRef = useRef<MediaStream | null>(null)
+  const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map())
+  const channelRef = useRef<any>(null)
+  const pendingCandidates = useRef<Map<string, RTCIceCandidateInit[]>>(new Map())
 
   // Keep ref in sync
   useEffect(() => {
     localStreamRef.current = localStream
   }, [localStream])
 
+  // Create peer connection for a remote user
+  const createPeerConnection = useCallback((oderId: string): RTCPeerConnection => {
+    console.log('Creating peer connection for:', oderId)
+    
+    if (peerConnections.current.has(oderId)) {
+      peerConnections.current.get(oderId)?.close()
+    }
+    
+    const pc = new RTCPeerConnection(ICE_SERVERS)
+    
+    // Add local tracks
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => {
+        console.log('Adding track to peer:', track.kind)
+        pc.addTrack(track, localStreamRef.current!)
+      })
+    }
+    
+    // Handle incoming tracks
+    pc.ontrack = (event) => {
+      console.log('Received track from:', oderId, event.track.kind)
+      if (oderId.startsWith('teacher-')) {
+        setTeacherStream(event.streams[0])
+      } else {
+        setRemoteStreams(prev => {
+          const newMap = new Map(prev)
+          newMap.set(oderId, event.streams[0])
+          return newMap
+        })
+      }
+    }
+    
+    // Handle ICE candidates
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        channelRef.current?.send({
+          type: 'broadcast',
+          event: 'webrtc-ice',
+          payload: { from: myId.current, to: oderId, candidate: event.candidate.toJSON() }
+        })
+      }
+    }
+    
+    pc.oniceconnectionstatechange = () => {
+      console.log('ICE state for', oderId, ':', pc.iceConnectionState)
+      if (pc.iceConnectionState === 'failed') {
+        pc.restartIce()
+      }
+    }
+    
+    pc.onconnectionstatechange = () => {
+      console.log('Connection state for', oderId, ':', pc.connectionState)
+      if (pc.connectionState === 'failed') {
+        if (oderId.startsWith('teacher-')) {
+          setTeacherStream(null)
+        } else {
+          setRemoteStreams(prev => {
+            const newMap = new Map(prev)
+            newMap.delete(oderId)
+            return newMap
+          })
+        }
+      }
+    }
+    
+    peerConnections.current.set(oderId, pc)
+    return pc
+  }, [])
+
+  // Handle incoming offer
+  const handleOffer = useCallback(async (from: string, sdp: string) => {
+    console.log('Received offer from:', from)
+    const pc = createPeerConnection(from)
+    
+    try {
+      await pc.setRemoteDescription({ type: 'offer', sdp })
+      
+      const pending = pendingCandidates.current.get(from) || []
+      for (const candidate of pending) {
+        await pc.addIceCandidate(candidate)
+      }
+      pendingCandidates.current.delete(from)
+      
+      const answer = await pc.createAnswer()
+      await pc.setLocalDescription(answer)
+      
+      channelRef.current?.send({
+        type: 'broadcast',
+        event: 'webrtc-answer',
+        payload: { from: myId.current, to: from, sdp: answer.sdp }
+      })
+    } catch (err) {
+      console.error('Error handling offer:', err)
+    }
+  }, [createPeerConnection])
+
+  // Handle incoming answer
+  const handleAnswer = useCallback(async (from: string, sdp: string) => {
+    console.log('Received answer from:', from)
+    const pc = peerConnections.current.get(from)
+    
+    if (pc && pc.signalingState === 'have-local-offer') {
+      try {
+        await pc.setRemoteDescription({ type: 'answer', sdp })
+        
+        const pending = pendingCandidates.current.get(from) || []
+        for (const candidate of pending) {
+          await pc.addIceCandidate(candidate)
+        }
+        pendingCandidates.current.delete(from)
+      } catch (err) {
+        console.error('Error handling answer:', err)
+      }
+    }
+  }, [])
+
+  // Handle incoming ICE candidate
+  const handleIceCandidate = useCallback(async (from: string, candidate: RTCIceCandidateInit) => {
+    const pc = peerConnections.current.get(from)
+    
+    if (pc && pc.remoteDescription) {
+      try {
+        await pc.addIceCandidate(candidate)
+      } catch (err) {
+        console.error('Error adding ICE candidate:', err)
+      }
+    } else {
+      const pending = pendingCandidates.current.get(from) || []
+      pending.push(candidate)
+      pendingCandidates.current.set(from, pending)
+    }
+  }, [])
+
   useEffect(() => {
     const name = localStorage.getItem('live_class_participant_name')
     const id = localStorage.getItem('live_class_participant_id')
     if (name) setParticipantName(name)
-    if (id) setParticipantId(id)
+    if (id) {
+      setParticipantId(id)
+      myId.current = id
+    }
     
     fetchRoomData()
     initMedia()
     
     return () => {
-      // Use ref to get current value in cleanup
       localStreamRef.current?.getTracks().forEach(t => t.stop())
+      peerConnections.current.forEach(pc => pc.close())
+      peerConnections.current.clear()
+      if (channelRef.current) {
+        channelRef.current.send({
+          type: 'broadcast',
+          event: 'user-leave',
+          payload: { oderId: myId.current }
+        })
+        supabase.removeChannel(channelRef.current)
+      }
     }
   }, [])
+
+  // Setup WebRTC signaling channel
+  useEffect(() => {
+    if (!roomId || !participantId) return
+
+    const channel = supabase.channel(`webrtc-room-${roomId}`, {
+      config: { broadcast: { self: false } }
+    })
+    
+    channel
+      .on('broadcast', { event: 'webrtc-offer' }, ({ payload }) => {
+        if (payload.to === myId.current) {
+          handleOffer(payload.from, payload.sdp)
+        }
+      })
+      .on('broadcast', { event: 'webrtc-answer' }, ({ payload }) => {
+        if (payload.to === myId.current) {
+          handleAnswer(payload.from, payload.sdp)
+        }
+      })
+      .on('broadcast', { event: 'webrtc-ice' }, ({ payload }) => {
+        if (payload.to === myId.current) {
+          handleIceCandidate(payload.from, payload.candidate)
+        }
+      })
+      .on('broadcast', { event: 'teacher-ready' }, ({ payload }) => {
+        console.log('Teacher is ready:', payload.oderId)
+      })
+      .on('broadcast', { event: 'teacher-leave' }, () => {
+        console.log('Teacher left')
+        setTeacherStream(null)
+      })
+      .on('broadcast', { event: 'class-end' }, () => {
+        alert('The class has ended.')
+        router.push('/live-class')
+      })
+      .subscribe((status) => {
+        console.log('WebRTC channel status:', status)
+        if (status === 'SUBSCRIBED') {
+          // Announce presence to teacher
+          channel.send({
+            type: 'broadcast',
+            event: 'user-join',
+            payload: { oderId: myId.current }
+          })
+        }
+      })
+    
+    channelRef.current = channel
+    
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [roomId, participantId, handleOffer, handleAnswer, handleIceCandidate, router])
 
   // Subscribe to room and participant changes
   useEffect(() => {
@@ -76,7 +289,7 @@ export default function LiveClassRoomPage() {
         schema: 'public', 
         table: 'live_class_rooms', 
         filter: `id=eq.${roomId}` 
-      }, (payload) => {
+      }, (payload: any) => {
         if (payload.new.status === 'ended') {
           alert('The class has ended.')
           router.push('/live-class')
@@ -195,6 +408,13 @@ export default function LiveClassRoomPage() {
           t.stop()
           localStream.removeTrack(t)
         })
+        // Remove video track from peer connections
+        peerConnections.current.forEach(pc => {
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video')
+          if (sender) {
+            pc.removeTrack(sender)
+          }
+        })
       }
       setIsVideoEnabled(false)
       if (participantId) {
@@ -210,6 +430,15 @@ export default function LiveClassRoomPage() {
         
         if (localStream) {
           localStream.addTrack(videoTrack)
+          // Add video track to peer connections
+          peerConnections.current.forEach(pc => {
+            const sender = pc.getSenders().find(s => s.track?.kind === 'video')
+            if (sender) {
+              sender.replaceTrack(videoTrack)
+            } else {
+              pc.addTrack(videoTrack, localStream)
+            }
+          })
         } else {
           setLocalStream(videoStream)
         }
@@ -236,7 +465,18 @@ export default function LiveClassRoomPage() {
   }
 
   const leaveClass = async () => {
+    // Cleanup WebRTC
+    peerConnections.current.forEach(pc => pc.close())
+    peerConnections.current.clear()
     localStream?.getTracks().forEach(t => t.stop())
+    
+    // Announce leaving
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'user-leave',
+      payload: { oderId: myId.current }
+    })
+    
     if (participantId) {
       await supabase.from('live_class_participants').update({ left_at: new Date().toISOString() }).eq('id', participantId)
       localStorage.removeItem('live_class_participant_id')
@@ -297,18 +537,28 @@ export default function LiveClassRoomPage() {
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 p-4">
           <div className="grid gap-4 h-full grid-cols-1 lg:grid-cols-2">
-            {/* Teacher Placeholder (Large) - Note: Real video streaming requires WebRTC service */}
+            {/* Teacher Video */}
             <div className="bg-gray-800 rounded-xl overflow-hidden relative lg:col-span-2 aspect-video">
-              <div className="w-full h-full flex flex-col items-center justify-center">
-                <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white text-5xl font-bold mb-4">
-                  T
+              {teacherStream ? (
+                <video 
+                  ref={(el) => {
+                    if (el && teacherStream) {
+                      el.srcObject = teacherStream
+                    }
+                  }}
+                  autoPlay 
+                  playsInline 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white text-5xl font-bold mb-4">
+                    T
+                  </div>
+                  <p className="text-white text-lg font-medium">Teacher</p>
+                  <p className="text-gray-400 text-sm">Waiting for video...</p>
                 </div>
-                <p className="text-white text-lg font-medium">Teacher</p>
-                <p className="text-gray-400 text-sm">Live class in session</p>
-                <p className="text-gray-500 text-xs mt-2 max-w-md text-center px-4">
-                  Note: Video streaming between participants requires a WebRTC service (Twilio, Agora, etc.)
-                </p>
-              </div>
+              )}
               <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 rounded-lg text-white text-sm flex items-center gap-2">
                 <span className="text-yellow-400">👑</span>
                 Teacher (Host)
@@ -348,25 +598,41 @@ export default function LiveClassRoomPage() {
               )}
             </div>
 
-            {/* Other Students */}
-            {otherParticipants.map((p, i) => (
-              <div key={p.id} className="bg-gray-800 rounded-xl overflow-hidden relative aspect-video">
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getColor(i)} flex items-center justify-center text-white text-2xl font-bold`}>
-                    {p.student_name[0].toUpperCase()}
+            {/* Other Students with remote streams */}
+            {otherParticipants.map((p, i) => {
+              const remoteStream = remoteStreams.get(p.id)
+              return (
+                <div key={p.id} className="bg-gray-800 rounded-xl overflow-hidden relative aspect-video">
+                  {remoteStream ? (
+                    <video 
+                      ref={(el) => {
+                        if (el && remoteStream) {
+                          el.srcObject = remoteStream
+                        }
+                      }}
+                      autoPlay 
+                      playsInline 
+                      className="w-full h-full object-cover" 
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${getColor(i)} flex items-center justify-center text-white text-2xl font-bold`}>
+                        {p.student_name[0].toUpperCase()}
+                      </div>
+                    </div>
+                  )}
+                  <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 rounded text-white text-sm flex items-center gap-2">
+                    {p.is_audio_enabled ? <Mic className="h-3 w-3 text-green-400" /> : <MicOff className="h-3 w-3 text-red-400" />}
+                    {p.student_name}
                   </div>
+                  {p.is_hand_raised && (
+                    <div className="absolute top-3 right-3 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
+                      <Hand className="h-3 w-3 text-white" />
+                    </div>
+                  )}
                 </div>
-                <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 rounded text-white text-sm flex items-center gap-2">
-                  {p.is_audio_enabled ? <Mic className="h-3 w-3 text-green-400" /> : <MicOff className="h-3 w-3 text-red-400" />}
-                  {p.student_name}
-                </div>
-                {p.is_hand_raised && (
-                  <div className="absolute top-3 right-3 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
-                    <Hand className="h-3 w-3 text-white" />
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
