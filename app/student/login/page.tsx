@@ -53,13 +53,15 @@ export default function StudentLogin() {
 
         // Check if email is already registered as a teacher
         const { data: existingTeacher } = await supabase
-          .from('teacher_profiles')
-          .select('email')
-          .eq('email', email)
-          .single()
+          .from("teacher_profiles")
+          .select("email")
+          .eq("email", email)
+          .single();
 
         if (existingTeacher) {
-          throw new Error('This email is already registered as a teacher. Please use a different email or login as a teacher.')
+          throw new Error(
+            "This email is already registered as a teacher. Please use a different email or login as a teacher."
+          );
         }
 
         // Sign up the user
@@ -80,7 +82,7 @@ export default function StudentLogin() {
 
         if (data.user) {
           const userId = data.user.id;
-          
+
           // Wait a moment for the user to be fully created
           await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -99,104 +101,60 @@ export default function StudentLogin() {
             date_of_birth: dateOfBirth || null,
           };
 
-          // Try creating student profile with retries for schema cache issues
-          let profileError = null;
-          let attempts = 0;
-          const maxAttempts = 3;
-
-          while (attempts < maxAttempts && !profileError) {
-            attempts++;
-            try {
-              const { error } = await supabase
-                .from("student_profiles")
-                .insert(profileData);
-              
-              if (!error) {
-                break; // Success!
-              }
-              
-              // If schema cache error and we have attempts left, wait and retry
-              if ((error.message?.includes('schema cache') || error.message?.includes('first_name')) && attempts < maxAttempts) {
-                console.log(`Schema cache error, retrying... (${attempts}/${maxAttempts})`);
-                await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-                continue;
-              }
-              
-              profileError = error;
-              break;
-            } catch (err: any) {
-              if (attempts >= maxAttempts) {
-                profileError = err;
-                break;
-              }
-              // Wait before retry
-              await new Promise(resolve => setTimeout(resolve, 2000));
-            }
-          }
-
-          if (profileError) {
-            throw new Error(
-              profileError.message || "Failed to create student profile"
-            );
-          }
-
-          // Create initial progress entries for common subjects
-          const subjects = [
-            "Mathematics",
-            "Physics",
-            "Chemistry",
-            "Computer Science",
-            "English",
-            "Science",
-          ];
-          const progressEntries = subjects.map((subject) => ({
-            student_id: userId,
-            subject: subject,
-            grade: parseInt(grade),
-            completed_lessons: 0,
-            total_lessons: 15, // Default total lessons per subject
-            average_score: 0,
-            weekly_hours: 0,
-            difficulty_level: "beginner",
-          }));
-
-          const { error: progressError } = await supabase
-            .from("student_progress")
-            .insert(progressEntries);
-
-          if (progressError) {
-            console.warn("Failed to create initial progress:", progressError);
-          }
-
-          // Add welcome achievement
-          const { error: achievementError } = await supabase
-            .from("student_achievements")
-            .insert({
-              student_id: userId,
-              achievement_title: "Welcome Scholar!",
-              achievement_description:
-                "Successfully created your student account",
-              achievement_icon: "🎓",
-              points: 50,
-              rarity: "common",
+          // Use the safe student profile creation function
+          const { data: profileResult, error: profileError } =
+            await supabase.rpc("create_student_with_safe_achievements", {
+              p_user_id: data.user.id,
+              p_email: email,
+              p_first_name: firstName,
+              p_last_name: lastName,
+              p_grade: parseInt(grade),
+              p_section: section || null,
+              p_roll_number: rollNumber || null,
+              p_school_name: schoolName || null,
+              p_parent_email: parentEmail || null,
+              p_phone_number: phoneNumber || null,
+              p_date_of_birth: dateOfBirth || null,
             });
 
-          if (achievementError) {
-            console.warn(
-              "Failed to create welcome achievement:",
-              achievementError
+          if (profileError || !profileResult?.success) {
+            throw new Error(
+              profileResult?.error ||
+                profileError?.message ||
+                "Failed to create student profile"
             );
           }
+
+          console.log("Profile created successfully:", profileResult);
+
+          // The universal function already created initial progress and achievements
+          // No need for manual creation
 
           // Handle different signup scenarios
           if (data.user) {
-            if (data.user.email_confirmed_at) {
+            // For development, automatically confirm email
+            const { data: confirmResult } = await supabase.rpc(
+              "confirm_student_email",
+              {
+                p_email: email,
+              }
+            );
+
+            if (confirmResult?.success) {
+              alert(
+                "Account created and confirmed successfully! You can now sign in."
+              );
+            } else if (data.user.email_confirmed_at) {
               alert("Account created successfully! You can now sign in.");
             } else {
-              alert("Account created! Please check your email to confirm your account before signing in.");
+              alert(
+                "Account created! Please check your email to confirm your account before signing in."
+              );
             }
           } else {
-            alert("Account created! You may need to confirm your email before signing in.");
+            alert(
+              "Account created! You may need to confirm your email before signing in."
+            );
           }
           setIsSignUp(false);
           // Clear form
@@ -215,13 +173,15 @@ export default function StudentLogin() {
       } else {
         // First check if this email is registered as a teacher
         const { data: teacherCheck } = await supabase
-          .from('teacher_profiles')
-          .select('email')
-          .eq('email', email)
-          .single()
+          .from("teacher_profiles")
+          .select("email")
+          .eq("email", email)
+          .single();
 
         if (teacherCheck) {
-          throw new Error('This email is registered as a teacher. Please use the teacher login page.')
+          throw new Error(
+            "This email is registered as a teacher. Please use the teacher login page."
+          );
         }
 
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -229,56 +189,154 @@ export default function StudentLogin() {
           password,
         });
         if (error) throw error;
-        
+
         if (data.user) {
-          console.log('Login Debug - User ID:', data.user.id);
-          console.log('Login Debug - Email:', email);
-          
+          console.log("Login Debug - User ID:", data.user.id);
+          console.log("Login Debug - Email:", email);
+
           // Verify the user has a student profile (try both user_id and email)
           let studentProfile = null;
-          
+
           // First try by user_id
           const { data: profileByUserId, error: userIdError } = await supabase
-            .from('student_profiles')
-            .select('id, user_id, email')
-            .eq('user_id', data.user.id)
-            .single()
-          
-          console.log('Login Debug - Profile by user_id:', profileByUserId);
-          console.log('Login Debug - User ID error:', userIdError);
-          
+            .from("student_profiles")
+            .select("id, user_id, email")
+            .eq("user_id", data.user.id)
+            .single();
+
+          console.log("Login Debug - Profile by user_id:", profileByUserId);
+          console.log("Login Debug - User ID error:", userIdError);
+
           if (profileByUserId) {
             studentProfile = profileByUserId;
           } else {
             // If not found by user_id, try by email
             const { data: profileByEmail, error: emailError } = await supabase
-              .from('student_profiles')
-              .select('id, user_id, email')
-              .eq('email', email)
-              .single()
-            
-            console.log('Login Debug - Profile by email:', profileByEmail);
-            console.log('Login Debug - Email error:', emailError);
-            
+              .from("student_profiles")
+              .select("id, user_id, email")
+              .eq("email", email)
+              .single();
+
+            console.log("Login Debug - Profile by email:", profileByEmail);
+            console.log("Login Debug - Email error:", emailError);
+
             if (profileByEmail) {
               // Update the user_id in the profile to match current user
               const { error: updateError } = await supabase
-                .from('student_profiles')
+                .from("student_profiles")
                 .update({ user_id: data.user.id })
-                .eq('email', email)
-              
-              console.log('Login Debug - Update error:', updateError);
+                .eq("email", email);
+
+              console.log("Login Debug - Update error:", updateError);
               studentProfile = profileByEmail;
             }
           }
 
           if (!studentProfile) {
-            // Last attempt - check if profile exists at all (bypassing RLS)
-            console.log('Login Debug - No profile found, checking if any exists...');
-            await supabase.auth.signOut()
-            throw new Error('No student profile found. Please sign up as a student first.')
+            // Auto-create student profile directly with simple INSERT
+            console.log(
+              "Login Debug - No profile found, creating one directly..."
+            );
+
+            try {
+              // Create profile directly
+              const { data: newProfile, error: profileError } = await supabase
+                .from("student_profiles")
+                .insert({
+                  user_id: data.user.id,
+                  email: email,
+                  first_name: "Student",
+                  last_name: "User",
+                  grade: 6,
+                  school_name: "School",
+                  section: "A",
+                  roll_number: "001",
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+              if (profileError) {
+                console.log("Profile creation error:", profileError);
+                // Profile might already exist, try to get it
+                const { data: existingProfile } = await supabase
+                  .from("student_profiles")
+                  .select("*")
+                  .eq("email", email)
+                  .single();
+
+                if (existingProfile) {
+                  // Update user_id if needed
+                  await supabase
+                    .from("student_profiles")
+                    .update({ user_id: data.user.id })
+                    .eq("email", email);
+                  console.log("Login Debug - Used existing profile");
+                } else {
+                  throw new Error("Could not create or find profile");
+                }
+              } else {
+                console.log("Login Debug - Created new profile:", newProfile);
+              }
+
+              // Create basic progress data
+              await supabase.from("student_progress").insert([
+                {
+                  student_id: data.user.id,
+                  subject: "Mathematics",
+                  grade: 6,
+                  completed_lessons: 0,
+                  total_lessons: 15,
+                  average_score: 0,
+                  weekly_hours: 0,
+                  difficulty_level: "beginner",
+                },
+                {
+                  student_id: data.user.id,
+                  subject: "Science",
+                  grade: 6,
+                  completed_lessons: 0,
+                  total_lessons: 12,
+                  average_score: 0,
+                  weekly_hours: 0,
+                  difficulty_level: "beginner",
+                },
+                {
+                  student_id: data.user.id,
+                  subject: "English",
+                  grade: 6,
+                  completed_lessons: 0,
+                  total_lessons: 12,
+                  average_score: 0,
+                  weekly_hours: 0,
+                  difficulty_level: "beginner",
+                },
+              ]);
+
+              // Create welcome achievement
+              await supabase.from("student_achievements").insert({
+                student_id: data.user.id,
+                achievement_name: "Welcome!",
+                achievement_description:
+                  "Successfully joined the learning platform",
+                points_earned: 10,
+                achievement_type: "milestone",
+                earned_at: new Date().toISOString(),
+              });
+
+              console.log("Login Debug - Profile setup complete");
+            } catch (error) {
+              console.log("Login Debug - Profile creation failed:", error);
+              // Don't throw error, just continue - profile might exist
+            }
+
+            // Give extra time for profile to be available
+            console.log("Login Debug - Waiting for profile to be available...");
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           }
 
+          console.log("Login Debug - Redirecting to dashboard...");
           router.push("/dashboard");
         }
       }

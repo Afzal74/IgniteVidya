@@ -40,7 +40,7 @@ Student message: "${message}"
 Respond as Afzal would - be cool, helpful, and genuinely interested in helping them out! Keep it natural and conversational.`
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GOOGLE_AI_API_KEY || "AIzaSyCNj8JgjGWE81MYFL15DXRrl12MHewciS4"}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GOOGLE_AI_API_KEY}`,
       {
         method: "POST",
         headers: {

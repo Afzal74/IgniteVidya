@@ -20,6 +20,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import GradeAccessGuard from "@/components/grade-access-guard";
 
 export default function Grade6EnglishPage() {
   const [mounted, setMounted] = useState(false);
@@ -412,7 +413,8 @@ export default function Grade6EnglishPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
+    <GradeAccessGuard requiredGrade={6}>
+      <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
       {/* Global Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none">
         {/* Animated Grid */}
@@ -563,6 +565,7 @@ export default function Grade6EnglishPage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </GradeAccessGuard>
   );
 }

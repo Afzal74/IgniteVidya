@@ -69,8 +69,8 @@ export const getCurrentUser = async (): Promise<User | null> => {
   }
 };
 
-// Get user profile and determine type
-export const getUserProfile = async (): Promise<{
+// Get user profile and determine type with retry mechanism
+export const getUserProfile = async (retryCount: number = 0): Promise<{
   user: User | null;
   profile: UserProfile | null;
   userType: UserType;
@@ -81,7 +81,7 @@ export const getUserProfile = async (): Promise<{
     return { user: null, profile: null, userType: null };
   }
 
-  console.log("getUserProfile - checking for user:", user.id, user.email);
+  console.log("getUserProfile - checking for user:", user.id, user.email, "retry:", retryCount);
 
   // Check if user is a student (try both user_id and email)
   let studentProfile = null;
@@ -122,6 +122,13 @@ export const getUserProfile = async (): Promise<{
 
       studentProfile = studentByEmail;
     }
+  }
+
+  // If no profile found and this is the first attempt, retry after a short delay
+  if (!studentProfile && retryCount < 2) {
+    console.log("No profile found, retrying in 1 second...");
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return getUserProfile(retryCount + 1);
   }
 
   if (studentProfile) {

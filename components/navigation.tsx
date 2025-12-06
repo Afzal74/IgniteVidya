@@ -34,21 +34,35 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
-const navItems = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/notes", label: "Library", icon: BookOpen },
-  { href: "/lectures", label: "Lectures", icon: Play },
-  {
-    href: "/smart-calculator",
-    label: "Smart Calculator",
-    icon: Calculator,
-    badge: "New~AI",
-  },
-  { href: "/ai-tutor", label: "AI Tutor", icon: Brain, badge: "Coming Soon" },
-  { href: "/quiz", label: "Quiz", icon: Target },
-  { href: "/dashboard", label: "Dashboard", icon: Star },
-  { href: "/projects", label: "Projects", icon: Lightbulb },
-];
+const getNavItems = (studentGrade?: number) => {
+  const baseItems = [
+    { href: "/", label: "Home", icon: Home },
+    { href: "/notes", label: "Library", icon: BookOpen },
+    { href: "/lectures", label: "Lectures", icon: Play },
+    {
+      href: "/smart-calculator",
+      label: "Smart Calculator",
+      icon: Calculator,
+      badge: "New~AI",
+    },
+    { href: "/ai-tutor", label: "AI Tutor", icon: Brain, badge: "Coming Soon" },
+    { href: "/quiz", label: "Quiz", icon: Target },
+    { href: "/dashboard", label: "Dashboard", icon: Star },
+    { href: "/projects", label: "Projects", icon: Lightbulb },
+  ];
+
+  // Add grade-specific navigation for students
+  if (studentGrade) {
+    baseItems.splice(2, 0, {
+      href: `/grade/${studentGrade}`,
+      label: `Grade ${studentGrade}`,
+      icon: GraduationCap,
+      badge: "My Grade"
+    });
+  }
+
+  return baseItems;
+};
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
@@ -455,7 +469,7 @@ export default function Navigation() {
                   )}
 
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    {navItems.map((item) =>
+                    {getNavItems(studentProfile?.grade).map((item) =>
                       item.badge === "Coming Soon" ? (
                         <div
                           key={item.href}

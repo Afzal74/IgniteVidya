@@ -8,6 +8,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "No image provided" });
     }
 
+    // Use Google AI API key for Gemini
     const googleApiKey = process.env.GOOGLE_AI_API_KEY;
 
     if (!googleApiKey) {
@@ -33,7 +34,8 @@ Respond in this exact JSON format:
 
 Be educational, clear, and encouraging!`;
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${googleApiKey}`;
+    // Use Gemini 2.0 Flash API with vision (supports image analysis)
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleApiKey}`;
 
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -58,17 +60,33 @@ Be educational, clear, and encouraging!`;
         ],
         generationConfig: {
           temperature: 0.4,
-          maxOutputTokens: 300,
+          maxOutputTokens: 500,
         },
       }),
     });
 
+    console.log("Gemini API Response Status:", response.status);
+    
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Gemini API error:", response.status, errorText);
+      
+      // Return more specific error message
+      if (response.status === 400) {
+        return NextResponse.json({
+          success: false,
+          error: "Invalid image format. Please try drawing again.",
+        });
+      } else if (response.status === 429) {
+        return NextResponse.json({
+          success: false,
+          error: "Too many requests. Please wait a moment and try again.",
+        });
+      }
+      
       return NextResponse.json({
         success: false,
-        error: "Failed to analyze image",
+        error: `API Error: ${response.status}. Please try again.`,
       });
     }
 

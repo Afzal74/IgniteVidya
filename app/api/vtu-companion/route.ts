@@ -38,8 +38,8 @@ Respond as the motivating IgniteVidya Companion in exactly 2 sentences with enco
       )
     }
 
-    // Updated API endpoint - using the correct Gemini API URL
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`
+    // Updated API endpoint - using Gemini 1.5 Flash
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
 
     console.log("Making request to:", apiUrl.replace(apiKey, "***API_KEY***"))
 

@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { motion } from "framer-motion"
+import GradeAccessGuard from "@/components/grade-access-guard"
 
 export default function Grade12Page() {
   const [mounted, setMounted] = useState(false)
@@ -34,7 +35,8 @@ export default function Grade12Page() {
   if (!mounted) return null
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <GradeAccessGuard requiredGrade={12}>
+      <div className="min-h-screen bg-white dark:bg-black">
       {/* Header */}
       <section className="pt-20 md:pt-24 pb-8 px-2 md:px-4">
         <div className="max-w-6xl mx-auto">
@@ -155,6 +157,7 @@ export default function Grade12Page() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </GradeAccessGuard>
   )
 }

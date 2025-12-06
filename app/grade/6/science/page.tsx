@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
+import GradeAccessGuard from "@/components/grade-access-guard";
 
 export default function SciencePage() {
   const [mounted, setMounted] = useState(false);
@@ -70,7 +71,8 @@ export default function SciencePage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black">
+    <GradeAccessGuard requiredGrade={6}>
+      <div className="min-h-screen bg-white dark:bg-black">
       <section className="pt-20 md:pt-24 pb-8 px-2 md:px-4">
         <div className="max-w-6xl mx-auto">
           <Link href="/grade/6">
@@ -198,6 +200,7 @@ export default function SciencePage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+    </GradeAccessGuard>
   );
 }
