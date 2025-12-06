@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getVTUPapers } from "@/lib/database"
+import { getIgniteVidyaPapers } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     const month = searchParams.get("month")
     const search = searchParams.get("search")
 
-    let filteredPapers = getVTUPapers()
+    let filteredPapers = getIgniteVidyaPapers()
 
     // Apply filters
     if (semester && semester !== "all") {
