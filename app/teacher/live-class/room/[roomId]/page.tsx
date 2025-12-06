@@ -59,9 +59,15 @@ export default function TeacherLiveClassRoomPage() {
   const createPeerConnection = useCallback((oderId: string): RTCPeerConnection => {
     console.log('Creating peer connection for:', oderId)
     
-    // Close existing connection if any
-    if (peerConnections.current.has(oderId)) {
-      peerConnections.current.get(oderId)?.close()
+    // Close existing connection if any (but only if not working)
+    const existing = peerConnections.current.get(oderId)
+    if (existing) {
+      if (existing.connectionState === 'connected') {
+        console.log('Returning existing connected peer for:', oderId)
+        return existing
+      }
+      existing.close()
+      peerConnections.current.delete(oderId)
     }
     
     const pc = new RTCPeerConnection(ICE_SERVERS)
@@ -122,6 +128,26 @@ export default function TeacherLiveClassRoomPage() {
 
   // Send offer to a peer
   const sendOffer = useCallback(async (oderId: string) => {
+    // Check if we already have a working connection
+    const existingPc = peerConnections.current.get(oderId)
+    if (existingPc) {
+      const state = existingPc.connectionState
+      const sigState = existingPc.signalingState
+      console.log('Existing connection for:', oderId, 'connection:', state, 'signaling:', sigState)
+      
+      // If connected or connecting, don't create new offer
+      if (state === 'connected' || state === 'connecting' || sigState === 'have-local-offer') {
+        console.log('Skipping offer - connection in progress or established')
+        return
+      }
+      
+      // Close failed/disconnected connection before creating new one
+      if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+        existingPc.close()
+        peerConnections.current.delete(oderId)
+      }
+    }
+    
     console.log('Sending offer to:', oderId)
     const pc = createPeerConnection(oderId)
     
@@ -137,6 +163,7 @@ export default function TeacherLiveClassRoomPage() {
         event: 'webrtc-offer',
         payload: { from: myId.current, to: oderId, sdp: offer.sdp }
       })
+      console.log('Offer sent to:', oderId)
     } catch (err) {
       console.error('Error sending offer:', err)
     }
@@ -145,6 +172,14 @@ export default function TeacherLiveClassRoomPage() {
   // Handle incoming offer
   const handleOffer = useCallback(async (from: string, sdp: string) => {
     console.log('Received offer from:', from)
+    
+    // Check if we already have a stable connection
+    const existingPc = peerConnections.current.get(from)
+    if (existingPc && existingPc.signalingState === 'stable' && existingPc.connectionState === 'connected') {
+      console.log('Already connected to:', from, 'ignoring offer')
+      return
+    }
+    
     const pc = createPeerConnection(from)
     
     try {
@@ -172,10 +207,17 @@ export default function TeacherLiveClassRoomPage() {
 
   // Handle incoming answer
   const handleAnswer = useCallback(async (from: string, sdp: string) => {
-    console.log('Received answer from:', from)
+    console.log('Received answer from:', from, 'current connections:', Array.from(peerConnections.current.keys()))
     const pc = peerConnections.current.get(from)
     
-    if (pc && pc.signalingState === 'have-local-offer') {
+    if (!pc) {
+      console.log('No peer connection found for:', from)
+      return
+    }
+    
+    console.log('Signaling state:', pc.signalingState)
+    
+    if (pc.signalingState === 'have-local-offer') {
       try {
         await pc.setRemoteDescription({ type: 'answer', sdp })
         
@@ -185,9 +227,14 @@ export default function TeacherLiveClassRoomPage() {
           await pc.addIceCandidate(candidate)
         }
         pendingCandidates.current.delete(from)
+        console.log('Answer set successfully for:', from)
       } catch (err) {
         console.error('Error handling answer:', err)
       }
+    } else if (pc.signalingState === 'stable') {
+      console.log('Connection already stable, ignoring duplicate answer from:', from)
+    } else {
+      console.log('Unexpected signaling state:', pc.signalingState, 'for:', from)
     }
   }, [])
 
@@ -263,8 +310,10 @@ export default function TeacherLiveClassRoomPage() {
         })
         .on('broadcast', { event: 'user-join' }, ({ payload }) => {
           console.log('User joined:', payload.oderId)
-          // Teacher sends offer to new user
-          setTimeout(() => sendOffer(payload.oderId), 1000)
+          // Don't send offer to ourselves
+          if (payload.oderId === myId.current) return
+          // Teacher sends offer to new user after a short delay
+          setTimeout(() => sendOffer(payload.oderId), 500)
         })
         .on('broadcast', { event: 'user-leave' }, ({ payload }) => {
           console.log('User left:', payload.oderId)
@@ -501,7 +550,7 @@ export default function TeacherLiveClassRoomPage() {
                 {raisedHands.length > 0 && (
                   <div className="mb-4">
                     <h4 className="text-yellow-400 text-sm mb-2"><Hand className="h-4 w-4 inline mr-2" />Raised Hands</h4>
-                    {raisedHands.map((p, i) => (
+                    {raisedHands.map((p) => (
                       <div key={p.id} className="p-2 rounded bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-between mb-2">
                         <span className="text-white text-sm">{p.student_name}</span>
                         <Button size="sm" variant="ghost" onClick={() => lowerHand(p.id)} className="h-6 w-6 p-0 text-yellow-400"><Hand className="h-3 w-3" /></Button>

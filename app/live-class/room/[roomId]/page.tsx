@@ -64,8 +64,15 @@ export default function LiveClassRoomPage() {
   const createPeerConnection = useCallback((oderId: string): RTCPeerConnection => {
     console.log('Creating peer connection for:', oderId)
     
-    if (peerConnections.current.has(oderId)) {
-      peerConnections.current.get(oderId)?.close()
+    // Close existing connection if any (but only if not working)
+    const existing = peerConnections.current.get(oderId)
+    if (existing) {
+      if (existing.connectionState === 'connected') {
+        console.log('Returning existing connected peer for:', oderId)
+        return existing
+      }
+      existing.close()
+      peerConnections.current.delete(oderId)
     }
     
     const pc = new RTCPeerConnection(ICE_SERVERS)
@@ -132,6 +139,14 @@ export default function LiveClassRoomPage() {
   // Handle incoming offer
   const handleOffer = useCallback(async (from: string, sdp: string) => {
     console.log('Received offer from:', from)
+    
+    // Check if we already have a stable connection
+    const existingPc = peerConnections.current.get(from)
+    if (existingPc && existingPc.signalingState === 'stable' && existingPc.connectionState === 'connected') {
+      console.log('Already connected to:', from, 'ignoring offer')
+      return
+    }
+    
     const pc = createPeerConnection(from)
     
     try {
@@ -146,6 +161,7 @@ export default function LiveClassRoomPage() {
       const answer = await pc.createAnswer()
       await pc.setLocalDescription(answer)
       
+      console.log('Sending answer to:', from)
       channelRef.current?.send({
         type: 'broadcast',
         event: 'webrtc-answer',
@@ -161,7 +177,14 @@ export default function LiveClassRoomPage() {
     console.log('Received answer from:', from)
     const pc = peerConnections.current.get(from)
     
-    if (pc && pc.signalingState === 'have-local-offer') {
+    if (!pc) {
+      console.log('No peer connection for:', from)
+      return
+    }
+    
+    console.log('Signaling state:', pc.signalingState)
+    
+    if (pc.signalingState === 'have-local-offer') {
       try {
         await pc.setRemoteDescription({ type: 'answer', sdp })
         
@@ -170,9 +193,12 @@ export default function LiveClassRoomPage() {
           await pc.addIceCandidate(candidate)
         }
         pendingCandidates.current.delete(from)
+        console.log('Answer set successfully')
       } catch (err) {
         console.error('Error handling answer:', err)
       }
+    } else if (pc.signalingState === 'stable') {
+      console.log('Already stable, ignoring duplicate answer')
     }
   }, [])
 
