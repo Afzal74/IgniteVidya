@@ -568,8 +568,22 @@ export default function TeacherLiveClassRoomPage() {
   const getColor = (i: number) => ['from-blue-500 to-cyan-500', 'from-purple-500 to-pink-500', 'from-green-500 to-emerald-500', 'from-orange-500 to-red-500'][i % 4]
   const raisedHands = participants.filter(p => p.is_hand_raised)
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900"><div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" /></div>
-  if (!room) return <div className="min-h-screen flex items-center justify-center bg-gray-900"><p className="text-zinc-400">Class not found</p></div>
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f23]" style={{ fontFamily: '"Press Start 2P", cursive' }}>
+      <div className="text-center bg-[#1a1a3e] border-4 border-[#00ff41] p-8">
+        <div className="text-4xl mb-4 animate-pulse">📡</div>
+        <p className="text-xs text-[#00ff41]">CONNECTING...</p>
+      </div>
+    </div>
+  )
+  if (!room) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0f0f23]" style={{ fontFamily: '"Press Start 2P", cursive' }}>
+      <div className="text-center bg-[#1a1a3e] border-4 border-[#ff0000] p-8">
+        <div className="text-4xl mb-4">❌</div>
+        <p className="text-xs text-[#ff0000]">CLASS NOT FOUND</p>
+      </div>
+    </div>
+  )
 
   // Build video grid - use streamId as part of key to force re-render on stream change
   const teacherStreamId = (isScreenSharing ? screenStream?.id : localStream?.id) || 'no-stream'
@@ -582,35 +596,43 @@ export default function TeacherLiveClassRoomPage() {
   ]
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-gray-900 flex flex-col">
-      <div className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+    <div ref={containerRef} className="min-h-screen bg-[#0f0f23] flex flex-col relative overflow-hidden" style={{ fontFamily: '"Press Start 2P", cursive' }}>
+      {/* Pixel Grid Background */}
+      <div className="fixed inset-0 opacity-5 pointer-events-none" style={{
+        backgroundImage: `linear-gradient(0deg, transparent 24%, rgba(0, 255, 65, .1) 25%, rgba(0, 255, 65, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .1) 75%, rgba(0, 255, 65, .1) 76%, transparent 77%, transparent),
+        linear-gradient(90deg, transparent 24%, rgba(0, 255, 65, .1) 25%, rgba(0, 255, 65, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .1) 75%, rgba(0, 255, 65, .1) 76%, transparent 77%, transparent)`,
+        backgroundSize: '50px 50px'
+      }} />
+      
+      {/* Header */}
+      <div className="bg-[#1a1a3e] border-b-4 border-[#00ff41] px-4 py-3 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4">
-          <h1 className="text-white font-semibold">{room.room_name}</h1>
-          <span className="px-2 py-1 rounded bg-red-500/20 text-red-400 text-xs animate-pulse">● LIVE</span>
-          <Button variant="ghost" size="sm" onClick={copyCode} className="text-gray-400 hover:text-white">
-            <Copy className="h-4 w-4 mr-2" />{room.room_code}
-          </Button>
+          <h1 className="text-[#00ff41] text-xs sm:text-sm font-bold">{room.room_name}</h1>
+          <span className="px-2 py-1 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[8px] animate-pulse">● LIVE</span>
+          <button onClick={copyCode} className="flex items-center gap-2 bg-[#0f0f23] border-2 border-[#00d4ff] px-2 py-1 text-[#00d4ff] text-[8px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            <Copy className="h-3 w-3" />{room.room_code}
+          </button>
         </div>
         <div className="flex items-center gap-2">
-          {raisedHands.length > 0 && <div className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-400 text-sm animate-pulse"><Hand className="h-4 w-4 inline mr-2" />{raisedHands.length}</div>}
-          <Button variant="ghost" size="sm" onClick={() => setShowParticipants(!showParticipants)} className="text-gray-400 hover:text-white">
-            <Users className="h-4 w-4 mr-2" />{participants.length}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="text-gray-400 hover:text-white">
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </Button>
+          {raisedHands.length > 0 && <div className="px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white text-[8px] animate-pulse"><Hand className="h-3 w-3 inline mr-1" />{raisedHands.length}</div>}
+          <button onClick={() => setShowParticipants(!showParticipants)} className="flex items-center gap-1 bg-[#0f0f23] border-2 border-[#00d4ff] px-2 py-1 text-[#00d4ff] text-[8px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            <Users className="h-3 w-3" />{participants.length}
+          </button>
+          <button onClick={toggleFullscreen} className="bg-[#0f0f23] border-2 border-[#00d4ff] p-1 text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            {isFullscreen ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
+          </button>
         </div>
       </div>
 
       {mediaError && (
-        <div className="bg-yellow-500/20 border-b border-yellow-500/30 px-4 py-2 flex items-center gap-2 text-yellow-400 text-sm">
+        <div className="bg-[#1a1a3e] border-b-4 border-[#ff00ff] px-4 py-2 flex items-center gap-2 text-[#ff00ff] text-[10px] relative z-10">
           <AlertCircle className="h-4 w-4" />{mediaError}
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative z-10">
         <div className="flex-1 p-4">
-          <div className={`grid gap-2 h-full ${allVideos.length <= 1 ? 'grid-cols-1' : allVideos.length <= 2 ? 'grid-cols-2' : allVideos.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+          <div className={`grid gap-3 h-full ${allVideos.length <= 1 ? 'grid-cols-1' : allVideos.length <= 2 ? 'grid-cols-2' : allVideos.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {allVideos.map((v, i) => (
               <VideoTile key={v.streamKey} stream={v.stream} name={v.name} isLocal={v.isLocal} colorIndex={i} isTeacher={v.isTeacher} isHandRaised={v.isHandRaised} />
             ))}
@@ -619,34 +641,34 @@ export default function TeacherLiveClassRoomPage() {
 
         <AnimatePresence>
           {showParticipants && (
-            <motion.div initial={{ width: 0 }} animate={{ width: 280 }} exit={{ width: 0 }} className="bg-gray-800 border-l border-gray-700 overflow-hidden">
+            <motion.div initial={{ width: 0 }} animate={{ width: 280 }} exit={{ width: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#00d4ff] overflow-hidden">
               <div className="p-4 h-full flex flex-col w-[280px]">
-                <h3 className="text-white font-semibold mb-4"><Users className="h-4 w-4 inline mr-2" />Participants ({participants.length})</h3>
+                <h3 className="text-[#00ff41] text-[10px] font-bold mb-4"><Users className="h-4 w-4 inline mr-2" />PARTICIPANTS ({participants.length})</h3>
                 {raisedHands.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-yellow-400 text-sm mb-2"><Hand className="h-4 w-4 inline mr-2" />Raised Hands</h4>
+                    <h4 className="text-[#ff00ff] text-[8px] mb-2"><Hand className="h-3 w-3 inline mr-1" />RAISED HANDS</h4>
                     {raisedHands.map((p) => (
-                      <div key={p.id} className="p-2 rounded bg-yellow-500/10 border border-yellow-500/30 flex items-center justify-between mb-2">
-                        <span className="text-white text-sm">{p.student_name}</span>
-                        <Button size="sm" variant="ghost" onClick={() => lowerHand(p.id)} className="h-6 w-6 p-0 text-yellow-400"><Hand className="h-3 w-3" /></Button>
+                      <div key={p.id} className="p-2 bg-[#0f0f23] border-2 border-[#ff00ff] flex items-center justify-between mb-2">
+                        <span className="text-[#ff00ff] text-[8px]">{p.student_name}</span>
+                        <button onClick={() => lowerHand(p.id)} className="text-[#ff00ff] hover:text-white"><Hand className="h-3 w-3" /></button>
                       </div>
                     ))}
                   </div>
                 )}
                 <div className="flex-1 overflow-y-auto space-y-2">
                   {participants.map((p, idx) => (
-                    <div key={p.id} className="p-3 rounded-lg bg-gray-700/50 flex items-center justify-between group">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getColor(idx)} flex items-center justify-center text-white text-sm font-bold`}>{p.student_name[0]}</div>
+                    <div key={p.id} className="p-2 bg-[#0f0f23] border-2 border-[#00d4ff] flex items-center justify-between group">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-[#1a1a3e] border-2 border-[#ff00ff] flex items-center justify-center text-[#ff00ff] text-[10px] font-bold">{p.student_name[0]}</div>
                         <div>
-                          <p className="text-white text-sm">{p.student_name}</p>
+                          <p className="text-[#00ff41] text-[8px]">{p.student_name}</p>
                           <div className="flex gap-2 mt-1">
-                            {p.is_audio_enabled ? <Mic className="h-3 w-3 text-green-400" /> : <MicOff className="h-3 w-3 text-gray-500" />}
-                            {p.is_video_enabled ? <Video className="h-3 w-3 text-green-400" /> : <VideoOff className="h-3 w-3 text-gray-500" />}
+                            {p.is_audio_enabled ? <Mic className="h-3 w-3 text-[#00ff41]" /> : <MicOff className="h-3 w-3 text-[#444]" />}
+                            {p.is_video_enabled ? <Video className="h-3 w-3 text-[#00ff41]" /> : <VideoOff className="h-3 w-3 text-[#444]" />}
                           </div>
                         </div>
                       </div>
-                      <Button size="sm" variant="ghost" onClick={() => removeParticipant(p.id)} className="opacity-0 group-hover:opacity-100 h-8 w-8 p-0 text-red-400"><UserX className="h-4 w-4" /></Button>
+                      <button onClick={() => removeParticipant(p.id)} className="opacity-0 group-hover:opacity-100 text-[#ff0000]"><UserX className="h-4 w-4" /></button>
                     </div>
                   ))}
                 </div>
@@ -656,19 +678,22 @@ export default function TeacherLiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
-      <div className="bg-gray-800 border-t border-gray-700 px-4 py-4">
-        <div className="flex items-center justify-center gap-4">
-          <Button onClick={toggleAudio} className={`rounded-full w-12 h-12 ${isAudioEnabled ? 'bg-gray-700' : 'bg-red-600'}`}>
+      {/* Control Bar */}
+      <div className="bg-[#1a1a3e] border-t-4 border-[#00ff41] px-4 py-4 relative z-10">
+        <div className="flex items-center justify-center gap-3">
+          <button onClick={toggleAudio} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isAudioEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
             {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-          </Button>
-          <Button onClick={toggleVideo} className={`rounded-full w-12 h-12 ${isVideoEnabled ? 'bg-gray-700' : 'bg-red-600'}`}>
+          </button>
+          <button onClick={toggleVideo} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isVideoEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
             {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-          </Button>
-          <Button onClick={toggleScreenShare} className={`rounded-full w-12 h-12 ${isScreenSharing ? 'bg-blue-600' : 'bg-gray-700'}`}>
+          </button>
+          <button onClick={toggleScreenShare} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isScreenSharing ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}>
             {isScreenSharing ? <ScreenShareOff className="h-5 w-5" /> : <ScreenShare className="h-5 w-5" />}
-          </Button>
-          <div className="w-px h-8 bg-gray-700 mx-2" />
-          <Button onClick={endClass} className="rounded-full px-6 h-12 bg-red-600"><PhoneOff className="h-5 w-5 mr-2" />End</Button>
+          </button>
+          <div className="w-1 h-8 bg-[#00ff41] mx-2" />
+          <button onClick={endClass} className="px-4 h-12 bg-[#ff0000] border-4 border-[#ff0000] text-white text-[10px] font-bold flex items-center gap-2 hover:bg-[#0f0f23] hover:text-[#ff0000] transition-colors">
+            <PhoneOff className="h-5 w-5" />END
+          </button>
         </div>
       </div>
     </div>
@@ -769,10 +794,11 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
     }
   }, [stream])
 
-  const colors = ['from-blue-600 to-cyan-600', 'from-purple-500 to-pink-500', 'from-green-500 to-emerald-500', 'from-orange-500 to-red-500']
+  const pixelColors = ['border-[#00d4ff]', 'border-[#ff00ff]', 'border-[#00ff41]', 'border-[#ff6600]']
+  const avatarColors = ['bg-[#00d4ff]', 'bg-[#ff00ff]', 'bg-[#00ff41]', 'bg-[#ff6600]']
 
   return (
-    <div className="bg-gray-800 rounded-xl overflow-hidden relative aspect-video">
+    <div className={`bg-[#1a1a3e] border-4 ${pixelColors[colorIndex % 4]} overflow-hidden relative aspect-video`} style={{ imageRendering: 'auto' }}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -781,16 +807,20 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
         className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} 
       />
       {!showVideo && (
-        <div className="w-full h-full flex items-center justify-center">
-          <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${colors[colorIndex % 4]} flex items-center justify-center text-white text-3xl font-bold`}>
+        <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
+          <div className={`w-16 h-16 sm:w-20 sm:h-20 ${avatarColors[colorIndex % 4]} border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl sm:text-3xl font-bold`}>
             {name[0]?.toUpperCase() || '?'}
           </div>
         </div>
       )}
-      <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/60 rounded text-white text-sm flex items-center gap-2">
-        {isTeacher && <span className="text-yellow-400">👑</span>}{name}
+      <div className="absolute bottom-2 left-2 px-2 py-1 bg-[#0f0f23] border-2 border-[#00ff41] text-[#00ff41] text-[8px] sm:text-[10px] flex items-center gap-1">
+        {isTeacher && <span>👑</span>}{name}
       </div>
-      {isHandRaised && <div className="absolute top-3 right-3 w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce"><Hand className="h-4 w-4 text-white" /></div>}
+      {isHandRaised && (
+        <div className="absolute top-2 right-2 w-8 h-8 bg-[#ff00ff] border-2 border-[#ff00ff] flex items-center justify-center animate-bounce">
+          <Hand className="h-4 w-4 text-white" />
+        </div>
+      )}
     </div>
   )
 }
