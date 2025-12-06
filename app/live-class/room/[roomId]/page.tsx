@@ -739,28 +739,54 @@ function TeacherVideoTile({ stream }: { stream: MediaStream | null }) {
     
     const checkVideoTracks = () => {
       const tracks = stream.getVideoTracks()
-      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live')
-      setShowVideo(hasActiveTrack)
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => {
+        return t.enabled && t.readyState === 'live' && !t.muted
+      })
+      
+      // Must have active track to show video
+      if (!hasActiveTrack) {
+        setShowVideo(false)
+        return
+      }
+      
+      // Also verify video element has actual dimensions
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
     }
     
-    checkVideoTracks()
+    setTimeout(checkVideoTracks, 100)
     
-    const handlePlaying = () => setShowVideo(true)
+    const handlePlaying = () => setTimeout(checkVideoTracks, 50)
+    const handleEnded = () => setShowVideo(false)
+    const handleLoadedData = () => checkVideoTracks()
+    const handleEmptied = () => setShowVideo(false)
+    
     video.addEventListener('playing', handlePlaying)
+    video.addEventListener('ended', handleEnded)
+    video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('emptied', handleEmptied)
     
-    const tracks = stream.getVideoTracks()
-    tracks.forEach(track => {
+    const handleTrackChange = () => setTimeout(checkVideoTracks, 50)
+    stream.addEventListener('addtrack', handleTrackChange)
+    stream.addEventListener('removetrack', handleTrackChange)
+    
+    stream.getVideoTracks().forEach(track => {
       track.onended = checkVideoTracks
       track.onmute = checkVideoTracks
       track.onunmute = checkVideoTracks
     })
     
-    const interval = setInterval(checkVideoTracks, 500)
+    const interval = setInterval(checkVideoTracks, 300)
     
     return () => {
       clearInterval(interval)
       video.removeEventListener('playing', handlePlaying)
-      tracks.forEach(track => {
+      video.removeEventListener('ended', handleEnded)
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('emptied', handleEmptied)
+      stream.removeEventListener('addtrack', handleTrackChange)
+      stream.removeEventListener('removetrack', handleTrackChange)
+      stream.getVideoTracks().forEach(track => {
         track.onended = null
         track.onmute = null
         track.onunmute = null

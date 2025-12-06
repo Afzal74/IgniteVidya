@@ -662,39 +662,72 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
     // Set the stream
     video.srcObject = stream
     
-    // Check video tracks
+    // Check video tracks - more robust check
     const checkVideoTracks = () => {
       const tracks = stream.getVideoTracks()
-      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live')
-      setShowVideo(hasActiveTrack)
+      // Check if any track is enabled AND live (not ended/muted)
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => {
+        const isActive = t.enabled && t.readyState === 'live' && !t.muted
+        return isActive
+      })
+      
+      // For remote streams, we MUST have an active track to show video
+      // The video element might show black even with videoWidth > 0
+      if (!hasActiveTrack) {
+        setShowVideo(false)
+        return
+      }
+      
+      // Also verify video element has actual dimensions
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
     }
     
-    // Initial check
-    checkVideoTracks()
+    // Initial check after a short delay to let video load
+    setTimeout(checkVideoTracks, 100)
     
-    // Listen for video playing
-    const handlePlaying = () => setShowVideo(true)
-    const handleEnded = () => checkVideoTracks()
+    // Listen for video events
+    const handlePlaying = () => {
+      setTimeout(checkVideoTracks, 50)
+    }
+    const handleEnded = () => setShowVideo(false)
+    const handleLoadedData = () => checkVideoTracks()
+    const handleEmptied = () => setShowVideo(false)
     
     video.addEventListener('playing', handlePlaying)
     video.addEventListener('ended', handleEnded)
+    video.addEventListener('loadeddata', handleLoadedData)
+    video.addEventListener('emptied', handleEmptied)
     
-    // Track event listeners
-    const tracks = stream.getVideoTracks()
-    tracks.forEach(track => {
-      track.onended = checkVideoTracks
-      track.onmute = checkVideoTracks
-      track.onunmute = checkVideoTracks
-    })
+    // Stream track event listeners
+    const handleTrackChange = () => {
+      setTimeout(checkVideoTracks, 50)
+    }
+    stream.addEventListener('addtrack', handleTrackChange)
+    stream.addEventListener('removetrack', handleTrackChange)
     
-    // Periodic check for remote streams
-    const interval = setInterval(checkVideoTracks, 500)
+    // Track event listeners for each video track
+    const setupTrackListeners = () => {
+      stream.getVideoTracks().forEach(track => {
+        track.onended = checkVideoTracks
+        track.onmute = checkVideoTracks
+        track.onunmute = checkVideoTracks
+      })
+    }
+    setupTrackListeners()
+    
+    // Periodic check - important for remote streams where track events may not fire
+    const interval = setInterval(checkVideoTracks, 300)
     
     return () => {
       clearInterval(interval)
       video.removeEventListener('playing', handlePlaying)
       video.removeEventListener('ended', handleEnded)
-      tracks.forEach(track => {
+      video.removeEventListener('loadeddata', handleLoadedData)
+      video.removeEventListener('emptied', handleEmptied)
+      stream.removeEventListener('addtrack', handleTrackChange)
+      stream.removeEventListener('removetrack', handleTrackChange)
+      stream.getVideoTracks().forEach(track => {
         track.onended = null
         track.onmute = null
         track.onunmute = null
