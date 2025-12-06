@@ -272,10 +272,43 @@ export default function LiveClassRoomPage() {
       })
       .on('broadcast', { event: 'teacher-ready' }, ({ payload }) => {
         console.log('Teacher is ready:', payload.oderId)
+        // Check if we have a working connection to ANY teacher
+        let hasWorkingTeacherConnection = false
+        peerConnections.current.forEach((pc, id) => {
+          if (id.startsWith('teacher-') && (pc.connectionState === 'connected' || pc.connectionState === 'connecting')) {
+            hasWorkingTeacherConnection = true
+          }
+        })
+        
+        if (!hasWorkingTeacherConnection) {
+          console.log('No working teacher connection, requesting connection')
+          // Clear any old teacher connections
+          peerConnections.current.forEach((pc, id) => {
+            if (id.startsWith('teacher-')) {
+              pc.close()
+              peerConnections.current.delete(id)
+            }
+          })
+          setTeacherStream(null)
+          
+          // Request connection from the new teacher
+          channel.send({
+            type: 'broadcast',
+            event: 'request-connection',
+            payload: { oderId: myId.current }
+          })
+        }
       })
       .on('broadcast', { event: 'teacher-leave' }, () => {
         console.log('Teacher left')
         setTeacherStream(null)
+        // Clear teacher peer connection
+        peerConnections.current.forEach((pc, id) => {
+          if (id.startsWith('teacher-')) {
+            pc.close()
+            peerConnections.current.delete(id)
+          }
+        })
       })
       .on('broadcast', { event: 'class-end' }, () => {
         alert('The class has ended.')

@@ -325,7 +325,13 @@ export default function TeacherLiveClassRoomPage() {
             return newMap
           })
         })
-        .subscribe((status) => {
+        .on('broadcast', { event: 'request-connection' }, ({ payload }) => {
+          // Student is requesting connection (e.g., after refresh)
+          console.log('Connection requested by:', payload.oderId)
+          if (payload.oderId === myId.current) return
+          setTimeout(() => sendOffer(payload.oderId), 300)
+        })
+        .subscribe(async (status) => {
           console.log('Channel status:', status)
           if (status === 'SUBSCRIBED') {
             // Announce teacher presence
@@ -334,6 +340,36 @@ export default function TeacherLiveClassRoomPage() {
               event: 'teacher-ready',
               payload: { oderId: myId.current }
             })
+            
+            // Also fetch existing participants and try to connect to them
+            // This handles the case when teacher refreshes
+            const { data: existingParticipants } = await supabase
+              .from('live_class_participants')
+              .select('id')
+              .eq('room_id', roomId)
+              .is('left_at', null)
+            
+            if (existingParticipants && existingParticipants.length > 0) {
+              console.log('Found existing participants:', existingParticipants.length)
+              // Send offers to all existing participants after a short delay
+              setTimeout(() => {
+                existingParticipants.forEach(p => {
+                  sendOffer(p.id)
+                })
+              }, 1000)
+            }
+            
+            // Periodically announce presence for late joiners
+            const announceInterval = setInterval(() => {
+              channel.send({
+                type: 'broadcast',
+                event: 'teacher-ready',
+                payload: { oderId: myId.current }
+              })
+            }, 5000)
+            
+            // Store interval for cleanup
+            ;(channel as any)._announceInterval = announceInterval
           }
         })
       
@@ -350,6 +386,10 @@ export default function TeacherLiveClassRoomPage() {
       localStreamRef.current?.getTracks().forEach(t => t.stop())
       screenStreamRef.current?.getTracks().forEach(t => t.stop())
       if (channelRef.current) {
+        // Clear announce interval
+        if ((channelRef.current as any)._announceInterval) {
+          clearInterval((channelRef.current as any)._announceInterval)
+        }
         channelRef.current.send({
           type: 'broadcast',
           event: 'teacher-leave',
