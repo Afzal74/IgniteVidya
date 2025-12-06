@@ -929,9 +929,9 @@ export default function LiveClassRoomPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 p-2 flex flex-col md:flex-row gap-2">
-          {/* Teacher Video - Large center - Shows first on mobile */}
-          <div className="flex-1 flex items-center justify-center order-1 md:order-2">
+        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
+          {/* Teacher Video - Large - Shows first on mobile, takes most space */}
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
             <TeacherVideoTile
               stream={teacherStream}
               isSpeaking={speakingUsers.has("teacher")}
@@ -939,11 +939,11 @@ export default function LiveClassRoomPage() {
             />
           </div>
 
-          {/* Students column - Below on mobile, left on desktop */}
-          <div className="flex flex-row md:flex-col gap-2 w-full md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-1 md:pb-0">
+          {/* Students row on mobile - bigger thumbnails */}
+          <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-20 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
             {/* Your Video */}
             <div
-              className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+              className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
                 speakingUsers.has(participantId)
                   ? "ring-2 ring-green-400 shadow-[0_0_8px_rgba(74,222,128,0.4)]"
                   : "ring-1 ring-blue-500"
@@ -1220,10 +1220,10 @@ function TeacherVideoTile({
 
   return (
     <div
-      className={`w-full max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 ${
+      className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 ${
         isSpeaking
           ? "ring-2 md:ring-4 ring-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)] md:shadow-[0_0_30px_rgba(74,222,128,0.5)]"
-          : "ring-1 md:ring-2 ring-yellow-400"
+          : "ring-2 md:ring-2 ring-yellow-400"
       }`}
     >
       <video
@@ -1235,16 +1235,16 @@ function TeacherVideoTile({
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
           <div
-            className={`w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-2xl md:text-4xl mb-2 md:mb-3 ${
+            className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-3xl md:text-4xl mb-2 md:mb-3 ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
             👑
           </div>
-          <p className="text-yellow-400 text-sm md:text-lg font-medium">
+          <p className="text-yellow-400 text-base md:text-lg font-medium">
             Teacher
           </p>
-          <p className="text-gray-500 text-xs md:text-sm">
+          <p className="text-gray-500 text-sm md:text-sm">
             {stream ? "Video paused" : "Waiting..."}
           </p>
         </div>
@@ -1335,7 +1335,7 @@ function StudentThumbnailView({
 
   return (
     <div
-      className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+      className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
         isActiveSpeaker
           ? "ring-2 ring-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
           : isSpeaking
@@ -1352,9 +1352,9 @@ function StudentThumbnailView({
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center">
           <div
-            className={`w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${
+            className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${
               colors[colorIndex % 4]
-            } flex items-center justify-center text-white text-sm md:text-lg font-bold ${
+            } flex items-center justify-center text-white text-base md:text-lg font-bold ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >

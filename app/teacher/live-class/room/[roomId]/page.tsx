@@ -782,9 +782,9 @@ export default function TeacherLiveClassRoomPage() {
 
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Main Layout: Mobile = column, Desktop = row with students on left */}
-        <div className="flex-1 p-2 flex flex-col md:flex-row gap-2">
-          {/* Host (Teacher) - Large video - Shows first on mobile */}
-          <div className="flex-1 flex items-center justify-center order-1 md:order-2">
+        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
+          {/* Host (Teacher) - Large video - Shows first on mobile, takes most space */}
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
             {sortedVideos.filter(v => v.isTeacher).map((v) => (
               <HostVideoTile 
                 key={v.streamKey} 
@@ -797,9 +797,9 @@ export default function TeacherLiveClassRoomPage() {
             ))}
           </div>
           
-          {/* Students - Below on mobile, left column on desktop */}
+          {/* Students - Row on mobile (bigger), column on desktop */}
           {sortedVideos.filter(v => !v.isTeacher).length > 0 && (
-            <div className="flex flex-row md:flex-col gap-2 w-full md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible pb-1 md:pb-0">
+            <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-20 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
               {sortedVideos.filter(v => !v.isTeacher).map((v, i) => (
                 <StudentThumbnail 
                   key={v.streamKey} 
@@ -1038,7 +1038,7 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
   }, [stream])
 
   return (
-    <div className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
+    <div className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1048,10 +1048,10 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
       />
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
-          <div className={`w-16 h-16 md:w-24 md:h-24 bg-[#ffff00] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl md:text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+          <div className={`w-20 h-20 md:w-24 md:h-24 bg-[#ffff00] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-3xl md:text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             👑
           </div>
-          <p className="text-[#ffff00] text-xs md:text-sm mt-2 md:mt-4">{name}</p>
+          <p className="text-[#ffff00] text-sm md:text-sm mt-2 md:mt-4">{name}</p>
         </div>
       )}
       {/* Speaking indicator */}
@@ -1114,7 +1114,7 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
   const borderColor = isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_10px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : pixelColors[colorIndex % 4]
 
   return (
-    <div className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
+    <div className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1123,7 +1123,7 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
       />
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
-          <div className={`w-8 h-8 md:w-12 md:h-12 ${avatarColors[colorIndex % 4]} border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-sm md:text-lg font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+          <div className={`w-10 h-10 md:w-12 md:h-12 ${avatarColors[colorIndex % 4]} border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-base md:text-lg font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             {name[0]?.toUpperCase() || '?'}
           </div>
         </div>
