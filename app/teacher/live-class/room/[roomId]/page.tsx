@@ -48,6 +48,7 @@ export default function TeacherLiveClassRoomPage() {
   const [showParticipants, setShowParticipants] = useState(true)
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null)
   const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set())
+  const [spotlightUser, setSpotlightUser] = useState<string | null>(null) // Double-click to spotlight
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -783,37 +784,71 @@ export default function TeacherLiveClassRoomPage() {
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Main Layout: Mobile = column, Desktop = row with students on left */}
         <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
-          {/* Host (Teacher) - Large video - Shows first on mobile, takes most space */}
+          {/* Main Video - Host or Spotlighted user */}
           <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
-            {sortedVideos.filter(v => v.isTeacher).map((v) => (
-              <HostVideoTile 
-                key={v.streamKey} 
-                stream={v.stream} 
-                name={v.name} 
-                isLocal={v.isLocal}
-                isSpeaking={v.isSpeaking}
-                isActiveSpeaker={v.isActiveSpeaker}
-              />
-            ))}
-          </div>
-          
-          {/* Students - Row on mobile (bigger), column on desktop */}
-          {sortedVideos.filter(v => !v.isTeacher).length > 0 && (
-            <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-20 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
-              {sortedVideos.filter(v => !v.isTeacher).map((v, i) => (
-                <StudentThumbnail 
+            {spotlightUser ? (
+              // Show spotlighted student
+              (() => {
+                const spotlightedVideo = sortedVideos.find(v => v.id === spotlightUser)
+                if (!spotlightedVideo) return null
+                return (
+                  <SpotlightVideoTile 
+                    key={spotlightedVideo.streamKey} 
+                    stream={spotlightedVideo.stream} 
+                    name={spotlightedVideo.name} 
+                    isSpeaking={spotlightedVideo.isSpeaking}
+                    onDoubleClick={() => setSpotlightUser(null)}
+                  />
+                )
+              })()
+            ) : (
+              // Show host (teacher)
+              sortedVideos.filter(v => v.isTeacher).map((v) => (
+                <HostVideoTile 
                   key={v.streamKey} 
                   stream={v.stream} 
                   name={v.name} 
-                  colorIndex={i} 
-                  isHandRaised={v.isHandRaised}
+                  isLocal={v.isLocal}
                   isSpeaking={v.isSpeaking}
                   isActiveSpeaker={v.isActiveSpeaker}
-                  onRemove={() => removeParticipant(v.id)}
                 />
-              ))}
-            </div>
-          )}
+              ))
+            )}
+          </div>
+          
+          {/* Thumbnails - Host (if spotlighted) + Students */}
+          <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-24 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
+            {/* Show host thumbnail when someone else is spotlighted */}
+            {spotlightUser && sortedVideos.filter(v => v.isTeacher).map((v) => (
+              <StudentThumbnail 
+                key={v.streamKey} 
+                stream={v.stream} 
+                name={v.name + " (Host)"} 
+                colorIndex={99}
+                isHandRaised={false}
+                isSpeaking={v.isSpeaking}
+                isActiveSpeaker={v.isActiveSpeaker}
+                isSpotlighted={false}
+                onDoubleClick={() => setSpotlightUser(null)}
+                onRemove={() => {}}
+              />
+            ))}
+            {/* Students */}
+            {sortedVideos.filter(v => !v.isTeacher).map((v, i) => (
+              <StudentThumbnail 
+                key={v.streamKey} 
+                stream={v.stream} 
+                name={v.name} 
+                colorIndex={i} 
+                isHandRaised={v.isHandRaised}
+                isSpeaking={v.isSpeaking}
+                isActiveSpeaker={v.isActiveSpeaker}
+                isSpotlighted={spotlightUser === v.id}
+                onDoubleClick={() => setSpotlightUser(spotlightUser === v.id ? null : v.id)}
+                onRemove={() => removeParticipant(v.id)}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Participants Sidebar - Hidden on mobile */}
@@ -1038,7 +1073,7 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
   }, [stream])
 
   return (
-    <div className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
+    <div className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1048,10 +1083,10 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
       />
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
-          <div className={`w-20 h-20 md:w-24 md:h-24 bg-[#ffff00] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-3xl md:text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+          <div className={`w-16 h-16 md:w-24 md:h-24 bg-[#ffff00] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl md:text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             👑
           </div>
-          <p className="text-[#ffff00] text-sm md:text-sm mt-2 md:mt-4">{name}</p>
+          <p className="text-[#ffff00] text-xs md:text-sm mt-2 md:mt-4">{name}</p>
         </div>
       )}
       {/* Speaking indicator */}
@@ -1073,14 +1108,77 @@ function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
   )
 }
 
-// Small Student Thumbnail (top strip)
-function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, isActiveSpeaker, onRemove }: {
+// Spotlight Video Tile (for spotlighted student in center)
+function SpotlightVideoTile({ stream, name, isSpeaking, onDoubleClick }: {
+  stream: MediaStream | null
+  name: string
+  isSpeaking?: boolean
+  onDoubleClick: () => void
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) { setShowVideo(false); return }
+    video.srcObject = stream
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live' && !t.muted)
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
+    }
+    setTimeout(checkVideoTracks, 100)
+    video.addEventListener('playing', () => setTimeout(checkVideoTracks, 50))
+    video.addEventListener('loadeddata', checkVideoTracks)
+    const interval = setInterval(checkVideoTracks, 300)
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <div 
+      onDoubleClick={onDoubleClick}
+      className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 cursor-pointer ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#00d4ff]'} overflow-hidden relative transition-all duration-300`}
+    >
+      <video ref={videoRef} autoPlay playsInline className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} />
+      {!showVideo && (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
+          <div className={`w-20 h-20 md:w-24 md:h-24 bg-[#00d4ff] border-2 md:border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl md:text-3xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+            {name[0]?.toUpperCase() || '?'}
+          </div>
+          <p className="text-[#00d4ff] text-sm md:text-sm mt-2 md:mt-4">{name}</p>
+        </div>
+      )}
+      {isSpeaking && (
+        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex items-center gap-1 md:gap-2 bg-[#0f0f23]/80 px-1.5 md:px-2 py-0.5 md:py-1 border border-[#00ff41]">
+          <div className="flex gap-0.5">
+            <div className="w-0.5 md:w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse" />
+            <div className="w-0.5 md:w-1 h-4 md:h-6 bg-[#00ff41] animate-pulse" style={{ animationDelay: '150ms' }} />
+            <div className="w-0.5 md:w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" style={{ animationDelay: '300ms' }} />
+          </div>
+          <span className="text-[6px] md:text-[8px] text-[#00ff41]">SPEAKING</span>
+        </div>
+      )}
+      <div className="absolute bottom-2 md:bottom-3 left-2 md:left-3 px-2 md:px-3 py-0.5 md:py-1 bg-[#0f0f23] border md:border-2 border-[#00d4ff] text-[#00d4ff] text-[8px] md:text-[10px] flex items-center gap-1 md:gap-2">
+        🔍 {name} (Spotlight)
+      </div>
+      <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#0f0f23]/80 border border-[#ff00ff] text-[#ff00ff] text-[6px] md:text-[8px]">
+        Double-click to exit
+      </div>
+    </div>
+  )
+}
+
+// Student Thumbnail (side strip)
+function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, isActiveSpeaker, isSpotlighted, onDoubleClick, onRemove }: {
   stream: MediaStream | null
   name: string
   colorIndex: number
   isHandRaised?: boolean
   isSpeaking?: boolean
   isActiveSpeaker?: boolean
+  isSpotlighted?: boolean
+  onDoubleClick?: () => void
   onRemove: () => void
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -1111,10 +1209,13 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
 
   const pixelColors = ['border-[#00d4ff]', 'border-[#ff00ff]', 'border-[#00ff41]', 'border-[#ff6600]']
   const avatarColors = ['bg-[#00d4ff]', 'bg-[#ff00ff]', 'bg-[#00ff41]', 'bg-[#ff6600]']
-  const borderColor = isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_10px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : pixelColors[colorIndex % 4]
+  const borderColor = isSpotlighted ? 'border-[#ff00ff] shadow-[0_0_10px_#ff00ff]' : isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_10px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : pixelColors[colorIndex % 4]
 
   return (
-    <div className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
+    <div 
+      onDoubleClick={onDoubleClick}
+      className={`relative w-32 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200 cursor-pointer`}
+    >
       <video 
         ref={videoRef} 
         autoPlay 
@@ -1130,29 +1231,37 @@ function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, 
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-0.5 md:top-1 left-0.5 md:left-1 flex gap-0.5">
-          <div className="w-0.5 md:w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" />
-          <div className="w-0.5 md:w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
-          <div className="w-0.5 md:w-1 h-1.5 md:h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '200ms' }} />
+        <div className="absolute top-1 left-1 flex gap-0.5">
+          <div className="w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" />
+          <div className="w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+          <div className="w-1 h-1.5 md:h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '200ms' }} />
         </div>
       )}
+      {/* Spotlight indicator */}
+      {isSpotlighted && (
+        <div className="absolute top-1 left-1 px-1 py-0.5 bg-[#ff00ff] text-white text-[6px]">🔍</div>
+      )}
       {/* Name label */}
-      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[6px] md:text-[8px] text-[#00ff41] truncate">
+      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[8px] md:text-[8px] text-[#00ff41] truncate">
         {name}
       </div>
       {/* Hand raised */}
       {isHandRaised && (
-        <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
-          <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
+        <div className="absolute top-1 right-1 w-5 h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
+          <Hand className="h-3 w-3 text-white" />
         </div>
       )}
       {/* Remove button on hover - desktop only */}
       <button 
-        onClick={onRemove}
+        onClick={(e) => { e.stopPropagation(); onRemove(); }}
         className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff0000] items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden md:group-hover:flex"
       >
         <UserX className="h-2 w-2 text-white" />
       </button>
+      {/* Double-click hint on hover */}
+      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+        <span className="text-[6px] md:text-[8px] text-white">Double-click to spotlight</span>
+      </div>
     </div>
   )
 }

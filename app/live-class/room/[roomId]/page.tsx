@@ -58,6 +58,7 @@ export default function LiveClassRoomPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showParticipants, setShowParticipants] = useState(true);
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
+  const [spotlightUser, setSpotlightUser] = useState<string | null>(null); // Double-click to spotlight
   const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set());
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -930,21 +931,52 @@ export default function LiveClassRoomPage() {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
-          {/* Teacher Video - Large - Shows first on mobile, takes most space */}
+          {/* Main Video - Teacher or Spotlighted user */}
           <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
-            <TeacherVideoTile
-              stream={teacherStream}
-              isSpeaking={speakingUsers.has("teacher")}
-              isActiveSpeaker={activeSpeaker === "teacher"}
-            />
+            {spotlightUser ? (
+              // Show spotlighted student
+              (() => {
+                const spotlightedStream = spotlightUser === participantId ? localStream : remoteStreams.get(spotlightUser);
+                const spotlightedName = spotlightUser === participantId ? participantName : otherParticipants.find(p => p.id === spotlightUser)?.student_name || 'Student';
+                return (
+                  <SpotlightVideoTile 
+                    stream={spotlightedStream || null}
+                    name={spotlightedName}
+                    isSpeaking={speakingUsers.has(spotlightUser)}
+                    isLocal={spotlightUser === participantId}
+                    onDoubleClick={() => setSpotlightUser(null)}
+                  />
+                );
+              })()
+            ) : (
+              <TeacherVideoTile
+                stream={teacherStream}
+                isSpeaking={speakingUsers.has("teacher")}
+                isActiveSpeaker={activeSpeaker === "teacher"}
+                onDoubleClick={() => {}}
+              />
+            )}
           </div>
 
-          {/* Students row on mobile - bigger thumbnails */}
-          <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-20 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
+          {/* Thumbnails - Teacher (if spotlighted) + Students */}
+          <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-24 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
+            {/* Show teacher thumbnail when someone else is spotlighted */}
+            {spotlightUser && (
+              <div
+                onDoubleClick={() => setSpotlightUser(null)}
+                className="relative w-32 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden cursor-pointer ring-2 ring-yellow-400"
+              >
+                <TeacherThumbnail stream={teacherStream} isSpeaking={speakingUsers.has("teacher")} />
+                <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[8px] text-yellow-400 truncate">👑 Teacher</div>
+              </div>
+            )}
             {/* Your Video */}
             <div
-              className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
-                speakingUsers.has(participantId)
+              onDoubleClick={() => setSpotlightUser(spotlightUser === participantId ? null : participantId)}
+              className={`relative w-32 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 cursor-pointer group ${
+                spotlightUser === participantId
+                  ? "ring-2 ring-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
+                  : speakingUsers.has(participantId)
                   ? "ring-2 ring-green-400 shadow-[0_0_8px_rgba(74,222,128,0.4)]"
                   : "ring-1 ring-blue-500"
               }`}
@@ -1220,10 +1252,10 @@ function TeacherVideoTile({
 
   return (
     <div
-      className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 ${
+      className={`w-full max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 ${
         isSpeaking
           ? "ring-2 md:ring-4 ring-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)] md:shadow-[0_0_30px_rgba(74,222,128,0.5)]"
-          : "ring-2 md:ring-2 ring-yellow-400"
+          : "ring-1 md:ring-2 ring-yellow-400"
       }`}
     >
       <video
@@ -1235,16 +1267,16 @@ function TeacherVideoTile({
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
           <div
-            className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-3xl md:text-4xl mb-2 md:mb-3 ${
+            className={`w-16 h-16 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-2xl md:text-4xl mb-2 md:mb-3 ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
             👑
           </div>
-          <p className="text-yellow-400 text-base md:text-lg font-medium">
+          <p className="text-yellow-400 text-sm md:text-lg font-medium">
             Teacher
           </p>
-          <p className="text-gray-500 text-sm md:text-sm">
+          <p className="text-gray-500 text-xs md:text-sm">
             {stream ? "Video paused" : "Waiting..."}
           </p>
         </div>
@@ -1335,7 +1367,7 @@ function StudentThumbnailView({
 
   return (
     <div
-      className={`relative w-28 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+      className={`relative w-24 md:w-full aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
         isActiveSpeaker
           ? "ring-2 ring-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
           : isSpeaking
@@ -1352,9 +1384,9 @@ function StudentThumbnailView({
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center">
           <div
-            className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${
+            className={`w-8 h-8 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${
               colors[colorIndex % 4]
-            } flex items-center justify-center text-white text-base md:text-lg font-bold ${
+            } flex items-center justify-center text-white text-sm md:text-lg font-bold ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
@@ -1393,4 +1425,114 @@ function StudentThumbnailView({
       )}
     </div>
   );
+}
+
+// Spotlight Video Tile for student room
+function SpotlightVideoTile({ stream, name, isSpeaking, isLocal, onDoubleClick }: {
+  stream: MediaStream | null
+  name: string
+  isSpeaking?: boolean
+  isLocal?: boolean
+  onDoubleClick: () => void
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) { setShowVideo(false); return }
+    video.srcObject = stream
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live' && !t.muted)
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
+    }
+    setTimeout(checkVideoTracks, 100)
+    video.addEventListener('playing', () => setTimeout(checkVideoTracks, 50))
+    video.addEventListener('loadeddata', checkVideoTracks)
+    const interval = setInterval(checkVideoTracks, 300)
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <div 
+      onDoubleClick={onDoubleClick}
+      className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 cursor-pointer ${
+        isSpeaking ? 'ring-2 md:ring-4 ring-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)]' : 'ring-2 ring-pink-500'
+      }`}
+    >
+      <video ref={videoRef} autoPlay playsInline muted={isLocal} className={`w-full h-full object-cover ${isLocal ? 'scale-x-[-1]' : ''} ${showVideo ? '' : 'hidden'}`} />
+      {!showVideo && (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-gray-900">
+          <div className={`w-20 h-20 md:w-24 md:h-24 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-2xl md:text-3xl mb-2 md:mb-3 ${isSpeaking ? 'animate-pulse' : ''}`}>
+            {name[0]?.toUpperCase() || '?'}
+          </div>
+          <p className="text-blue-400 text-base md:text-lg font-medium">{name}</p>
+        </div>
+      )}
+      {isSpeaking && (
+        <div className="absolute top-2 md:top-3 left-2 md:left-3 flex items-center gap-1 md:gap-2 bg-black/70 px-1.5 md:px-2 py-0.5 md:py-1 rounded">
+          <div className="flex gap-0.5">
+            <div className="w-0.5 md:w-1 h-3 md:h-4 bg-green-400 animate-pulse" />
+            <div className="w-0.5 md:w-1 h-4 md:h-6 bg-green-400 animate-pulse" style={{ animationDelay: '150ms' }} />
+            <div className="w-0.5 md:w-1 h-2 md:h-3 bg-green-400 animate-pulse" style={{ animationDelay: '300ms' }} />
+          </div>
+          <span className="text-[10px] md:text-xs text-green-400">SPEAKING</span>
+        </div>
+      )}
+      <div className="absolute bottom-2 md:bottom-3 left-2 md:left-3 px-1.5 md:px-2 py-0.5 md:py-1 bg-black/70 rounded text-white text-xs md:text-sm flex items-center gap-1 md:gap-2">
+        🔍 {name} (Spotlight)
+      </div>
+      <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-black/70 rounded border border-pink-500 text-pink-400 text-[8px] md:text-[10px]">
+        Double-click to exit
+      </div>
+    </div>
+  )
+}
+
+// Teacher Thumbnail for when teacher is not in spotlight
+function TeacherThumbnail({ stream, isSpeaking }: {
+  stream: MediaStream | null
+  isSpeaking?: boolean
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) { setShowVideo(false); return }
+    video.srcObject = stream
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live' && !t.muted)
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
+    }
+    setTimeout(checkVideoTracks, 100)
+    video.addEventListener('playing', () => setTimeout(checkVideoTracks, 50))
+    video.addEventListener('loadeddata', checkVideoTracks)
+    const interval = setInterval(checkVideoTracks, 300)
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <>
+      <video ref={videoRef} autoPlay playsInline className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} />
+      {!showVideo && (
+        <div className="w-full h-full flex items-center justify-center">
+          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-base md:text-lg ${isSpeaking ? 'animate-pulse' : ''}`}>
+            👑
+          </div>
+        </div>
+      )}
+      {isSpeaking && (
+        <div className="absolute top-1 left-1 flex gap-0.5">
+          <div className="w-1 h-2 md:h-3 bg-green-400 animate-pulse" />
+          <div className="w-1 h-3 md:h-4 bg-green-400 animate-pulse" style={{ animationDelay: '100ms' }} />
+          <div className="w-1 h-1.5 md:h-2 bg-green-400 animate-pulse" style={{ animationDelay: '200ms' }} />
+        </div>
+      )}
+    </>
+  )
 }
