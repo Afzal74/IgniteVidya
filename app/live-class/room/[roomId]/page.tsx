@@ -467,11 +467,11 @@ export default function LiveClassRoomPage() {
           t.stop()
           localStream.removeTrack(t)
         })
-        // Remove video track from peer connections
+        // Replace video track with null in peer connections (keeps sender for later)
         peerConnections.current.forEach(pc => {
           const sender = pc.getSenders().find(s => s.track?.kind === 'video')
           if (sender) {
-            pc.removeTrack(sender)
+            sender.replaceTrack(null)
           }
         })
       }
@@ -491,10 +491,16 @@ export default function LiveClassRoomPage() {
           localStream.addTrack(videoTrack)
           // Add video track to peer connections
           peerConnections.current.forEach(pc => {
-            const sender = pc.getSenders().find(s => s.track?.kind === 'video')
-            if (sender) {
-              sender.replaceTrack(videoTrack)
+            // Find any video sender (even if track is null)
+            const videoSender = pc.getSenders().find(s => s.track?.kind === 'video' || !s.track)
+            if (videoSender && videoSender.track === null) {
+              // Sender exists but has no track - replace with new track
+              videoSender.replaceTrack(videoTrack)
+            } else if (videoSender && videoSender.track?.kind === 'video') {
+              // Sender has a video track - replace it
+              videoSender.replaceTrack(videoTrack)
             } else {
+              // No video sender - add new track
               pc.addTrack(videoTrack, localStream)
             }
           })

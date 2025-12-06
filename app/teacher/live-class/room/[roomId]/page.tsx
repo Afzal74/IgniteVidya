@@ -440,7 +440,16 @@ export default function TeacherLiveClassRoomPage() {
 
   const toggleVideo = async () => {
     if (isVideoEnabled && localStreamRef.current) {
-      localStreamRef.current.getVideoTracks().forEach(t => { t.stop(); localStreamRef.current?.removeTrack(t) })
+      // Stop and remove video tracks
+      localStreamRef.current.getVideoTracks().forEach(t => { 
+        t.stop()
+        localStreamRef.current?.removeTrack(t) 
+      })
+      // Replace with null in peer connections (keeps sender for later)
+      peerConnections.current.forEach(pc => {
+        const sender = pc.getSenders().find(s => s.track?.kind === 'video')
+        if (sender) sender.replaceTrack(null)
+      })
       setIsVideoEnabled(false)
     } else {
       try {
@@ -451,9 +460,13 @@ export default function TeacherLiveClassRoomPage() {
         setIsVideoEnabled(true)
         // Update track in all peer connections
         peerConnections.current.forEach(pc => {
-          const sender = pc.getSenders().find(s => s.track?.kind === 'video')
-          if (sender) sender.replaceTrack(track)
-          else pc.addTrack(track, localStreamRef.current!)
+          // Find video sender (even if track is null)
+          const sender = pc.getSenders().find(s => s.track?.kind === 'video' || (s.track === null))
+          if (sender) {
+            sender.replaceTrack(track)
+          } else {
+            pc.addTrack(track, localStreamRef.current!)
+          }
         })
       } catch (e) {
         setMediaError('Could not enable camera')
