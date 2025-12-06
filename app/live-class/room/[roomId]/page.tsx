@@ -564,32 +564,7 @@ export default function LiveClassRoomPage() {
         <div className="flex-1 p-4">
           <div className="grid gap-4 h-full grid-cols-1 lg:grid-cols-2">
             {/* Teacher Video */}
-            <div className="bg-gray-800 rounded-xl overflow-hidden relative lg:col-span-2 aspect-video">
-              {teacherStream ? (
-                <video 
-                  ref={(el) => {
-                    if (el && teacherStream) {
-                      el.srcObject = teacherStream
-                    }
-                  }}
-                  autoPlay 
-                  playsInline 
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white text-5xl font-bold mb-4">
-                    T
-                  </div>
-                  <p className="text-white text-lg font-medium">Teacher</p>
-                  <p className="text-gray-400 text-sm">Waiting for video...</p>
-                </div>
-              )}
-              <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 rounded-lg text-white text-sm flex items-center gap-2">
-                <span className="text-yellow-400">👑</span>
-                Teacher (Host)
-              </div>
-            </div>
+            <TeacherVideoTile stream={teacherStream} />
 
             {/* Your Video */}
             <div className="bg-gray-800 rounded-xl overflow-hidden relative aspect-video">
@@ -710,6 +685,76 @@ export default function LiveClassRoomPage() {
             <PhoneOff className="h-5 w-5" />
           </Button>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// Teacher video tile with proper stream handling
+function TeacherVideoTile({ stream }: { stream: MediaStream | null }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) {
+      setShowVideo(false)
+      return
+    }
+
+    video.srcObject = stream
+    
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live')
+      setShowVideo(hasActiveTrack)
+    }
+    
+    checkVideoTracks()
+    
+    const handlePlaying = () => setShowVideo(true)
+    video.addEventListener('playing', handlePlaying)
+    
+    const tracks = stream.getVideoTracks()
+    tracks.forEach(track => {
+      track.onended = checkVideoTracks
+      track.onmute = checkVideoTracks
+      track.onunmute = checkVideoTracks
+    })
+    
+    const interval = setInterval(checkVideoTracks, 500)
+    
+    return () => {
+      clearInterval(interval)
+      video.removeEventListener('playing', handlePlaying)
+      tracks.forEach(track => {
+        track.onended = null
+        track.onmute = null
+        track.onunmute = null
+      })
+    }
+  }, [stream])
+
+  return (
+    <div className="bg-gray-800 rounded-xl overflow-hidden relative lg:col-span-2 aspect-video">
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} 
+      />
+      {!showVideo && (
+        <div className="w-full h-full flex flex-col items-center justify-center">
+          <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-600 to-cyan-600 flex items-center justify-center text-white text-5xl font-bold mb-4">
+            T
+          </div>
+          <p className="text-white text-lg font-medium">Teacher</p>
+          <p className="text-gray-400 text-sm">{stream ? 'Video paused' : 'Waiting for video...'}</p>
+        </div>
+      )}
+      <div className="absolute bottom-4 left-4 px-3 py-1.5 bg-black/60 rounded-lg text-white text-sm flex items-center gap-2">
+        <span className="text-yellow-400">👑</span>
+        Teacher (Host)
       </div>
     </div>
   )

@@ -497,12 +497,13 @@ export default function TeacherLiveClassRoomPage() {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-900"><div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" /></div>
   if (!room) return <div className="min-h-screen flex items-center justify-center bg-gray-900"><p className="text-zinc-400">Class not found</p></div>
 
-  // Build video grid
-  const allVideos: Array<{ id: string; name: string; stream: MediaStream | null; isLocal: boolean; isTeacher: boolean; isHandRaised?: boolean }> = [
-    { id: 'teacher', name: 'You (Host)', stream: isScreenSharing ? screenStream : localStream, isLocal: true, isTeacher: true, isHandRaised: false },
+  // Build video grid - use streamId as part of key to force re-render on stream change
+  const teacherStreamId = (isScreenSharing ? screenStream?.id : localStream?.id) || 'no-stream'
+  const allVideos: Array<{ id: string; name: string; stream: MediaStream | null; isLocal: boolean; isTeacher: boolean; isHandRaised?: boolean; streamKey: string }> = [
+    { id: 'teacher', name: 'You (Host)', stream: isScreenSharing ? screenStream : localStream, isLocal: true, isTeacher: true, isHandRaised: false, streamKey: `teacher-${teacherStreamId}` },
     ...Array.from(remoteStreams.entries()).map(([oderId, stream]) => {
       const p = participants.find(x => x.id === oderId)
-      return { id: oderId, name: p?.student_name || 'Student', stream, isLocal: false, isTeacher: false, isHandRaised: p?.is_hand_raised }
+      return { id: oderId, name: p?.student_name || 'Student', stream, isLocal: false, isTeacher: false, isHandRaised: p?.is_hand_raised, streamKey: `${oderId}-${stream?.id || 'no-stream'}` }
     })
   ]
 
@@ -537,7 +538,7 @@ export default function TeacherLiveClassRoomPage() {
         <div className="flex-1 p-4">
           <div className={`grid gap-2 h-full ${allVideos.length <= 1 ? 'grid-cols-1' : allVideos.length <= 2 ? 'grid-cols-2' : allVideos.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
             {allVideos.map((v, i) => (
-              <VideoTile key={v.id} stream={v.stream} name={v.name} isLocal={v.isLocal} colorIndex={i} isTeacher={v.isTeacher} isHandRaised={v.isHandRaised} />
+              <VideoTile key={v.streamKey} stream={v.stream} name={v.name} isLocal={v.isLocal} colorIndex={i} isTeacher={v.isTeacher} isHandRaised={v.isHandRaised} />
             ))}
           </div>
         </div>
@@ -609,21 +610,70 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
   isHandRaised?: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
 
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream
+    const video = videoRef.current
+    if (!video || !stream) {
+      setShowVideo(false)
+      return
+    }
+
+    // Set the stream
+    video.srcObject = stream
+    
+    // Check video tracks
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live')
+      setShowVideo(hasActiveTrack)
+    }
+    
+    // Initial check
+    checkVideoTracks()
+    
+    // Listen for video playing
+    const handlePlaying = () => setShowVideo(true)
+    const handleEnded = () => checkVideoTracks()
+    
+    video.addEventListener('playing', handlePlaying)
+    video.addEventListener('ended', handleEnded)
+    
+    // Track event listeners
+    const tracks = stream.getVideoTracks()
+    tracks.forEach(track => {
+      track.onended = checkVideoTracks
+      track.onmute = checkVideoTracks
+      track.onunmute = checkVideoTracks
+    })
+    
+    // Periodic check for remote streams
+    const interval = setInterval(checkVideoTracks, 500)
+    
+    return () => {
+      clearInterval(interval)
+      video.removeEventListener('playing', handlePlaying)
+      video.removeEventListener('ended', handleEnded)
+      tracks.forEach(track => {
+        track.onended = null
+        track.onmute = null
+        track.onunmute = null
+      })
     }
   }, [stream])
 
-  const hasVideo = stream?.getVideoTracks().some(t => t.enabled && t.readyState === 'live')
   const colors = ['from-blue-600 to-cyan-600', 'from-purple-500 to-pink-500', 'from-green-500 to-emerald-500', 'from-orange-500 to-red-500']
 
   return (
     <div className="bg-gray-800 rounded-xl overflow-hidden relative aspect-video">
-      {stream && hasVideo ? (
-        <video ref={videoRef} autoPlay playsInline muted={isLocal} className={`w-full h-full object-cover ${isLocal ? '' : ''}`} />
-      ) : (
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        muted={isLocal} 
+        className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} 
+      />
+      {!showVideo && (
         <div className="w-full h-full flex items-center justify-center">
           <div className={`w-20 h-20 rounded-full bg-gradient-to-br ${colors[colorIndex % 4]} flex items-center justify-center text-white text-3xl font-bold`}>
             {name[0]?.toUpperCase() || '?'}
