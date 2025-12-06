@@ -46,8 +46,12 @@ export default function TeacherLiveClassRoomPage() {
   const [mediaError, setMediaError] = useState<string | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showParticipants, setShowParticipants] = useState(true)
+  const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null)
+  const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set())
 
   const localVideoRef = useRef<HTMLVideoElement>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const audioAnalyzersRef = useRef<Map<string, { analyzer: AnalyserNode; source: MediaStreamAudioSourceNode }>>(new Map())
   const containerRef = useRef<HTMLDivElement>(null)
   const peerConnections = useRef<Map<string, RTCPeerConnection>>(new Map())
   const localStreamRef = useRef<MediaStream | null>(null)
@@ -423,6 +427,143 @@ export default function TeacherLiveClassRoomPage() {
     return () => { supabase.removeChannel(ch) }
   }, [roomId])
 
+  // Voice activity detection for local stream (teacher)
+  useEffect(() => {
+    if (!localStream || !isAudioEnabled) {
+      setSpeakingUsers(prev => {
+        const next = new Set(prev)
+        next.delete('teacher')
+        return next
+      })
+      return
+    }
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
+    const audioContext = audioContextRef.current
+
+    const analyzer = audioContext.createAnalyser()
+    analyzer.fftSize = 256
+    analyzer.smoothingTimeConstant = 0.5
+    
+    const source = audioContext.createMediaStreamSource(localStream)
+    source.connect(analyzer)
+    
+    const dataArray = new Uint8Array(analyzer.frequencyBinCount)
+    let animationId: number
+    
+    const checkAudio = () => {
+      analyzer.getByteFrequencyData(dataArray)
+      const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length
+      const isSpeaking = average > 15
+      
+      setSpeakingUsers(prev => {
+        const next = new Set(prev)
+        if (isSpeaking) {
+          next.add('teacher')
+          setActiveSpeaker('teacher')
+        } else {
+          next.delete('teacher')
+        }
+        return next
+      })
+      
+      animationId = requestAnimationFrame(checkAudio)
+    }
+    checkAudio()
+    
+    return () => {
+      cancelAnimationFrame(animationId)
+      source.disconnect()
+    }
+  }, [localStream, isAudioEnabled])
+
+  // Voice activity detection for remote streams
+  useEffect(() => {
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContext()
+    }
+    const audioContext = audioContextRef.current
+    
+    // Clean up old analyzers for streams that no longer exist
+    audioAnalyzersRef.current.forEach((value, oderId) => {
+      if (!remoteStreams.has(oderId)) {
+        value.source.disconnect()
+        audioAnalyzersRef.current.delete(oderId)
+      }
+    })
+    
+    // Set up analyzers for new streams
+    remoteStreams.forEach((stream, oderId) => {
+      if (audioAnalyzersRef.current.has(oderId)) return
+      
+      const audioTracks = stream.getAudioTracks()
+      if (audioTracks.length === 0) return
+      
+      try {
+        const analyzer = audioContext.createAnalyser()
+        analyzer.fftSize = 256
+        analyzer.smoothingTimeConstant = 0.5
+        
+        const source = audioContext.createMediaStreamSource(stream)
+        source.connect(analyzer)
+        
+        audioAnalyzersRef.current.set(oderId, { analyzer, source })
+      } catch (e) {
+        console.error('Error setting up audio analyzer for', oderId, e)
+      }
+    })
+    
+    // Check all remote streams for voice activity
+    const dataArrays: Record<string, Uint8Array> = {}
+    audioAnalyzersRef.current.forEach((value, oderId) => {
+      dataArrays[oderId] = new Uint8Array(value.analyzer.frequencyBinCount)
+    })
+    
+    let animationId: number
+    const checkAllAudio = () => {
+      let loudestUser: string | null = null
+      let loudestLevel = 15 // Minimum threshold
+      
+      audioAnalyzersRef.current.forEach((value, oderId) => {
+        const dataArray = dataArrays[oderId]
+        if (!dataArray) return
+        
+        value.analyzer.getByteFrequencyData(dataArray as Uint8Array<ArrayBuffer>)
+        const average = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length
+        
+        setSpeakingUsers(prev => {
+          const next = new Set(prev)
+          if (average > 15) {
+            next.add(oderId)
+            if (average > loudestLevel) {
+              loudestLevel = average
+              loudestUser = oderId
+            }
+          } else {
+            next.delete(oderId)
+          }
+          return next
+        })
+      })
+      
+      if (loudestUser) {
+        setActiveSpeaker(loudestUser)
+      }
+      
+      animationId = requestAnimationFrame(checkAllAudio)
+    }
+    
+    if (audioAnalyzersRef.current.size > 0) {
+      checkAllAudio()
+    }
+    
+    return () => {
+      cancelAnimationFrame(animationId)
+    }
+  }, [remoteStreams])
+
   const fetchRoomData = async () => {
     const { data } = await supabase.from('live_class_rooms').select('*').eq('id', roomId).single()
     if (data) { setRoom(data); fetchParticipants() }
@@ -587,88 +728,126 @@ export default function TeacherLiveClassRoomPage() {
 
   // Build video grid - use streamId as part of key to force re-render on stream change
   const teacherStreamId = (isScreenSharing ? screenStream?.id : localStream?.id) || 'no-stream'
-  const allVideos: Array<{ id: string; name: string; stream: MediaStream | null; isLocal: boolean; isTeacher: boolean; isHandRaised?: boolean; streamKey: string }> = [
-    { id: 'teacher', name: 'You (Host)', stream: isScreenSharing ? screenStream : localStream, isLocal: true, isTeacher: true, isHandRaised: false, streamKey: `teacher-${teacherStreamId}` },
+  const allVideos: Array<{ id: string; name: string; stream: MediaStream | null; isLocal: boolean; isTeacher: boolean; isHandRaised?: boolean; streamKey: string; isSpeaking: boolean; isActiveSpeaker: boolean }> = [
+    { id: 'teacher', name: 'You (Host)', stream: isScreenSharing ? screenStream : localStream, isLocal: true, isTeacher: true, isHandRaised: false, streamKey: `teacher-${teacherStreamId}`, isSpeaking: speakingUsers.has('teacher'), isActiveSpeaker: activeSpeaker === 'teacher' },
     ...Array.from(remoteStreams.entries()).map(([oderId, stream]) => {
       const p = participants.find(x => x.id === oderId)
-      return { id: oderId, name: p?.student_name || 'Student', stream, isLocal: false, isTeacher: false, isHandRaised: p?.is_hand_raised, streamKey: `${oderId}-${stream?.id || 'no-stream'}` }
+      return { id: oderId, name: p?.student_name || 'Student', stream, isLocal: false, isTeacher: false, isHandRaised: p?.is_hand_raised, streamKey: `${oderId}-${stream?.id || 'no-stream'}`, isSpeaking: speakingUsers.has(oderId), isActiveSpeaker: activeSpeaker === oderId }
     })
   ]
+  
+  // Sort to put active speaker first (if not teacher)
+  const sortedVideos = [...allVideos].sort((a, b) => {
+    if (a.isActiveSpeaker && !a.isTeacher) return -1
+    if (b.isActiveSpeaker && !b.isTeacher) return 1
+    if (a.isTeacher) return -1
+    if (b.isTeacher) return 1
+    return 0
+  })
 
   return (
-    <div ref={containerRef} className="min-h-screen bg-[#0f0f23] flex flex-col relative overflow-hidden" style={{ fontFamily: '"Press Start 2P", cursive' }}>
+    <div ref={containerRef} className="h-screen pt-16 bg-[#0f0f23] flex flex-col relative overflow-hidden" style={{ fontFamily: '"Press Start 2P", cursive' }}>
       {/* Pixel Grid Background */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none" style={{
+      <div className="fixed inset-0 top-16 opacity-5 pointer-events-none" style={{
         backgroundImage: `linear-gradient(0deg, transparent 24%, rgba(0, 255, 65, .1) 25%, rgba(0, 255, 65, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .1) 75%, rgba(0, 255, 65, .1) 76%, transparent 77%, transparent),
         linear-gradient(90deg, transparent 24%, rgba(0, 255, 65, .1) 25%, rgba(0, 255, 65, .1) 26%, transparent 27%, transparent 74%, rgba(0, 255, 65, .1) 75%, rgba(0, 255, 65, .1) 76%, transparent 77%, transparent)`,
         backgroundSize: '50px 50px'
       }} />
       
-      {/* Header */}
-      <div className="bg-[#1a1a3e] border-b-4 border-[#00ff41] px-4 py-3 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4">
-          <h1 className="text-[#00ff41] text-xs sm:text-sm font-bold">{room.room_name}</h1>
-          <span className="px-2 py-1 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[8px] animate-pulse">● LIVE</span>
-          <button onClick={copyCode} className="flex items-center gap-2 bg-[#0f0f23] border-2 border-[#00d4ff] px-2 py-1 text-[#00d4ff] text-[8px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
-            <Copy className="h-3 w-3" />{room.room_code}
+      {/* Header - Compact */}
+      <div className="bg-[#1a1a3e] border-b-2 border-[#00ff41] px-3 py-1.5 flex items-center justify-between relative z-10 flex-shrink-0">
+        <div className="flex items-center gap-2">
+          <h1 className="text-[#00ff41] text-[8px] sm:text-[10px] font-bold truncate max-w-[150px]">{room.room_name}</h1>
+          <span className="px-1 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px] animate-pulse">● LIVE</span>
+          <button onClick={copyCode} className="flex items-center gap-1 bg-[#0f0f23] border border-[#00d4ff] px-1.5 py-0.5 text-[#00d4ff] text-[6px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            <Copy className="h-2 w-2" />{room.room_code}
           </button>
         </div>
-        <div className="flex items-center gap-2">
-          {raisedHands.length > 0 && <div className="px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white text-[8px] animate-pulse"><Hand className="h-3 w-3 inline mr-1" />{raisedHands.length}</div>}
-          <button onClick={() => setShowParticipants(!showParticipants)} className="flex items-center gap-1 bg-[#0f0f23] border-2 border-[#00d4ff] px-2 py-1 text-[#00d4ff] text-[8px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
-            <Users className="h-3 w-3" />{participants.length}
+        <div className="flex items-center gap-1">
+          {raisedHands.length > 0 && <div className="px-1 py-0.5 bg-[#ff00ff] border border-[#ff00ff] text-white text-[6px] animate-pulse"><Hand className="h-2 w-2 inline mr-0.5" />{raisedHands.length}</div>}
+          <button onClick={() => setShowParticipants(!showParticipants)} className="flex items-center gap-0.5 bg-[#0f0f23] border border-[#00d4ff] px-1.5 py-0.5 text-[#00d4ff] text-[6px] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            <Users className="h-2 w-2" />{participants.length}
           </button>
-          <button onClick={toggleFullscreen} className="bg-[#0f0f23] border-2 border-[#00d4ff] p-1 text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
-            {isFullscreen ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
+          <button onClick={toggleFullscreen} className="bg-[#0f0f23] border border-[#00d4ff] p-0.5 text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23] transition-colors">
+            {isFullscreen ? <Minimize className="h-2 w-2" /> : <Maximize className="h-2 w-2" />}
           </button>
         </div>
       </div>
 
       {mediaError && (
-        <div className="bg-[#1a1a3e] border-b-4 border-[#ff00ff] px-4 py-2 flex items-center gap-2 text-[#ff00ff] text-[10px] relative z-10">
-          <AlertCircle className="h-4 w-4" />{mediaError}
+        <div className="bg-[#1a1a3e] border-b-2 border-[#ff00ff] px-3 py-1 flex items-center gap-2 text-[#ff00ff] text-[8px] relative z-10 flex-shrink-0">
+          <AlertCircle className="h-3 w-3" />{mediaError}
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden relative z-10">
-        <div className="flex-1 p-4">
-          <div className={`grid gap-3 h-full ${allVideos.length <= 1 ? 'grid-cols-1' : allVideos.length <= 2 ? 'grid-cols-2' : allVideos.length <= 4 ? 'grid-cols-2' : 'grid-cols-3'}`}>
-            {allVideos.map((v, i) => (
-              <VideoTile key={v.streamKey} stream={v.stream} name={v.name} isLocal={v.isLocal} colorIndex={i} isTeacher={v.isTeacher} isHandRaised={v.isHandRaised} />
+        {/* Main Layout: Host center, students on left */}
+        <div className="flex-1 p-2 flex gap-2">
+          {/* Students column on left - bigger thumbnails, no scroll */}
+          {sortedVideos.filter(v => !v.isTeacher).length > 0 && (
+            <div className="flex flex-col gap-2 w-40 flex-shrink-0">
+              {sortedVideos.filter(v => !v.isTeacher).map((v, i) => (
+                <StudentThumbnail 
+                  key={v.streamKey} 
+                  stream={v.stream} 
+                  name={v.name} 
+                  colorIndex={i} 
+                  isHandRaised={v.isHandRaised}
+                  isSpeaking={v.isSpeaking}
+                  isActiveSpeaker={v.isActiveSpeaker}
+                  onRemove={() => removeParticipant(v.id)}
+                />
+              ))}
+            </div>
+          )}
+          
+          {/* Host (Teacher) - Large center video */}
+          <div className="flex-1 flex items-center justify-center">
+            {sortedVideos.filter(v => v.isTeacher).map((v) => (
+              <HostVideoTile 
+                key={v.streamKey} 
+                stream={v.stream} 
+                name={v.name} 
+                isLocal={v.isLocal}
+                isSpeaking={v.isSpeaking}
+                isActiveSpeaker={v.isActiveSpeaker}
+              />
             ))}
           </div>
         </div>
 
+        {/* Participants Sidebar */}
         <AnimatePresence>
           {showParticipants && (
-            <motion.div initial={{ width: 0 }} animate={{ width: 280 }} exit={{ width: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#00d4ff] overflow-hidden">
-              <div className="p-4 h-full flex flex-col w-[280px]">
-                <h3 className="text-[#00ff41] text-[10px] font-bold mb-4"><Users className="h-4 w-4 inline mr-2" />PARTICIPANTS ({participants.length})</h3>
+            <motion.div initial={{ width: 0 }} animate={{ width: 200 }} exit={{ width: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#00d4ff] overflow-hidden">
+              <div className="p-2 h-full flex flex-col w-[200px]">
+                <h3 className="text-[#00ff41] text-[8px] font-bold mb-2"><Users className="h-3 w-3 inline mr-1" />STUDENTS ({participants.length})</h3>
                 {raisedHands.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-[#ff00ff] text-[8px] mb-2"><Hand className="h-3 w-3 inline mr-1" />RAISED HANDS</h4>
+                  <div className="mb-2">
+                    <h4 className="text-[#ff00ff] text-[6px] mb-1"><Hand className="h-2 w-2 inline mr-1" />HANDS UP</h4>
                     {raisedHands.map((p) => (
-                      <div key={p.id} className="p-2 bg-[#0f0f23] border-2 border-[#ff00ff] flex items-center justify-between mb-2">
-                        <span className="text-[#ff00ff] text-[8px]">{p.student_name}</span>
-                        <button onClick={() => lowerHand(p.id)} className="text-[#ff00ff] hover:text-white"><Hand className="h-3 w-3" /></button>
+                      <div key={p.id} className="p-1 bg-[#0f0f23] border border-[#ff00ff] flex items-center justify-between mb-1">
+                        <span className="text-[#ff00ff] text-[6px] truncate">{p.student_name}</span>
+                        <button onClick={() => lowerHand(p.id)} className="text-[#ff00ff] hover:text-white"><Hand className="h-2 w-2" /></button>
                       </div>
                     ))}
                   </div>
                 )}
-                <div className="flex-1 overflow-y-auto space-y-2">
+                <div className="flex-1 overflow-y-auto space-y-1">
                   {participants.map((p, idx) => (
-                    <div key={p.id} className="p-2 bg-[#0f0f23] border-2 border-[#00d4ff] flex items-center justify-between group">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-[#1a1a3e] border-2 border-[#ff00ff] flex items-center justify-center text-[#ff00ff] text-[10px] font-bold">{p.student_name[0]}</div>
-                        <div>
-                          <p className="text-[#00ff41] text-[8px]">{p.student_name}</p>
-                          <div className="flex gap-2 mt-1">
-                            {p.is_audio_enabled ? <Mic className="h-3 w-3 text-[#00ff41]" /> : <MicOff className="h-3 w-3 text-[#444]" />}
-                            {p.is_video_enabled ? <Video className="h-3 w-3 text-[#00ff41]" /> : <VideoOff className="h-3 w-3 text-[#444]" />}
+                    <div key={p.id} className={`p-1 bg-[#0f0f23] border border-[#00d4ff] flex items-center justify-between group ${speakingUsers.has(p.id) ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : ''}`}>
+                      <div className="flex items-center gap-1 flex-1 min-w-0">
+                        <div className="w-5 h-5 bg-[#1a1a3e] border border-[#ff00ff] flex items-center justify-center text-[#ff00ff] text-[6px] font-bold flex-shrink-0">{p.student_name[0]}</div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[#00ff41] text-[6px] truncate">{p.student_name}</p>
+                          <div className="flex gap-1">
+                            {p.is_audio_enabled ? <Mic className="h-2 w-2 text-[#00ff41]" /> : <MicOff className="h-2 w-2 text-[#444]" />}
+                            {p.is_video_enabled ? <Video className="h-2 w-2 text-[#00ff41]" /> : <VideoOff className="h-2 w-2 text-[#444]" />}
+                            {speakingUsers.has(p.id) && <span className="text-[5px] text-[#ffff00]">🔊</span>}
                           </div>
                         </div>
                       </div>
-                      <button onClick={() => removeParticipant(p.id)} className="opacity-0 group-hover:opacity-100 text-[#ff0000]"><UserX className="h-4 w-4" /></button>
+                      <button onClick={() => removeParticipant(p.id)} className="opacity-0 group-hover:opacity-100 text-[#ff0000] flex-shrink-0"><UserX className="h-3 w-3" /></button>
                     </div>
                   ))}
                 </div>
@@ -678,21 +857,21 @@ export default function TeacherLiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
-      {/* Control Bar */}
-      <div className="bg-[#1a1a3e] border-t-4 border-[#00ff41] px-4 py-4 relative z-10">
-        <div className="flex items-center justify-center gap-3">
-          <button onClick={toggleAudio} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isAudioEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
-            {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+      {/* Control Bar - Compact */}
+      <div className="bg-[#1a1a3e] border-t-4 border-[#00ff41] px-4 py-2 relative z-10 flex-shrink-0">
+        <div className="flex items-center justify-center gap-2">
+          <button onClick={toggleAudio} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isAudioEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
+            {isAudioEnabled ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
           </button>
-          <button onClick={toggleVideo} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isVideoEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
-            {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+          <button onClick={toggleVideo} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isVideoEnabled ? 'bg-[#0f0f23] border-[#00ff41] text-[#00ff41] hover:bg-[#00ff41] hover:text-[#0f0f23]' : 'bg-[#ff0000] border-[#ff0000] text-white'}`}>
+            {isVideoEnabled ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
           </button>
-          <button onClick={toggleScreenShare} className={`w-12 h-12 border-4 flex items-center justify-center transition-colors ${isScreenSharing ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}>
-            {isScreenSharing ? <ScreenShareOff className="h-5 w-5" /> : <ScreenShare className="h-5 w-5" />}
+          <button onClick={toggleScreenShare} className={`w-10 h-10 border-2 flex items-center justify-center transition-colors ${isScreenSharing ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}>
+            {isScreenSharing ? <ScreenShareOff className="h-4 w-4" /> : <ScreenShare className="h-4 w-4" />}
           </button>
-          <div className="w-1 h-8 bg-[#00ff41] mx-2" />
-          <button onClick={endClass} className="px-4 h-12 bg-[#ff0000] border-4 border-[#ff0000] text-white text-[10px] font-bold flex items-center gap-2 hover:bg-[#0f0f23] hover:text-[#ff0000] transition-colors">
-            <PhoneOff className="h-5 w-5" />END
+          <div className="w-0.5 h-6 bg-[#00ff41] mx-1" />
+          <button onClick={endClass} className="px-3 h-10 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[8px] font-bold flex items-center gap-1 hover:bg-[#0f0f23] hover:text-[#ff0000] transition-colors">
+            <PhoneOff className="h-4 w-4" />END
           </button>
         </div>
       </div>
@@ -700,13 +879,15 @@ export default function TeacherLiveClassRoomPage() {
   )
 }
 
-function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised }: {
+function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised, isSpeaking, isActiveSpeaker }: {
   stream: MediaStream | null
   name: string
   isLocal: boolean
   colorIndex: number
   isTeacher?: boolean
   isHandRaised?: boolean
+  isSpeaking?: boolean
+  isActiveSpeaker?: boolean
 }) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [showVideo, setShowVideo] = useState(false)
@@ -718,37 +899,26 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
       return
     }
 
-    // Set the stream
     video.srcObject = stream
     
-    // Check video tracks - more robust check
     const checkVideoTracks = () => {
       const tracks = stream.getVideoTracks()
-      // Check if any track is enabled AND live (not ended/muted)
       const hasActiveTrack = tracks.length > 0 && tracks.some(t => {
-        const isActive = t.enabled && t.readyState === 'live' && !t.muted
-        return isActive
+        return t.enabled && t.readyState === 'live' && !t.muted
       })
       
-      // For remote streams, we MUST have an active track to show video
-      // The video element might show black even with videoWidth > 0
       if (!hasActiveTrack) {
         setShowVideo(false)
         return
       }
       
-      // Also verify video element has actual dimensions
       const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
       setShowVideo(hasActiveTrack && hasVideoDimensions)
     }
     
-    // Initial check after a short delay to let video load
     setTimeout(checkVideoTracks, 100)
     
-    // Listen for video events
-    const handlePlaying = () => {
-      setTimeout(checkVideoTracks, 50)
-    }
+    const handlePlaying = () => setTimeout(checkVideoTracks, 50)
     const handleEnded = () => setShowVideo(false)
     const handleLoadedData = () => checkVideoTracks()
     const handleEmptied = () => setShowVideo(false)
@@ -758,24 +928,16 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
     video.addEventListener('loadeddata', handleLoadedData)
     video.addEventListener('emptied', handleEmptied)
     
-    // Stream track event listeners
-    const handleTrackChange = () => {
-      setTimeout(checkVideoTracks, 50)
-    }
+    const handleTrackChange = () => setTimeout(checkVideoTracks, 50)
     stream.addEventListener('addtrack', handleTrackChange)
     stream.addEventListener('removetrack', handleTrackChange)
     
-    // Track event listeners for each video track
-    const setupTrackListeners = () => {
-      stream.getVideoTracks().forEach(track => {
-        track.onended = checkVideoTracks
-        track.onmute = checkVideoTracks
-        track.onunmute = checkVideoTracks
-      })
-    }
-    setupTrackListeners()
+    stream.getVideoTracks().forEach(track => {
+      track.onended = checkVideoTracks
+      track.onmute = checkVideoTracks
+      track.onunmute = checkVideoTracks
+    })
     
-    // Periodic check - important for remote streams where track events may not fire
     const interval = setInterval(checkVideoTracks, 300)
     
     return () => {
@@ -796,9 +958,13 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
 
   const pixelColors = ['border-[#00d4ff]', 'border-[#ff00ff]', 'border-[#00ff41]', 'border-[#ff6600]']
   const avatarColors = ['bg-[#00d4ff]', 'bg-[#ff00ff]', 'bg-[#00ff41]', 'bg-[#ff6600]']
+  
+  // Active speaker gets special styling
+  const speakingBorder = isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_20px_#ffff00,0_0_40px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_10px_#00ff41]' : pixelColors[colorIndex % 4]
+  const speakingScale = isActiveSpeaker ? 'col-span-2 row-span-2' : ''
 
   return (
-    <div className={`bg-[#1a1a3e] border-4 ${pixelColors[colorIndex % 4]} overflow-hidden relative aspect-video`} style={{ imageRendering: 'auto' }}>
+    <div className={`bg-[#1a1a3e] border-4 ${speakingBorder} overflow-hidden relative aspect-video transition-all duration-300 ${speakingScale}`} style={{ imageRendering: 'auto' }}>
       <video 
         ref={videoRef} 
         autoPlay 
@@ -808,9 +974,21 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
       />
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
-          <div className={`w-16 h-16 sm:w-20 sm:h-20 ${avatarColors[colorIndex % 4]} border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl sm:text-3xl font-bold`}>
+          <div className={`w-16 h-16 sm:w-20 sm:h-20 ${avatarColors[colorIndex % 4]} border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-2xl sm:text-3xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
             {name[0]?.toUpperCase() || '?'}
           </div>
+        </div>
+      )}
+      {/* Speaking indicator */}
+      {isSpeaking && (
+        <div className="absolute top-2 left-2 flex items-center gap-1">
+          <div className="flex gap-0.5">
+            <div className="w-1 h-3 bg-[#00ff41] animate-pulse" style={{ animationDelay: '0ms' }} />
+            <div className="w-1 h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '150ms' }} />
+            <div className="w-1 h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '300ms' }} />
+            <div className="w-1 h-5 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+          </div>
+          {isActiveSpeaker && <span className="text-[8px] text-[#ffff00] ml-1">SPEAKING</span>}
         </div>
       )}
       <div className="absolute bottom-2 left-2 px-2 py-1 bg-[#0f0f23] border-2 border-[#00ff41] text-[#00ff41] text-[8px] sm:text-[10px] flex items-center gap-1">
@@ -821,6 +999,160 @@ function VideoTile({ stream, name, isLocal, colorIndex, isTeacher, isHandRaised 
           <Hand className="h-4 w-4 text-white" />
         </div>
       )}
+    </div>
+  )
+}
+
+// Large Host Video Tile (center of screen)
+function HostVideoTile({ stream, name, isLocal, isSpeaking, isActiveSpeaker }: {
+  stream: MediaStream | null
+  name: string
+  isLocal: boolean
+  isSpeaking?: boolean
+  isActiveSpeaker?: boolean
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) {
+      setShowVideo(false)
+      return
+    }
+    video.srcObject = stream
+    
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live' && !t.muted)
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
+    }
+    
+    setTimeout(checkVideoTracks, 100)
+    video.addEventListener('playing', () => setTimeout(checkVideoTracks, 50))
+    video.addEventListener('loadeddata', checkVideoTracks)
+    const interval = setInterval(checkVideoTracks, 300)
+    
+    return () => clearInterval(interval)
+  }, [stream])
+
+  return (
+    <div className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-4 ${isSpeaking ? 'border-[#00ff41] shadow-[0_0_20px_#00ff41]' : 'border-[#ffff00]'} overflow-hidden relative transition-all duration-300`}>
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        muted={isLocal} 
+        className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} 
+      />
+      {!showVideo && (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
+          <div className={`w-24 h-24 bg-[#ffff00] border-4 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-4xl font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+            👑
+          </div>
+          <p className="text-[#ffff00] text-sm mt-4">{name}</p>
+        </div>
+      )}
+      {/* Speaking indicator */}
+      {isSpeaking && (
+        <div className="absolute top-3 left-3 flex items-center gap-2 bg-[#0f0f23]/80 px-2 py-1 border border-[#00ff41]">
+          <div className="flex gap-0.5">
+            <div className="w-1 h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '0ms' }} />
+            <div className="w-1 h-6 bg-[#00ff41] animate-pulse" style={{ animationDelay: '150ms' }} />
+            <div className="w-1 h-3 bg-[#00ff41] animate-pulse" style={{ animationDelay: '300ms' }} />
+            <div className="w-1 h-5 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+          </div>
+          <span className="text-[8px] text-[#00ff41]">LIVE</span>
+        </div>
+      )}
+      <div className="absolute bottom-3 left-3 px-3 py-1 bg-[#0f0f23] border-2 border-[#ffff00] text-[#ffff00] text-[10px] flex items-center gap-2">
+        <span>👑</span>{name}
+      </div>
+    </div>
+  )
+}
+
+// Small Student Thumbnail (top strip)
+function StudentThumbnail({ stream, name, colorIndex, isHandRaised, isSpeaking, isActiveSpeaker, onRemove }: {
+  stream: MediaStream | null
+  name: string
+  colorIndex: number
+  isHandRaised?: boolean
+  isSpeaking?: boolean
+  isActiveSpeaker?: boolean
+  onRemove: () => void
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [showVideo, setShowVideo] = useState(false)
+
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video || !stream) {
+      setShowVideo(false)
+      return
+    }
+    video.srcObject = stream
+    
+    const checkVideoTracks = () => {
+      const tracks = stream.getVideoTracks()
+      const hasActiveTrack = tracks.length > 0 && tracks.some(t => t.enabled && t.readyState === 'live' && !t.muted)
+      const hasVideoDimensions = video.videoWidth > 0 && video.videoHeight > 0
+      setShowVideo(hasActiveTrack && hasVideoDimensions)
+    }
+    
+    setTimeout(checkVideoTracks, 100)
+    video.addEventListener('playing', () => setTimeout(checkVideoTracks, 50))
+    video.addEventListener('loadeddata', checkVideoTracks)
+    const interval = setInterval(checkVideoTracks, 300)
+    
+    return () => clearInterval(interval)
+  }, [stream])
+
+  const pixelColors = ['border-[#00d4ff]', 'border-[#ff00ff]', 'border-[#00ff41]', 'border-[#ff6600]']
+  const avatarColors = ['bg-[#00d4ff]', 'bg-[#ff00ff]', 'bg-[#00ff41]', 'bg-[#ff6600]']
+  const borderColor = isActiveSpeaker ? 'border-[#ffff00] shadow-[0_0_10px_#ffff00]' : isSpeaking ? 'border-[#00ff41] shadow-[0_0_5px_#00ff41]' : pixelColors[colorIndex % 4]
+
+  return (
+    <div className={`relative w-full aspect-video bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200`}>
+      <video 
+        ref={videoRef} 
+        autoPlay 
+        playsInline 
+        className={`w-full h-full object-cover ${showVideo ? '' : 'hidden'}`} 
+      />
+      {!showVideo && (
+        <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
+          <div className={`w-12 h-12 ${avatarColors[colorIndex % 4]} border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-lg font-bold ${isSpeaking ? 'animate-pulse' : ''}`}>
+            {name[0]?.toUpperCase() || '?'}
+          </div>
+        </div>
+      )}
+      {/* Speaking indicator */}
+      {isSpeaking && (
+        <div className="absolute top-1 left-1 flex gap-0.5">
+          <div className="w-1 h-3 bg-[#00ff41] animate-pulse" />
+          <div className="w-1 h-4 bg-[#00ff41] animate-pulse" style={{ animationDelay: '100ms' }} />
+          <div className="w-1 h-2 bg-[#00ff41] animate-pulse" style={{ animationDelay: '200ms' }} />
+        </div>
+      )}
+      {/* Name label */}
+      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[8px] text-[#00ff41] truncate">
+        {name}
+      </div>
+      {/* Hand raised */}
+      {isHandRaised && (
+        <div className="absolute top-1 right-1 w-5 h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
+          <Hand className="h-3 w-3 text-white" />
+        </div>
+      )}
+      {/* Remove button on hover */}
+      <button 
+        onClick={onRemove}
+        className="absolute top-0.5 right-0.5 w-4 h-4 bg-[#ff0000] items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hidden group-hover:flex"
+      >
+        <UserX className="h-2 w-2 text-white" />
+      </button>
     </div>
   )
 }
