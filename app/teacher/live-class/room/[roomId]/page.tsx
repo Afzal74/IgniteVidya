@@ -85,6 +85,20 @@ export default function TeacherLiveClassRoomPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Direct Message (DM) state
+  const [dmTarget, setDmTarget] = useState<{ id: string; name: string } | null>(null);
+  const [dmMessages, setDmMessages] = useState<Record<string, Array<{
+    id: string;
+    sender: string;
+    senderName: string;
+    message: string;
+    timestamp: number;
+    isTeacher?: boolean;
+  }>>>({});
+  const [dmInput, setDmInput] = useState("");
+  const [dmUnreadCounts, setDmUnreadCounts] = useState<Record<string, number>>({});
+  const dmEndRef = useRef<HTMLDivElement>(null);
+
   // Poll state
   const [showPoll, setShowPoll] = useState(false);
   const [activePoll, setActivePoll] = useState<{
@@ -464,6 +478,21 @@ export default function TeacherLiveClassRoomPage() {
           // Received chat message
           setChatMessages((prev) => [...prev, payload]);
           setUnreadCount((prev) => prev + 1);
+        })
+        .on("broadcast", { event: "dm-message" }, ({ payload }) => {
+          // Received direct message
+          if (payload.to === myId.current || payload.to === "teacher") {
+            const senderId = payload.sender;
+            setDmMessages((prev) => ({
+              ...prev,
+              [senderId]: [...(prev[senderId] || []), payload],
+            }));
+            // Increment unread if not currently viewing this DM
+            setDmUnreadCounts((prev) => ({
+              ...prev,
+              [senderId]: (prev[senderId] || 0) + 1,
+            }));
+          }
         })
         .on("broadcast", { event: "poll-vote" }, ({ payload }) => {
           // Student voted on poll
@@ -951,6 +980,46 @@ export default function TeacherLiveClassRoomPage() {
     setChatMessages((prev) => [...prev, msg]);
     setChatInput("");
   };
+
+  // Direct Message functions
+  const openDm = (studentId: string, studentName: string) => {
+    setDmTarget({ id: studentId, name: studentName });
+    // Clear unread count for this student
+    setDmUnreadCounts((prev) => ({ ...prev, [studentId]: 0 }));
+  };
+
+  const closeDm = () => {
+    setDmTarget(null);
+    setDmInput("");
+  };
+
+  const sendDmMessage = () => {
+    if (!dmInput.trim() || !channelRef.current || !dmTarget) return;
+    const msg = {
+      id: `dm-teacher-${Date.now()}`,
+      sender: "teacher",
+      senderName: "Teacher",
+      to: dmTarget.id,
+      toName: dmTarget.name,
+      message: dmInput.trim(),
+      timestamp: Date.now(),
+      isTeacher: true,
+    };
+    channelRef.current.send({
+      type: "broadcast",
+      event: "dm-message",
+      payload: msg,
+    });
+    // Add to local DM messages
+    setDmMessages((prev) => ({
+      ...prev,
+      [dmTarget.id]: [...(prev[dmTarget.id] || []), msg],
+    }));
+    setDmInput("");
+  };
+
+  // Get total DM unread count
+  const totalDmUnread = Object.values(dmUnreadCounts).reduce((a, b) => a + b, 0);
 
   // Poll functions
   const createPoll = () => {
@@ -1498,12 +1567,26 @@ export default function TeacherLiveClassRoomPage() {
                           </div>
                         </div>
                       </div>
-                      <button
-                        onClick={() => removeParticipant(p.id)}
-                        className="opacity-0 group-hover:opacity-100 text-[#ff0000] flex-shrink-0"
-                      >
-                        <UserX className="h-3 w-3" />
-                      </button>
+                      <div className="flex items-center gap-0.5">
+                        {/* DM Button */}
+                        <button
+                          onClick={() => { openDm(p.id, p.student_name); setShowChat(true); }}
+                          className="relative text-[#00d4ff] hover:text-white"
+                        >
+                          <MessageCircle className="h-3 w-3" />
+                          {dmUnreadCounts[p.id] > 0 && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#ff0000] rounded-full text-[5px] text-white flex items-center justify-center">
+                              {dmUnreadCounts[p.id]}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => removeParticipant(p.id)}
+                          className="opacity-0 group-hover:opacity-100 text-[#ff0000] flex-shrink-0"
+                        >
+                          <UserX className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1521,9 +1604,55 @@ export default function TeacherLiveClassRoomPage() {
               exit={{ width: 0, opacity: 0 }}
               className="bg-[#1a1a3e] border-l-4 border-[#00d4ff] flex flex-col overflow-hidden"
             >
+              {/* DM View */}
+              {dmTarget ? (
+                <>
+                  <div className="p-2 border-b-2 border-[#ff00ff] flex items-center justify-between bg-[#ff00ff]/10">
+                    <div className="flex items-center gap-1">
+                      <button onClick={closeDm} className="text-[#ff00ff] hover:text-white">
+                        ←
+                      </button>
+                      <h3 className="text-[#ff00ff] text-[8px] font-bold">
+                        💬 DM: {dmTarget.name}
+                      </h3>
+                    </div>
+                    <button onClick={() => { closeDm(); setShowChat(false); }} className="text-[#00d4ff] hover:text-white">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+                    {(dmMessages[dmTarget.id] || []).length === 0 ? (
+                      <p className="text-[#444] text-[8px] text-center py-4">Start a private conversation</p>
+                    ) : (
+                      (dmMessages[dmTarget.id] || []).map((msg) => (
+                        <div key={msg.id} className={`p-2 border ${msg.isTeacher ? "bg-[#00ff41]/10 border-[#00ff41] ml-4" : "bg-[#ff00ff]/10 border-[#ff00ff] mr-4"}`}>
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <span className={`text-[7px] font-bold ${msg.isTeacher ? "text-[#00ff41]" : "text-[#ff00ff]"}`}>
+                              {msg.isTeacher ? "👑 You" : msg.senderName}
+                            </span>
+                            <span className="text-[6px] text-[#666]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                          </div>
+                          <p className="text-white text-[8px] break-words">{msg.message}</p>
+                        </div>
+                      ))
+                    )}
+                    <div ref={dmEndRef} />
+                  </div>
+                  <div className="p-2 border-t-2 border-[#ff00ff]">
+                    <div className="flex gap-1">
+                      <input type="text" value={dmInput} onChange={(e) => setDmInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendDmMessage()} placeholder={`Message ${dmTarget.name}...`} className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#ff00ff] focus:border-[#00ff41] focus:outline-none" />
+                      <button onClick={sendDmMessage} className="px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white hover:bg-[#0f0f23] transition-colors">
+                        <Send className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+              <>
               <div className="p-2 border-b-2 border-[#00d4ff] flex items-center justify-between">
                 <h3 className="text-[#00ff41] text-[8px] font-bold flex items-center gap-1">
                   <MessageCircle className="h-3 w-3" /> CHAT
+                  {totalDmUnread > 0 && <span className="ml-1 px-1 py-0.5 bg-[#ff0000] text-white text-[5px] rounded">{totalDmUnread} DM</span>}
                 </h3>
                 <div className="flex items-center gap-1">
                   <button onClick={() => { setShowPoll(!showPoll); setShowQuizForm(false); }} className={`px-1.5 py-0.5 border text-[6px] ${showPoll || activePoll ? 'bg-[#ff00ff] border-[#ff00ff] text-white' : 'border-[#ff00ff] text-[#ff00ff] hover:bg-[#ff00ff] hover:text-white'}`}>
@@ -1728,6 +1857,8 @@ export default function TeacherLiveClassRoomPage() {
                   </button>
                 </div>
               </div>
+              </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

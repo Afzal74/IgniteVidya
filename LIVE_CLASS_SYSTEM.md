@@ -164,6 +164,7 @@ app/
 | `webrtc-ice`    | Any → Any         | ICE candidate exchange      |
 | `video-toggle`  | Any → All         | Camera on/off notification  |
 | `chat-message`  | Any → All         | Chat message broadcast      |
+| `dm-message`    | 1-to-1            | Private direct message      |
 | `poll-start`    | Teacher → All     | New poll created            |
 | `poll-vote`     | Student → All     | Vote submitted              |
 | `poll-end`      | Teacher → All     | Poll closed                 |
@@ -171,6 +172,39 @@ app/
 | `quiz-answer`   | Student → Teacher | Answer submitted            |
 | `quiz-end`      | Teacher → All     | Quiz ended with results     |
 | `class-end`     | Teacher → All     | Class session ended         |
+
+---
+
+## 💬 Direct Messages (DM)
+
+Private 1-on-1 messaging between teacher and students.
+
+### Teacher View
+
+- Click 💬 icon next to any student in the participants list
+- Opens private chat panel
+- Unread DM badges show on each student
+- Total unread count shown in chat header
+
+### Student View
+
+- Click "💬 DM" button in chat header
+- Opens private chat with teacher
+- Unread badge when teacher sends message
+
+```
+┌─────────────────────────────────────┐
+│  ← 💬 DM: Student Name         [X]  │
+│  ─────────────────────────────────  │
+│                                     │
+│  [Teacher message]          10:30   │
+│                                     │
+│          [Your message]     10:31   │
+│                                     │
+│  ─────────────────────────────────  │
+│  [Message input...        ] [Send]  │
+└─────────────────────────────────────┘
+```
 
 ---
 
