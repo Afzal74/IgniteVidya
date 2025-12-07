@@ -1132,10 +1132,12 @@ export default function TeacherLiveClassRoomPage() {
     startNextQuestion(activeQuiz.questionNumber || 0);
   };
 
-  // Clear quiz and end session
+  // Clear quiz and reset all quiz-related state
   const clearQuiz = () => {
     setActiveQuiz(null);
     setShowLeaderboardBreak(false);
+    setQuizSessionActive(false);
+    // Don't clear the stack - teacher might want to run it again
   };
 
   // End quiz session early
@@ -1153,6 +1155,7 @@ export default function TeacherLiveClassRoomPage() {
   // Clear quiz stack
   const clearQuizStack = () => {
     setQuizStack([]);
+    setQuizSessionActive(false);
   };
   
   // Get sorted leaderboard for display
