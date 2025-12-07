@@ -212,34 +212,21 @@ export default function TeacherLiveClassRoomPage() {
 
   // Handle incoming answer
   const handleAnswer = useCallback(async (from: string, sdp: string) => {
-    console.log('Received answer from:', from, 'current connections:', Array.from(peerConnections.current.keys()))
     const pc = peerConnections.current.get(from)
+    if (!pc) return
     
-    if (!pc) {
-      console.log('No peer connection found for:', from)
-      return
-    }
+    // Only set answer if we're waiting for one
+    if (pc.signalingState !== 'have-local-offer') return
     
-    console.log('Signaling state:', pc.signalingState)
-    
-    if (pc.signalingState === 'have-local-offer') {
-      try {
-        await pc.setRemoteDescription({ type: 'answer', sdp })
-        
-        // Add any pending ICE candidates
-        const pending = pendingCandidates.current.get(from) || []
-        for (const candidate of pending) {
-          await pc.addIceCandidate(candidate)
-        }
-        pendingCandidates.current.delete(from)
-        console.log('Answer set successfully for:', from)
-      } catch (err) {
-        console.error('Error handling answer:', err)
+    try {
+      await pc.setRemoteDescription({ type: 'answer', sdp })
+      const pending = pendingCandidates.current.get(from) || []
+      for (const candidate of pending) {
+        await pc.addIceCandidate(candidate)
       }
-    } else if (pc.signalingState === 'stable') {
-      console.log('Connection already stable, ignoring duplicate answer from:', from)
-    } else {
-      console.log('Unexpected signaling state:', pc.signalingState, 'for:', from)
+      pendingCandidates.current.delete(from)
+    } catch {
+      // Silently ignore - connection may have changed state
     }
   }, [])
 
