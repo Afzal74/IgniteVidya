@@ -447,10 +447,21 @@ export default function LiveClassRoomPage() {
         setUnreadCount((prev) => prev + 1);
       })
       .on("broadcast", { event: "dm-message" }, ({ payload }) => {
-        // Received direct message from teacher
-        if (payload.to === myId.current || payload.sender === "teacher") {
-          setDmMessages((prev) => [...prev, payload]);
-          if (!showDm) {
+        // Received direct message - only if it's for me (my participant ID)
+        const myParticipantId =
+          localStorage.getItem("live_class_participant_id") || myId.current;
+        const isForMe = payload.to === myParticipantId;
+        // Don't add messages I sent (already added locally)
+        const isFromMe = payload.sender === myParticipantId;
+
+        if (isForMe && !isFromMe) {
+          setDmMessages((prev) => {
+            // Prevent duplicates
+            if (prev.some((m) => m.id === payload.id)) return prev;
+            return [...prev, payload];
+          });
+          // Increment unread if message is FROM teacher
+          if (payload.sender === "teacher") {
             setDmUnreadCount((prev) => prev + 1);
           }
         }

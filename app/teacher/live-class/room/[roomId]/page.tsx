@@ -480,13 +480,21 @@ export default function TeacherLiveClassRoomPage() {
           setUnreadCount((prev) => prev + 1);
         })
         .on("broadcast", { event: "dm-message" }, ({ payload }) => {
-          // Received direct message
-          if (payload.to === myId.current || payload.to === "teacher") {
+          // Received direct message from student (not from teacher - those are added locally)
+          if (
+            (payload.to === myId.current || payload.to === "teacher") &&
+            payload.sender !== "teacher"
+          ) {
             const senderId = payload.sender;
-            setDmMessages((prev) => ({
-              ...prev,
-              [senderId]: [...(prev[senderId] || []), payload],
-            }));
+            setDmMessages((prev) => {
+              const existing = prev[senderId] || [];
+              // Prevent duplicates
+              if (existing.some((m) => m.id === payload.id)) return prev;
+              return {
+                ...prev,
+                [senderId]: [...existing, payload],
+              };
+            });
             // Increment unread if not currently viewing this DM
             setDmUnreadCounts((prev) => ({
               ...prev,
