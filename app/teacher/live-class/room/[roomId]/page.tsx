@@ -23,11 +23,7 @@ import {
   Send,
   X,
   BarChart3,
-  Plus,
-  Trash2,
   Check,
-  Image,
-  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -107,7 +103,6 @@ export default function TeacherLiveClassRoomPage() {
   const [quizOptions, setQuizOptions] = useState(["", "", "", ""]);
   const [quizCorrectAnswer, setQuizCorrectAnswer] = useState(0);
   const [quizTimer, setQuizTimer] = useState(30);
-  const [quizImage, setQuizImage] = useState(""); // Image URL for quiz
   const [activeQuiz, setActiveQuiz] = useState<{
     id: string;
     question: string;
@@ -116,19 +111,20 @@ export default function TeacherLiveClassRoomPage() {
     timeLeft: number;
     answers: Record<string, { answer: number; name: string; time: number }>;
     isActive: boolean;
-    image?: string;
+    questionNumber: number;
+    totalQuestions: number;
   } | null>(null);
 
-  // Question Bank state
-  const [questionBank, setQuestionBank] = useState<Array<{
+  // Quiz Stack state - queue of questions to ask
+  const [quizStack, setQuizStack] = useState<Array<{
     id: string;
     question: string;
     options: string[];
     correctAnswer: number;
     timer: number;
-    image?: string;
   }>>([]);
-  const [showQuestionBank, setShowQuestionBank] = useState(false);
+  const [showLeaderboardBreak, setShowLeaderboardBreak] = useState(false);
+  const [quizSessionActive, setQuizSessionActive] = useState(false);
 
   // Leaderboard state (accumulates across quizzes)
   const [leaderboard, setLeaderboard] = useState<Record<string, { name: string; points: number; correct: number }>>({});
@@ -990,35 +986,10 @@ export default function TeacherLiveClassRoomPage() {
     setActivePoll(null);
   };
 
-  // Quiz functions
-  const startQuiz = () => {
-    const validOptions = quizOptions.filter(o => o.trim());
-    if (!quizQuestion.trim() || validOptions.length < 2) return;
-    const quiz = {
-      id: `quiz-${Date.now()}`,
-      question: quizQuestion.trim(),
-      options: validOptions,
-      correctAnswer: quizCorrectAnswer,
-      timeLeft: quizTimer,
-      answers: {},
-      isActive: true,
-      image: quizImage.trim() || undefined,
-    };
-    setActiveQuiz(quiz);
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "quiz-start",
-      payload: { ...quiz, correctAnswer: undefined }, // Don't send correct answer to students
-    });
-    setShowQuizForm(false);
-    setQuizQuestion("");
-    setQuizOptions(["", "", "", ""]);
-    setQuizCorrectAnswer(0);
-    setQuizImage("");
-  };
-
-  // Save question to bank
-  const saveToQuestionBank = () => {
+  // Quiz Stack functions
+  
+  // Add question to stack
+  const addToQuizStack = () => {
     const validOptions = quizOptions.filter(o => o.trim());
     if (!quizQuestion.trim() || validOptions.length < 2) return;
     const newQuestion = {
@@ -1027,27 +998,41 @@ export default function TeacherLiveClassRoomPage() {
       options: validOptions,
       correctAnswer: quizCorrectAnswer,
       timer: quizTimer,
-      image: quizImage.trim() || undefined,
     };
-    setQuestionBank(prev => [...prev, newQuestion]);
+    setQuizStack(prev => [...prev, newQuestion]);
     setQuizQuestion("");
     setQuizOptions(["", "", "", ""]);
     setQuizCorrectAnswer(0);
-    setQuizImage("");
   };
 
-  // Load question from bank
-  const loadFromQuestionBank = (q: typeof questionBank[0]) => {
-    setQuizQuestion(q.question);
-    setQuizOptions([...q.options, "", "", "", ""].slice(0, 4));
-    setQuizCorrectAnswer(q.correctAnswer);
-    setQuizTimer(q.timer);
-    setQuizImage(q.image || "");
-    setShowQuestionBank(false);
+  // Remove question from stack
+  const removeFromQuizStack = (id: string) => {
+    setQuizStack(prev => prev.filter(q => q.id !== id));
   };
 
-  // Start quiz directly from bank
-  const startQuizFromBank = (q: typeof questionBank[0]) => {
+  // Start the quiz session (runs through all questions in stack)
+  const startQuizSession = () => {
+    if (quizStack.length === 0) return;
+    setQuizSessionActive(true);
+    setLeaderboard({}); // Reset leaderboard for new session
+    startNextQuestion(0);
+  };
+
+  // Start a specific question from the stack
+  const startNextQuestion = (index: number) => {
+    if (index >= quizStack.length) {
+      // All questions done - show final leaderboard
+      setQuizSessionActive(false);
+      setShowLeaderboardBreak(true);
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "quiz-session-end",
+        payload: { message: "Quiz Complete!" },
+      });
+      return;
+    }
+
+    const q = quizStack[index];
     const quiz = {
       id: `quiz-${Date.now()}`,
       question: q.question,
@@ -1056,32 +1041,36 @@ export default function TeacherLiveClassRoomPage() {
       timeLeft: q.timer,
       answers: {},
       isActive: true,
-      image: q.image,
+      questionNumber: index + 1,
+      totalQuestions: quizStack.length,
     };
     setActiveQuiz(quiz);
+    setShowLeaderboardBreak(false);
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-start",
-      payload: { ...quiz, correctAnswer: undefined },
+      payload: { 
+        ...quiz, 
+        correctAnswer: undefined,
+        questionNumber: index + 1,
+        totalQuestions: quizStack.length,
+      },
     });
-    setShowQuestionBank(false);
   };
 
-  // Delete question from bank
-  const deleteFromQuestionBank = (id: string) => {
-    setQuestionBank(prev => prev.filter(q => q.id !== id));
-  };
+  // Current question index based on activeQuiz
+  const currentQuestionIndex = activeQuiz ? (activeQuiz.questionNumber || 1) - 1 : -1;
 
   const endQuiz = () => {
     if (!activeQuiz) return;
     
     // Calculate points for correct answers (100 points per second remaining)
-    const results: Array<{ oderId: string; name: string; points: number }> = [];
+    const questionResults: Array<{ oderId: string; name: string; points: number }> = [];
     Object.entries(activeQuiz.answers).forEach(([oderId, data]) => {
       if (data.answer === activeQuiz.correctAnswer) {
         const points = data.time * 100; // 100 points per second remaining
-        results.push({ oderId, name: data.name, points });
-        // Update leaderboard
+        questionResults.push({ oderId, name: data.name, points });
+        // Update cumulative leaderboard
         setLeaderboard((prev) => ({
           ...prev,
           [oderId]: {
@@ -1092,11 +1081,25 @@ export default function TeacherLiveClassRoomPage() {
         }));
       }
     });
+
+    // Get updated cumulative leaderboard for display
+    // We need to calculate it here since setState is async
+    const updatedLeaderboard = { ...leaderboard };
+    questionResults.forEach(r => {
+      updatedLeaderboard[r.oderId] = {
+        name: r.name,
+        points: (updatedLeaderboard[r.oderId]?.points || 0) + r.points,
+        correct: (updatedLeaderboard[r.oderId]?.correct || 0) + 1,
+      };
+    });
     
-    // Sort by points - full list for rank calculation
-    const fullLeaderboard = results.sort((a, b) => b.points - a.points);
-    // Top 5 for display
-    const top5 = fullLeaderboard.slice(0, 5);
+    // Sort cumulative leaderboard
+    const sortedCumulative = Object.entries(updatedLeaderboard)
+      .map(([id, data]) => ({ oderId: id, name: data.name, points: data.points }))
+      .sort((a, b) => b.points - a.points);
+    
+    const top5 = sortedCumulative.slice(0, 5);
+    const isLastQuestion = activeQuiz.questionNumber === activeQuiz.totalQuestions;
     
     channelRef.current?.send({
       type: "broadcast",
@@ -1105,14 +1108,52 @@ export default function TeacherLiveClassRoomPage() {
         quizId: activeQuiz.id, 
         correctAnswer: activeQuiz.correctAnswer, 
         leaderboard: top5,
-        fullLeaderboard: fullLeaderboard, // Send full list for rank calculation
+        fullLeaderboard: sortedCumulative,
         totalParticipants: Object.keys(activeQuiz.answers).length,
+        questionNumber: activeQuiz.questionNumber,
+        totalQuestions: activeQuiz.totalQuestions,
+        isLastQuestion,
       },
     });
+    
     setActiveQuiz((prev) => prev ? { ...prev, isActive: false } : null);
+    
+    // Show leaderboard break before next question
+    if (quizSessionActive && !isLastQuestion) {
+      setShowLeaderboardBreak(true);
+    }
   };
 
-  const clearQuiz = () => setActiveQuiz(null);
+  // Continue to next question after leaderboard break
+  const continueToNextQuestion = () => {
+    if (!activeQuiz) return;
+    setShowLeaderboardBreak(false);
+    setActiveQuiz(null);
+    startNextQuestion(activeQuiz.questionNumber || 0);
+  };
+
+  // Clear quiz and end session
+  const clearQuiz = () => {
+    setActiveQuiz(null);
+    setShowLeaderboardBreak(false);
+  };
+
+  // End quiz session early
+  const endQuizSession = () => {
+    setQuizSessionActive(false);
+    setActiveQuiz(null);
+    setShowLeaderboardBreak(false);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "quiz-session-end",
+      payload: { message: "Quiz ended by teacher" },
+    });
+  };
+
+  // Clear quiz stack
+  const clearQuizStack = () => {
+    setQuizStack([]);
+  };
   
   // Get sorted leaderboard for display
   const sortedLeaderboard = Object.entries(leaderboard)
@@ -1556,14 +1597,9 @@ export default function TeacherLiveClassRoomPage() {
               {activeQuiz && (
                 <div className="p-2 border-b-2 border-[#ffff00] bg-[#ffff00]/10">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#ffff00] text-[7px] font-bold">🎯 LIVE QUIZ</span>
+                    <span className="text-[#ffff00] text-[7px] font-bold">🎯 Q{activeQuiz.questionNumber}/{activeQuiz.totalQuestions}</span>
                     <span className={`text-[8px] font-bold ${activeQuiz.timeLeft <= 5 ? 'text-[#ff0000] animate-pulse' : 'text-[#00ff41]'}`}>{activeQuiz.timeLeft}s</span>
                   </div>
-                  {activeQuiz.image && (
-                    <div className="w-full h-24 mb-2 bg-[#0f0f23] border border-[#ffff00] overflow-hidden">
-                      <img src={activeQuiz.image} alt="Quiz" className="w-full h-full object-contain" />
-                    </div>
-                  )}
                   <p className="text-white text-[8px] mb-2">{activeQuiz.question}</p>
                   <div className="space-y-1 mb-2">
                     {activeQuiz.options.map((opt, i) => {
@@ -1581,6 +1617,8 @@ export default function TeacherLiveClassRoomPage() {
                     <span className="text-[6px] text-[#666]">{Object.keys(activeQuiz.answers).length} answered</span>
                     {activeQuiz.isActive ? (
                       <button onClick={endQuiz} className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]">END</button>
+                    ) : showLeaderboardBreak && activeQuiz.questionNumber < activeQuiz.totalQuestions ? (
+                      <button onClick={continueToNextQuestion} className="px-2 py-0.5 bg-[#00ff41] border border-[#00ff41] text-[#0f0f23] text-[6px] animate-pulse">NEXT ▶</button>
                     ) : (
                       <button onClick={clearQuiz} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
                     )}
@@ -1612,48 +1650,35 @@ export default function TeacherLiveClassRoomPage() {
                 </div>
               )}
 
-              {/* Quiz Form */}
-              {showQuizForm && !activeQuiz && (
+              {/* Quiz Form - Stack Based */}
+              {showQuizForm && !activeQuiz && !quizSessionActive && (
                 <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2 max-h-[50vh] overflow-y-auto">
-                  {/* Question Bank Toggle */}
-                  <div className="flex gap-1">
-                    <button onClick={() => setShowQuestionBank(!showQuestionBank)} className={`flex-1 px-2 py-0.5 border text-[6px] ${showQuestionBank ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff]/20'}`}>
-                      📚 BANK ({questionBank.length})
-                    </button>
-                  </div>
-
-                  {/* Question Bank List */}
-                  {showQuestionBank && questionBank.length > 0 && (
-                    <div className="space-y-1 p-1 bg-[#1a1a3e] border border-[#00d4ff] max-h-32 overflow-y-auto">
-                      {questionBank.map((q, i) => (
-                        <div key={q.id} className="flex items-center gap-1 p-1 bg-[#0f0f23] border border-[#444] hover:border-[#00d4ff]">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-[7px] truncate">{q.question}</p>
-                            <p className="text-[5px] text-[#666]">{q.options.length} opts • {q.timer}s {q.image ? '• 🖼️' : ''}</p>
+                  {/* Quiz Stack Display */}
+                  {quizStack.length > 0 && (
+                    <div className="p-1 bg-[#1a1a3e] border border-[#ffff00]">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[#ffff00] text-[6px] font-bold">📋 QUIZ STACK ({quizStack.length})</span>
+                        <button onClick={clearQuizStack} className="text-[5px] text-[#ff0000] hover:text-white">CLEAR ALL</button>
+                      </div>
+                      <div className="space-y-1 max-h-24 overflow-y-auto">
+                        {quizStack.map((q, i) => (
+                          <div key={q.id} className="flex items-center gap-1 p-1 bg-[#0f0f23] border border-[#444]">
+                            <span className="text-[#ffff00] text-[6px] font-bold w-4">{i + 1}.</span>
+                            <span className="text-white text-[6px] flex-1 truncate">{q.question}</span>
+                            <span className="text-[5px] text-[#666]">{q.timer}s</span>
+                            <button onClick={() => removeFromQuizStack(q.id)} className="text-[#ff0000] text-[6px]">✕</button>
                           </div>
-                          <button onClick={() => loadFromQuestionBank(q)} className="px-1 py-0.5 bg-[#00d4ff] text-[#0f0f23] text-[5px]">EDIT</button>
-                          <button onClick={() => startQuizFromBank(q)} className="px-1 py-0.5 bg-[#00ff41] text-[#0f0f23] text-[5px]">▶</button>
-                          <button onClick={() => deleteFromQuestionBank(q.id)} className="px-1 py-0.5 bg-[#ff0000] text-white text-[5px]">✕</button>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                      <button onClick={startQuizSession} className="w-full mt-2 px-2 py-1.5 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] text-[7px] font-bold">
+                        🚀 START QUIZ SESSION ({quizStack.length} questions)
+                      </button>
                     </div>
-                  )}
-                  {showQuestionBank && questionBank.length === 0 && (
-                    <p className="text-[6px] text-[#666] text-center py-2">No saved questions. Create one below!</p>
                   )}
 
+                  {/* Add Question Form */}
+                  <p className="text-[6px] text-[#666]">Add questions to stack:</p>
                   <input type="text" value={quizQuestion} onChange={(e) => setQuizQuestion(e.target.value)} placeholder="Question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ffff00] focus:outline-none" />
-                  
-                  {/* Image URL Input */}
-                  <div className="flex gap-1 items-center">
-                    <span className="text-[6px] text-[#666]">🖼️</span>
-                    <input type="text" value={quizImage} onChange={(e) => setQuizImage(e.target.value)} placeholder="Image URL (optional)" className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ff00ff] focus:outline-none" />
-                  </div>
-                  {quizImage && (
-                    <div className="relative w-full h-20 bg-[#1a1a3e] border border-[#ff00ff] overflow-hidden">
-                      <img src={quizImage} alt="Preview" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    </div>
-                  )}
 
                   {quizOptions.map((opt, i) => (
                     <div key={i} className="flex gap-1 items-center">
@@ -1668,14 +1693,9 @@ export default function TeacherLiveClassRoomPage() {
                     <input type="number" value={quizTimer} onChange={(e) => setQuizTimer(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))} className="w-12 bg-[#1a1a3e] text-white text-[8px] px-1 py-0.5 border border-[#444] text-center" />
                     <span className="text-[6px] text-[#666]">sec</span>
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={saveToQuestionBank} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="flex-1 px-2 py-1 bg-[#00d4ff] border-2 border-[#00d4ff] text-[#0f0f23] text-[6px] font-bold disabled:opacity-50">
-                      💾 SAVE TO BANK
-                    </button>
-                    <button onClick={startQuiz} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="flex-1 px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[6px] font-bold disabled:opacity-50">
-                      🚀 START NOW
-                    </button>
-                  </div>
+                  <button onClick={addToQuizStack} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[7px] font-bold disabled:opacity-50">
+                    + ADD TO STACK
+                  </button>
                 </div>
               )}
 

@@ -106,8 +106,13 @@ export default function LiveClassRoomPage() {
     myPoints?: number;
     myRank?: number;
     totalParticipants?: number;
-    image?: string;
+    questionNumber?: number;
+    totalQuestions?: number;
+    isLastQuestion?: boolean;
   } | null>(null);
+  
+  // Cumulative leaderboard for student (persists across questions)
+  const [cumulativeLeaderboard, setCumulativeLeaderboard] = useState<Array<{ oderId: string; name: string; points: number }>>([]);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -451,27 +456,29 @@ export default function LiveClassRoomPage() {
         });
       })
       .on("broadcast", { event: "quiz-start" }, ({ payload }) => {
-        // Teacher started a quiz
+        // Teacher started a quiz question
         setActiveQuiz({
           ...payload,
           myAnswer: undefined,
           correctAnswer: undefined,
-          image: payload.image,
+          questionNumber: payload.questionNumber || 1,
+          totalQuestions: payload.totalQuestions || 1,
         });
       })
       .on("broadcast", { event: "quiz-end" }, ({ payload }) => {
-        // Teacher ended the quiz - reveal correct answer and leaderboard
+        // Teacher ended the quiz question - reveal correct answer and cumulative leaderboard
+        // Update cumulative leaderboard
+        setCumulativeLeaderboard(payload.fullLeaderboard || payload.leaderboard || []);
+        
         setActiveQuiz((prev) => {
           if (!prev || prev.id !== payload.quizId) return prev;
-          // Calculate my points if I answered correctly
-          let myPoints = 0;
-          let myRank: number | undefined = undefined;
-          
-          // Find my entry in full results to get rank
+          // Find my entry in cumulative results to get rank
           const fullLeaderboard = payload.fullLeaderboard || payload.leaderboard || [];
           const myEntryIndex = fullLeaderboard.findIndex(
             (e: any) => e.oderId === participantId
           );
+          let myRank: number | undefined = undefined;
+          let myPoints = 0;
           if (myEntryIndex !== -1) {
             myRank = myEntryIndex + 1;
             myPoints = fullLeaderboard[myEntryIndex].points || 0;
@@ -485,8 +492,18 @@ export default function LiveClassRoomPage() {
             myPoints,
             myRank,
             totalParticipants: payload.totalParticipants,
+            questionNumber: payload.questionNumber,
+            totalQuestions: payload.totalQuestions,
+            isLastQuestion: payload.isLastQuestion,
           };
         });
+      })
+      .on("broadcast", { event: "quiz-session-end" }, () => {
+        // Quiz session ended - keep showing final leaderboard
+        // Reset cumulative leaderboard for next session
+        setTimeout(() => {
+          setCumulativeLeaderboard([]);
+        }, 10000); // Clear after 10 seconds
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -1448,7 +1465,7 @@ export default function LiveClassRoomPage() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-yellow-400 text-xs font-bold flex items-center gap-1">
-                      🎯 Quiz
+                      🎯 Q{activeQuiz.questionNumber || 1}/{activeQuiz.totalQuestions || 1}
                     </span>
                     {activeQuiz.isActive && (
                       <span
@@ -1462,12 +1479,6 @@ export default function LiveClassRoomPage() {
                       </span>
                     )}
                   </div>
-                  {/* Quiz Image */}
-                  {activeQuiz.image && (
-                    <div className="w-full h-32 mb-3 bg-gray-900 rounded-lg overflow-hidden border border-yellow-500/30">
-                      <img src={activeQuiz.image} alt="Quiz" className="w-full h-full object-contain" />
-                    </div>
-                  )}
                   <p className="text-white text-sm mb-3">
                     {activeQuiz.question}
                   </p>
@@ -1540,7 +1551,7 @@ export default function LiveClassRoomPage() {
                           activeQuiz.leaderboard.length > 0 && (
                             <div className="mt-2 p-2 bg-gray-800/50 rounded-lg border border-yellow-500/30">
                               <p className="text-yellow-400 text-[10px] font-bold mb-1 text-center">
-                                🏆 Top 5
+                                🏆 {activeQuiz.isLastQuestion ? 'Final Standings' : 'Leaderboard'}
                               </p>
                               <div className="space-y-1">
                                 {activeQuiz.leaderboard.map((entry, i) => (
@@ -1576,7 +1587,7 @@ export default function LiveClassRoomPage() {
                                       </span>
                                     </span>
                                     <span className="text-green-400 font-bold">
-                                      +{entry.points.toLocaleString()}
+                                      {entry.points.toLocaleString()} pts
                                     </span>
                                   </div>
                                 ))}
@@ -1590,15 +1601,21 @@ export default function LiveClassRoomPage() {
                                       <span className="text-blue-400">You</span>
                                     </span>
                                     <span className="text-green-400 font-bold">
-                                      +{(activeQuiz.myPoints || 0).toLocaleString()}
+                                      {(activeQuiz.myPoints || 0).toLocaleString()} pts
                                     </span>
                                   </div>
-                                  {activeQuiz.totalParticipants && (
-                                    <p className="text-[8px] text-gray-500 text-center mt-1">
-                                      out of {activeQuiz.totalParticipants} participants
-                                    </p>
-                                  )}
                                 </div>
+                              )}
+                              {/* Next question indicator */}
+                              {!activeQuiz.isLastQuestion && activeQuiz.questionNumber && activeQuiz.totalQuestions && (
+                                <p className="text-[8px] text-yellow-400 text-center mt-2 animate-pulse">
+                                  ⏳ Waiting for Q{(activeQuiz.questionNumber || 0) + 1}/{activeQuiz.totalQuestions}...
+                                </p>
+                              )}
+                              {activeQuiz.isLastQuestion && (
+                                <p className="text-[10px] text-green-400 text-center mt-2 font-bold">
+                                  🎉 Quiz Complete!
+                                </p>
                               )}
                             </div>
                           )}
