@@ -84,6 +84,17 @@ export default function LiveClassRoomPage() {
   } | null>(null);
   const [showPollNotification, setShowPollNotification] = useState(false);
 
+  // Quiz state
+  const [activeQuiz, setActiveQuiz] = useState<{
+    id: string;
+    question: string;
+    options: string[];
+    timeLeft: number;
+    myAnswer?: number;
+    correctAnswer?: number;
+    isActive: boolean;
+  } | null>(null);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -417,6 +428,14 @@ export default function LiveClassRoomPage() {
           if (!prev || prev.id !== payload.pollId) return prev;
           return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
         });
+      })
+      .on("broadcast", { event: "quiz-start" }, ({ payload }) => {
+        // Teacher started a quiz
+        setActiveQuiz({ ...payload, myAnswer: undefined, correctAnswer: undefined });
+      })
+      .on("broadcast", { event: "quiz-end" }, ({ payload }) => {
+        // Teacher ended the quiz - reveal correct answer
+        setActiveQuiz((prev) => prev && prev.id === payload.quizId ? { ...prev, isActive: false, correctAnswer: payload.correctAnswer } : prev);
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -953,6 +972,30 @@ export default function LiveClassRoomPage() {
     setShowPollNotification(false);
   };
 
+  // Answer quiz
+  const answerQuiz = (answerIndex: number) => {
+    if (!activeQuiz || !activeQuiz.isActive || activeQuiz.myAnswer !== undefined) return;
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "quiz-answer",
+      payload: { quizId: activeQuiz.id, oderId: participantId, answer: answerIndex, name: participantName, time: activeQuiz.timeLeft },
+    });
+    setActiveQuiz((prev) => prev ? { ...prev, myAnswer: answerIndex } : null);
+  };
+
+  // Quiz timer
+  useEffect(() => {
+    if (!activeQuiz?.isActive || activeQuiz.timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setActiveQuiz((prev) => {
+        if (!prev || !prev.isActive) return prev;
+        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, isActive: false };
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [activeQuiz?.isActive, activeQuiz?.id]);
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -1308,6 +1351,55 @@ export default function LiveClassRoomPage() {
                   <X className="h-4 w-4" />
                 </button>
               </div>
+
+              {/* Active Quiz in Chat */}
+              {activeQuiz && (
+                <div className={`p-3 border-b-2 ${activeQuiz.isActive ? 'border-yellow-500 bg-yellow-500/10' : activeQuiz.myAnswer === activeQuiz.correctAnswer ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-yellow-400 text-xs font-bold flex items-center gap-1">🎯 Quiz</span>
+                    {activeQuiz.isActive && (
+                      <span className={`text-sm font-bold ${activeQuiz.timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-green-400'}`}>{activeQuiz.timeLeft}s</span>
+                    )}
+                  </div>
+                  <p className="text-white text-sm mb-3">{activeQuiz.question}</p>
+                  <div className="space-y-2">
+                    {activeQuiz.options.map((opt, i) => {
+                      const isMyAnswer = activeQuiz.myAnswer === i;
+                      const isCorrect = activeQuiz.correctAnswer === i;
+                      const showResult = !activeQuiz.isActive && activeQuiz.correctAnswer !== undefined;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => answerQuiz(i)}
+                          disabled={!activeQuiz.isActive || activeQuiz.myAnswer !== undefined}
+                          className={`w-full p-2 rounded-lg border-2 text-left text-xs transition-all ${
+                            showResult && isCorrect ? 'border-green-500 bg-green-500/20 text-green-400' :
+                            showResult && isMyAnswer && !isCorrect ? 'border-red-500 bg-red-500/20 text-red-400' :
+                            isMyAnswer ? 'border-blue-500 bg-blue-500/20 text-blue-400' :
+                            activeQuiz.isActive && activeQuiz.myAnswer === undefined ? 'border-gray-600 hover:border-yellow-500 hover:bg-yellow-500/10 text-white' :
+                            'border-gray-700 text-gray-400'
+                          }`}
+                        >
+                          <span className="flex items-center gap-2">
+                            {showResult && isCorrect && <Check className="h-4 w-4 text-green-400" />}
+                            {showResult && isMyAnswer && !isCorrect && <X className="h-4 w-4 text-red-400" />}
+                            {opt}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {activeQuiz.myAnswer !== undefined && activeQuiz.isActive && (
+                    <p className="text-blue-400 text-[10px] text-center mt-2">✓ Answer submitted! Waiting for results...</p>
+                  )}
+                  {!activeQuiz.isActive && activeQuiz.correctAnswer !== undefined && (
+                    <p className={`text-[10px] text-center mt-2 ${activeQuiz.myAnswer === activeQuiz.correctAnswer ? 'text-green-400' : 'text-red-400'}`}>
+                      {activeQuiz.myAnswer === activeQuiz.correctAnswer ? '🎉 Correct!' : activeQuiz.myAnswer !== undefined ? '❌ Wrong answer' : '⏰ Time\'s up!'}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
                 {chatMessages.length === 0 ? (
                   <p className="text-gray-500 text-xs text-center py-4">No messages yet</p>

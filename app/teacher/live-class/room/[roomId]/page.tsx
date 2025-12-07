@@ -99,6 +99,22 @@ export default function TeacherLiveClassRoomPage() {
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollOptions, setPollOptions] = useState(["", ""]);
 
+  // Quick Quiz state (in chat)
+  const [showQuizForm, setShowQuizForm] = useState(false);
+  const [quizQuestion, setQuizQuestion] = useState("");
+  const [quizOptions, setQuizOptions] = useState(["", "", "", ""]);
+  const [quizCorrectAnswer, setQuizCorrectAnswer] = useState(0);
+  const [quizTimer, setQuizTimer] = useState(30);
+  const [activeQuiz, setActiveQuiz] = useState<{
+    id: string;
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    timeLeft: number;
+    answers: Record<string, { answer: number; name: string; time: number }>;
+    isActive: boolean;
+  } | null>(null);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -440,6 +456,14 @@ export default function TeacherLiveClassRoomPage() {
           setActivePoll((prev) => {
             if (!prev || prev.id !== payload.pollId) return prev;
             return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
+          });
+        })
+        .on("broadcast", { event: "quiz-answer" }, ({ payload }) => {
+          // Student answered quiz
+          setActiveQuiz((prev) => {
+            if (!prev || prev.id !== payload.quizId || !prev.isActive) return prev;
+            if (prev.answers[payload.oderId]) return prev; // Already answered
+            return { ...prev, answers: { ...prev.answers, [payload.oderId]: { answer: payload.answer, name: payload.name, time: payload.time } } };
           });
         })
         .subscribe(async (status) => {
@@ -948,6 +972,59 @@ export default function TeacherLiveClassRoomPage() {
     setActivePoll(null);
   };
 
+  // Quiz functions
+  const startQuiz = () => {
+    const validOptions = quizOptions.filter(o => o.trim());
+    if (!quizQuestion.trim() || validOptions.length < 2) return;
+    const quiz = {
+      id: `quiz-${Date.now()}`,
+      question: quizQuestion.trim(),
+      options: validOptions,
+      correctAnswer: quizCorrectAnswer,
+      timeLeft: quizTimer,
+      answers: {},
+      isActive: true,
+    };
+    setActiveQuiz(quiz);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "quiz-start",
+      payload: { ...quiz, correctAnswer: undefined }, // Don't send correct answer to students
+    });
+    setShowQuizForm(false);
+    setQuizQuestion("");
+    setQuizOptions(["", "", "", ""]);
+    setQuizCorrectAnswer(0);
+  };
+
+  const endQuiz = () => {
+    if (!activeQuiz) return;
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "quiz-end",
+      payload: { quizId: activeQuiz.id, correctAnswer: activeQuiz.correctAnswer },
+    });
+    setActiveQuiz((prev) => prev ? { ...prev, isActive: false } : null);
+  };
+
+  const clearQuiz = () => setActiveQuiz(null);
+
+  // Quiz timer
+  useEffect(() => {
+    if (!activeQuiz?.isActive || activeQuiz.timeLeft <= 0) return;
+    const timer = setInterval(() => {
+      setActiveQuiz((prev) => {
+        if (!prev || !prev.isActive) return prev;
+        if (prev.timeLeft <= 1) {
+          endQuiz();
+          return { ...prev, timeLeft: 0, isActive: false };
+        }
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [activeQuiz?.isActive, activeQuiz?.id]);
+
   // Auto-scroll chat and reset unread when chat is opened
   useEffect(() => {
     if (showChat) {
@@ -1300,10 +1377,70 @@ export default function TeacherLiveClassRoomPage() {
                 <h3 className="text-[#00ff41] text-[8px] font-bold flex items-center gap-1">
                   <MessageCircle className="h-3 w-3" /> CHAT
                 </h3>
-                <button onClick={() => setShowChat(false)} className="text-[#00d4ff] hover:text-white">
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => setShowQuizForm(!showQuizForm)} className={`px-1.5 py-0.5 border text-[6px] ${showQuizForm || activeQuiz ? 'bg-[#ffff00] border-[#ffff00] text-[#0f0f23]' : 'border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]'}`}>
+                    🎯 QUIZ
+                  </button>
+                  <button onClick={() => setShowChat(false)} className="text-[#00d4ff] hover:text-white">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
+
+              {/* Active Quiz Display */}
+              {activeQuiz && (
+                <div className="p-2 border-b-2 border-[#ffff00] bg-[#ffff00]/10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#ffff00] text-[7px] font-bold">🎯 LIVE QUIZ</span>
+                    <span className={`text-[8px] font-bold ${activeQuiz.timeLeft <= 5 ? 'text-[#ff0000] animate-pulse' : 'text-[#00ff41]'}`}>{activeQuiz.timeLeft}s</span>
+                  </div>
+                  <p className="text-white text-[8px] mb-2">{activeQuiz.question}</p>
+                  <div className="space-y-1 mb-2">
+                    {activeQuiz.options.map((opt, i) => {
+                      const answerCount = Object.values(activeQuiz.answers).filter(a => a.answer === i).length;
+                      const isCorrect = i === activeQuiz.correctAnswer;
+                      return (
+                        <div key={i} className={`p-1 border text-[7px] flex justify-between ${!activeQuiz.isActive && isCorrect ? 'border-[#00ff41] bg-[#00ff41]/20 text-[#00ff41]' : 'border-[#444] text-white'}`}>
+                          <span>{isCorrect && !activeQuiz.isActive ? '✓ ' : ''}{opt}</span>
+                          <span>{answerCount}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[6px] text-[#666]">{Object.keys(activeQuiz.answers).length} answered</span>
+                    {activeQuiz.isActive ? (
+                      <button onClick={endQuiz} className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]">END</button>
+                    ) : (
+                      <button onClick={clearQuiz} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Quiz Form */}
+              {showQuizForm && !activeQuiz && (
+                <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2">
+                  <input type="text" value={quizQuestion} onChange={(e) => setQuizQuestion(e.target.value)} placeholder="Question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ffff00] focus:outline-none" />
+                  {quizOptions.map((opt, i) => (
+                    <div key={i} className="flex gap-1 items-center">
+                      <button onClick={() => setQuizCorrectAnswer(i)} className={`w-4 h-4 border flex items-center justify-center text-[8px] ${quizCorrectAnswer === i ? 'bg-[#00ff41] border-[#00ff41] text-[#0f0f23]' : 'border-[#444] text-[#444]'}`}>
+                        {quizCorrectAnswer === i ? '✓' : i + 1}
+                      </button>
+                      <input type="text" value={opt} onChange={(e) => { const n = [...quizOptions]; n[i] = e.target.value; setQuizOptions(n); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ffff00] focus:outline-none" />
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[6px] text-[#666]">Timer:</span>
+                    <input type="number" value={quizTimer} onChange={(e) => setQuizTimer(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))} className="w-12 bg-[#1a1a3e] text-white text-[8px] px-1 py-0.5 border border-[#444] text-center" />
+                    <span className="text-[6px] text-[#666]">sec</span>
+                  </div>
+                  <button onClick={startQuiz} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[7px] font-bold disabled:opacity-50">
+                    🚀 START QUIZ
+                  </button>
+                </div>
+              )}
+
               <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
                 {chatMessages.length === 0 ? (
                   <p className="text-[#444] text-[8px] text-center py-4">NO MESSAGES YET</p>
