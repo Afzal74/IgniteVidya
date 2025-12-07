@@ -1180,13 +1180,6 @@ export default function TeacherLiveClassRoomPage() {
             </div>
           )}
           <button
-            onClick={() => setShowPoll(!showPoll)}
-            className={`relative bg-[#0f0f23] border p-0.5 transition-colors ${activePoll?.isActive ? 'border-[#00ff41] text-[#00ff41]' : 'border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}
-          >
-            <BarChart3 className="h-2 w-2" />
-            {activePoll?.isActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#00ff41] rounded-full animate-pulse" />}
-          </button>
-          <button
             onClick={() => {
               setShowChat(!showChat);
               if (!showChat) setUnreadCount(0);
@@ -1409,7 +1402,10 @@ export default function TeacherLiveClassRoomPage() {
                   <MessageCircle className="h-3 w-3" /> CHAT
                 </h3>
                 <div className="flex items-center gap-1">
-                  <button onClick={() => setShowQuizForm(!showQuizForm)} className={`px-1.5 py-0.5 border text-[6px] ${showQuizForm || activeQuiz ? 'bg-[#ffff00] border-[#ffff00] text-[#0f0f23]' : 'border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]'}`}>
+                  <button onClick={() => { setShowPoll(!showPoll); setShowQuizForm(false); }} className={`px-1.5 py-0.5 border text-[6px] ${showPoll || activePoll ? 'bg-[#ff00ff] border-[#ff00ff] text-white' : 'border-[#ff00ff] text-[#ff00ff] hover:bg-[#ff00ff] hover:text-white'}`}>
+                    📊 POLL
+                  </button>
+                  <button onClick={() => { setShowQuizForm(!showQuizForm); setShowPoll(false); }} className={`px-1.5 py-0.5 border text-[6px] ${showQuizForm || activeQuiz ? 'bg-[#ffff00] border-[#ffff00] text-[#0f0f23]' : 'border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]'}`}>
                     🎯 QUIZ
                   </button>
                   <button onClick={() => setShowChat(false)} className="text-[#00d4ff] hover:text-white">
@@ -1417,6 +1413,64 @@ export default function TeacherLiveClassRoomPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Active Poll Display (inside chat) */}
+              {activePoll && (
+                <div className="p-2 border-b-2 border-[#ff00ff] bg-[#ff00ff]/10">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#ff00ff] text-[7px] font-bold">📊 LIVE POLL</span>
+                    {activePoll.isActive && <span className="w-2 h-2 bg-[#ff00ff] rounded-full animate-pulse" />}
+                  </div>
+                  <p className="text-white text-[8px] mb-2">{activePoll.question}</p>
+                  <div className="space-y-1 mb-2">
+                    {activePoll.options.map((opt, i) => {
+                      const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
+                      const totalVotes = Object.keys(activePoll.votes).length;
+                      const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                      return (
+                        <div key={i} className="mb-1">
+                          <div className="flex justify-between text-[7px] text-white mb-0.5">
+                            <span>{opt}</span>
+                            <span>{voteCount} ({percent}%)</span>
+                          </div>
+                          <div className="h-2 bg-[#0f0f23] border border-[#ff00ff]">
+                            <div className="h-full bg-[#ff00ff] transition-all" style={{ width: `${percent}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-[6px] text-[#666]">{Object.keys(activePoll.votes).length} votes</span>
+                    {activePoll.isActive ? (
+                      <button onClick={endPoll} className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]">END</button>
+                    ) : (
+                      <button onClick={clearPoll} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Poll Form (inside chat) */}
+              {showPoll && !activePoll && (
+                <div className="p-2 border-b-2 border-[#ff00ff] bg-[#0f0f23] space-y-2">
+                  <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Poll question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ff00ff] focus:outline-none" />
+                  {pollOptions.map((opt, i) => (
+                    <div key={i} className="flex gap-1 items-center">
+                      <input type="text" value={opt} onChange={(e) => { const n = [...pollOptions]; n[i] = e.target.value; setPollOptions(n); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ff00ff] focus:outline-none" />
+                      {pollOptions.length > 2 && <button onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))} className="text-[#ff0000] text-[8px]">✕</button>}
+                    </div>
+                  ))}
+                  {pollOptions.length < 5 && (
+                    <button onClick={() => setPollOptions([...pollOptions, ""])} className="w-full px-2 py-0.5 border border-dashed border-[#ff00ff] text-[#ff00ff] text-[6px] hover:bg-[#ff00ff]/10">
+                      + ADD OPTION
+                    </button>
+                  )}
+                  <button onClick={createPoll} disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white text-[7px] font-bold disabled:opacity-50">
+                    🚀 START POLL
+                  </button>
+                </div>
+              )}
 
               {/* Active Quiz Display */}
               {activeQuiz && (
@@ -1526,68 +1580,6 @@ export default function TeacherLiveClassRoomPage() {
           )}
         </AnimatePresence>
 
-        {/* Poll Panel */}
-        <AnimatePresence>
-          {showPoll && (
-            <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 300, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#ff00ff] flex flex-col overflow-hidden">
-              <div className="p-2 border-b-2 border-[#ff00ff] flex items-center justify-between">
-                <h3 className="text-[#ff00ff] text-[8px] font-bold flex items-center gap-1"><BarChart3 className="h-3 w-3" /> POLL</h3>
-                <button onClick={() => setShowPoll(false)} className="text-[#ff00ff] hover:text-white"><X className="h-4 w-4" /></button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
-                {activePoll ? (
-                  <div className="space-y-2">
-                    <div className="p-2 bg-[#0f0f23] border-2 border-[#ff00ff]">
-                      <p className="text-[#ff00ff] text-[8px] font-bold mb-2">{activePoll.question}</p>
-                      {activePoll.options.map((opt, i) => {
-                        const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
-                        const totalVotes = Object.keys(activePoll.votes).length;
-                        const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
-                        return (
-                          <div key={i} className="mb-1">
-                            <div className="flex justify-between text-[7px] text-white mb-0.5">
-                              <span>{opt}</span>
-                              <span>{voteCount} ({percent}%)</span>
-                            </div>
-                            <div className="h-2 bg-[#0f0f23] border border-[#00d4ff]">
-                              <div className="h-full bg-[#00ff41] transition-all" style={{ width: `${percent}%` }} />
-                            </div>
-                          </div>
-                        );
-                      })}
-                      <p className="text-[6px] text-[#666] mt-2">Total votes: {Object.keys(activePoll.votes).length}</p>
-                    </div>
-                    <div className="flex gap-1">
-                      {activePoll.isActive ? (
-                        <button onClick={endPoll} className="flex-1 px-2 py-1 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[7px] hover:bg-[#0f0f23] hover:text-[#ff0000]">END POLL</button>
-                      ) : (
-                        <button onClick={clearPoll} className="flex-1 px-2 py-1 bg-[#00d4ff] border-2 border-[#00d4ff] text-[#0f0f23] text-[7px] hover:bg-[#0f0f23] hover:text-[#00d4ff]">CLEAR</button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Enter question..." className="w-full bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#ff00ff] focus:border-[#00ff41] focus:outline-none" />
-                    {pollOptions.map((opt, i) => (
-                      <div key={i} className="flex gap-1">
-                        <input type="text" value={opt} onChange={(e) => { const newOpts = [...pollOptions]; newOpts[i] = e.target.value; setPollOptions(newOpts); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none" />
-                        {pollOptions.length > 2 && <button onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))} className="text-[#ff0000]"><Trash2 className="h-3 w-3" /></button>}
-                      </div>
-                    ))}
-                    {pollOptions.length < 5 && (
-                      <button onClick={() => setPollOptions([...pollOptions, ""])} className="w-full px-2 py-1 border-2 border-dashed border-[#00d4ff] text-[#00d4ff] text-[7px] flex items-center justify-center gap-1 hover:bg-[#00d4ff]/10">
-                        <Plus className="h-3 w-3" /> ADD OPTION
-                      </button>
-                    )}
-                    <button onClick={createPoll} disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1.5 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] text-[8px] font-bold hover:bg-[#0f0f23] hover:text-[#00ff41] disabled:opacity-50 disabled:cursor-not-allowed">
-                      START POLL
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
 
       {/* Control Bar - Mobile responsive */}
