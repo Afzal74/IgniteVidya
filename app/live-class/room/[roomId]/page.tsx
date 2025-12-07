@@ -15,6 +15,9 @@ import {
   Maximize,
   Minimize,
   AlertCircle,
+  MessageCircle,
+  Send,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -60,6 +63,13 @@ export default function LiveClassRoomPage() {
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
   const [spotlightUser, setSpotlightUser] = useState<string | null>(null); // Double-click to spotlight
   const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set());
+  
+  // Chat state
+  const [showChat, setShowChat] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{id: string; sender: string; senderName: string; message: string; timestamp: number; isTeacher?: boolean}>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -259,10 +269,22 @@ export default function LiveClassRoomPage() {
     fetchRoomData();
     initMedia();
 
-    return () => {
+    // Stop camera on page close/refresh
+    const stopAllMedia = () => {
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+    window.addEventListener("beforeunload", stopAllMedia);
+    window.addEventListener("pagehide", stopAllMedia);
+
+    return () => {
+      window.removeEventListener("beforeunload", stopAllMedia);
+      window.removeEventListener("pagehide", stopAllMedia);
+      // Stop all media tracks (turns off camera light)
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      // Close all peer connections
       peerConnections.current.forEach((pc) => pc.close());
       peerConnections.current.clear();
+      // Notify and cleanup channel
       if (channelRef.current) {
         channelRef.current.send({
           type: "broadcast",
@@ -361,6 +383,11 @@ export default function LiveClassRoomPage() {
         } else {
           setRemoteStreams((prev) => new Map(prev));
         }
+      })
+      .on("broadcast", { event: "chat-message" }, ({ payload }) => {
+        // Received chat message
+        setChatMessages((prev) => [...prev, payload]);
+        setUnreadCount((prev) => prev + 1);
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -742,26 +769,27 @@ export default function LiveClassRoomPage() {
         const videoTrack = videoStream.getVideoTracks()[0];
 
         if (localStream) {
+          // Stop the temporary stream container (we only need the track)
+          videoStream.getVideoTracks().forEach((t) => {
+            if (t !== videoTrack) t.stop();
+          });
           localStream.addTrack(videoTrack);
           // Add video track to peer connections
           peerConnections.current.forEach((pc) => {
-            // Find any video sender (even if track is null)
             const videoSender = pc
               .getSenders()
               .find((s) => s.track?.kind === "video" || !s.track);
             if (videoSender && videoSender.track === null) {
-              // Sender exists but has no track - replace with new track
               videoSender.replaceTrack(videoTrack);
             } else if (videoSender && videoSender.track?.kind === "video") {
-              // Sender has a video track - replace it
               videoSender.replaceTrack(videoTrack);
             } else {
-              // No video sender - add new track
               pc.addTrack(videoTrack, localStream);
             }
           });
         } else {
           setLocalStream(videoStream);
+          localStreamRef.current = videoStream;
         }
         setIsVideoEnabled(true);
         if (participantId) {
@@ -770,7 +798,6 @@ export default function LiveClassRoomPage() {
             .update({ is_video_enabled: true })
             .eq("id", participantId);
         }
-        // Notify others that video is on
         channelRef.current?.send({
           type: "broadcast",
           event: "video-toggle",
@@ -798,10 +825,20 @@ export default function LiveClassRoomPage() {
   };
 
   const leaveClass = async () => {
+    // Clear video element first
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = null;
+    }
+
+    // Stop all media tracks (turns off camera light)
+    localStream?.getTracks().forEach((t) => t.stop());
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    setLocalStream(null);
+    localStreamRef.current = null;
+
     // Cleanup WebRTC
     peerConnections.current.forEach((pc) => pc.close());
     peerConnections.current.clear();
-    localStream?.getTracks().forEach((t) => t.stop());
 
     // Announce leaving
     channelRef.current?.send({
@@ -847,6 +884,34 @@ export default function LiveClassRoomPage() {
       "from-orange-500 to-red-500",
     ][i % 4];
 
+  // Send chat message
+  const sendChatMessage = () => {
+    if (!chatInput.trim() || !channelRef.current) return;
+    const msg = {
+      id: `${participantId}-${Date.now()}`,
+      sender: participantId,
+      senderName: participantName || "Student",
+      message: chatInput.trim(),
+      timestamp: Date.now(),
+      isTeacher: false,
+    };
+    channelRef.current.send({
+      type: "broadcast",
+      event: "chat-message",
+      payload: msg,
+    });
+    setChatMessages((prev) => [...prev, msg]);
+    setChatInput("");
+  };
+
+  // Auto-scroll chat and reset unread when chat is opened
+  useEffect(() => {
+    if (showChat) {
+      setUnreadCount(0);
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [showChat, chatMessages]);
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -878,6 +943,19 @@ export default function LiveClassRoomPage() {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { setShowChat(!showChat); if (!showChat) setUnreadCount(0); }}
+            className="text-gray-400 hover:text-white h-7 px-2 relative"
+          >
+            <MessageCircle className="h-3 w-3" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[8px] text-white flex items-center justify-center">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -1155,6 +1233,71 @@ export default function LiveClassRoomPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Chat Panel */}
+        <AnimatePresence>
+          {showChat && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 280, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="bg-gray-800 border-l border-gray-700 flex flex-col overflow-hidden"
+            >
+              <div className="p-2 border-b border-gray-700 flex items-center justify-between">
+                <h3 className="text-white text-xs font-semibold flex items-center gap-1">
+                  <MessageCircle className="h-3 w-3" /> Chat
+                </h3>
+                <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-white">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+                {chatMessages.length === 0 ? (
+                  <p className="text-gray-500 text-xs text-center py-4">No messages yet</p>
+                ) : (
+                  chatMessages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`p-2 rounded-lg ${
+                        msg.sender === participantId
+                          ? "bg-blue-600/30 ml-4"
+                          : msg.isTeacher
+                          ? "bg-yellow-600/30 mr-4"
+                          : "bg-gray-700/50 mr-4"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className={`text-[10px] font-semibold ${msg.isTeacher ? "text-yellow-400" : msg.sender === participantId ? "text-blue-400" : "text-gray-300"}`}>
+                          {msg.isTeacher ? "👑 " : ""}{msg.senderName}{msg.sender === participantId ? " (You)" : ""}
+                        </span>
+                        <span className="text-[8px] text-gray-500">
+                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-white text-xs break-words">{msg.message}</p>
+                    </div>
+                  ))
+                )}
+                <div ref={chatEndRef} />
+              </div>
+              <div className="p-2 border-t border-gray-700">
+                <div className="flex gap-1">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
+                    placeholder="Type a message..."
+                    className="flex-1 bg-gray-700 text-white text-xs px-2 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  />
+                  <Button size="sm" onClick={sendChatMessage} className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700">
+                    <Send className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             </motion.div>
