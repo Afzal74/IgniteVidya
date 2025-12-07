@@ -104,6 +104,9 @@ export default function LiveClassRoomPage() {
     isActive: boolean;
     leaderboard?: Array<{ oderId: string; name: string; points: number }>;
     myPoints?: number;
+    myRank?: number;
+    totalParticipants?: number;
+    image?: string;
   } | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -453,6 +456,7 @@ export default function LiveClassRoomPage() {
           ...payload,
           myAnswer: undefined,
           correctAnswer: undefined,
+          image: payload.image,
         });
       })
       .on("broadcast", { event: "quiz-end" }, ({ payload }) => {
@@ -461,22 +465,26 @@ export default function LiveClassRoomPage() {
           if (!prev || prev.id !== payload.quizId) return prev;
           // Calculate my points if I answered correctly
           let myPoints = 0;
-          if (
-            prev.myAnswer === payload.correctAnswer &&
-            prev.timeLeft !== undefined
-          ) {
-            // Find my entry in leaderboard to get exact points
-            const myEntry = payload.leaderboard?.find(
-              (e: any) => e.oderId === participantId
-            );
-            myPoints = myEntry?.points || 0;
+          let myRank: number | undefined = undefined;
+          
+          // Find my entry in full results to get rank
+          const fullLeaderboard = payload.fullLeaderboard || payload.leaderboard || [];
+          const myEntryIndex = fullLeaderboard.findIndex(
+            (e: any) => e.oderId === participantId
+          );
+          if (myEntryIndex !== -1) {
+            myRank = myEntryIndex + 1;
+            myPoints = fullLeaderboard[myEntryIndex].points || 0;
           }
+          
           return {
             ...prev,
             isActive: false,
             correctAnswer: payload.correctAnswer,
             leaderboard: payload.leaderboard,
             myPoints,
+            myRank,
+            totalParticipants: payload.totalParticipants,
           };
         });
       })
@@ -1454,6 +1462,12 @@ export default function LiveClassRoomPage() {
                       </span>
                     )}
                   </div>
+                  {/* Quiz Image */}
+                  {activeQuiz.image && (
+                    <div className="w-full h-32 mb-3 bg-gray-900 rounded-lg overflow-hidden border border-yellow-500/30">
+                      <img src={activeQuiz.image} alt="Quiz" className="w-full h-full object-contain" />
+                    </div>
+                  )}
                   <p className="text-white text-sm mb-3">
                     {activeQuiz.question}
                   </p>
@@ -1567,6 +1581,25 @@ export default function LiveClassRoomPage() {
                                   </div>
                                 ))}
                               </div>
+                              {/* Show student's rank if not in top 5 */}
+                              {activeQuiz.myRank && activeQuiz.myRank > 5 && (
+                                <div className="mt-2 pt-2 border-t border-gray-600">
+                                  <div className="flex items-center justify-between text-[9px] px-1 py-0.5 rounded bg-blue-500/20 border border-blue-500">
+                                    <span className="flex items-center gap-1">
+                                      <span className="text-gray-400">#{activeQuiz.myRank}</span>
+                                      <span className="text-blue-400">You</span>
+                                    </span>
+                                    <span className="text-green-400 font-bold">
+                                      +{(activeQuiz.myPoints || 0).toLocaleString()}
+                                    </span>
+                                  </div>
+                                  {activeQuiz.totalParticipants && (
+                                    <p className="text-[8px] text-gray-500 text-center mt-1">
+                                      out of {activeQuiz.totalParticipants} participants
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                       </div>

@@ -26,6 +26,8 @@ import {
   Plus,
   Trash2,
   Check,
+  Image,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -105,6 +107,7 @@ export default function TeacherLiveClassRoomPage() {
   const [quizOptions, setQuizOptions] = useState(["", "", "", ""]);
   const [quizCorrectAnswer, setQuizCorrectAnswer] = useState(0);
   const [quizTimer, setQuizTimer] = useState(30);
+  const [quizImage, setQuizImage] = useState(""); // Image URL for quiz
   const [activeQuiz, setActiveQuiz] = useState<{
     id: string;
     question: string;
@@ -113,7 +116,19 @@ export default function TeacherLiveClassRoomPage() {
     timeLeft: number;
     answers: Record<string, { answer: number; name: string; time: number }>;
     isActive: boolean;
+    image?: string;
   } | null>(null);
+
+  // Question Bank state
+  const [questionBank, setQuestionBank] = useState<Array<{
+    id: string;
+    question: string;
+    options: string[];
+    correctAnswer: number;
+    timer: number;
+    image?: string;
+  }>>([]);
+  const [showQuestionBank, setShowQuestionBank] = useState(false);
 
   // Leaderboard state (accumulates across quizzes)
   const [leaderboard, setLeaderboard] = useState<Record<string, { name: string; points: number; correct: number }>>({});
@@ -987,6 +1002,7 @@ export default function TeacherLiveClassRoomPage() {
       timeLeft: quizTimer,
       answers: {},
       isActive: true,
+      image: quizImage.trim() || undefined,
     };
     setActiveQuiz(quiz);
     channelRef.current?.send({
@@ -998,6 +1014,62 @@ export default function TeacherLiveClassRoomPage() {
     setQuizQuestion("");
     setQuizOptions(["", "", "", ""]);
     setQuizCorrectAnswer(0);
+    setQuizImage("");
+  };
+
+  // Save question to bank
+  const saveToQuestionBank = () => {
+    const validOptions = quizOptions.filter(o => o.trim());
+    if (!quizQuestion.trim() || validOptions.length < 2) return;
+    const newQuestion = {
+      id: `q-${Date.now()}`,
+      question: quizQuestion.trim(),
+      options: validOptions,
+      correctAnswer: quizCorrectAnswer,
+      timer: quizTimer,
+      image: quizImage.trim() || undefined,
+    };
+    setQuestionBank(prev => [...prev, newQuestion]);
+    setQuizQuestion("");
+    setQuizOptions(["", "", "", ""]);
+    setQuizCorrectAnswer(0);
+    setQuizImage("");
+  };
+
+  // Load question from bank
+  const loadFromQuestionBank = (q: typeof questionBank[0]) => {
+    setQuizQuestion(q.question);
+    setQuizOptions([...q.options, "", "", "", ""].slice(0, 4));
+    setQuizCorrectAnswer(q.correctAnswer);
+    setQuizTimer(q.timer);
+    setQuizImage(q.image || "");
+    setShowQuestionBank(false);
+  };
+
+  // Start quiz directly from bank
+  const startQuizFromBank = (q: typeof questionBank[0]) => {
+    const quiz = {
+      id: `quiz-${Date.now()}`,
+      question: q.question,
+      options: q.options,
+      correctAnswer: q.correctAnswer,
+      timeLeft: q.timer,
+      answers: {},
+      isActive: true,
+      image: q.image,
+    };
+    setActiveQuiz(quiz);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "quiz-start",
+      payload: { ...quiz, correctAnswer: undefined },
+    });
+    setShowQuestionBank(false);
+  };
+
+  // Delete question from bank
+  const deleteFromQuestionBank = (id: string) => {
+    setQuestionBank(prev => prev.filter(q => q.id !== id));
   };
 
   const endQuiz = () => {
@@ -1021,13 +1093,21 @@ export default function TeacherLiveClassRoomPage() {
       }
     });
     
-    // Sort by points and get top 5
-    const top5 = results.sort((a, b) => b.points - a.points).slice(0, 5);
+    // Sort by points - full list for rank calculation
+    const fullLeaderboard = results.sort((a, b) => b.points - a.points);
+    // Top 5 for display
+    const top5 = fullLeaderboard.slice(0, 5);
     
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-end",
-      payload: { quizId: activeQuiz.id, correctAnswer: activeQuiz.correctAnswer, leaderboard: top5 },
+      payload: { 
+        quizId: activeQuiz.id, 
+        correctAnswer: activeQuiz.correctAnswer, 
+        leaderboard: top5,
+        fullLeaderboard: fullLeaderboard, // Send full list for rank calculation
+        totalParticipants: Object.keys(activeQuiz.answers).length,
+      },
     });
     setActiveQuiz((prev) => prev ? { ...prev, isActive: false } : null);
   };
@@ -1479,6 +1559,11 @@ export default function TeacherLiveClassRoomPage() {
                     <span className="text-[#ffff00] text-[7px] font-bold">🎯 LIVE QUIZ</span>
                     <span className={`text-[8px] font-bold ${activeQuiz.timeLeft <= 5 ? 'text-[#ff0000] animate-pulse' : 'text-[#00ff41]'}`}>{activeQuiz.timeLeft}s</span>
                   </div>
+                  {activeQuiz.image && (
+                    <div className="w-full h-24 mb-2 bg-[#0f0f23] border border-[#ffff00] overflow-hidden">
+                      <img src={activeQuiz.image} alt="Quiz" className="w-full h-full object-contain" />
+                    </div>
+                  )}
                   <p className="text-white text-[8px] mb-2">{activeQuiz.question}</p>
                   <div className="space-y-1 mb-2">
                     {activeQuiz.options.map((opt, i) => {
@@ -1529,8 +1614,47 @@ export default function TeacherLiveClassRoomPage() {
 
               {/* Quiz Form */}
               {showQuizForm && !activeQuiz && (
-                <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2">
+                <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2 max-h-[50vh] overflow-y-auto">
+                  {/* Question Bank Toggle */}
+                  <div className="flex gap-1">
+                    <button onClick={() => setShowQuestionBank(!showQuestionBank)} className={`flex-1 px-2 py-0.5 border text-[6px] ${showQuestionBank ? 'bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]' : 'border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff]/20'}`}>
+                      📚 BANK ({questionBank.length})
+                    </button>
+                  </div>
+
+                  {/* Question Bank List */}
+                  {showQuestionBank && questionBank.length > 0 && (
+                    <div className="space-y-1 p-1 bg-[#1a1a3e] border border-[#00d4ff] max-h-32 overflow-y-auto">
+                      {questionBank.map((q, i) => (
+                        <div key={q.id} className="flex items-center gap-1 p-1 bg-[#0f0f23] border border-[#444] hover:border-[#00d4ff]">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-white text-[7px] truncate">{q.question}</p>
+                            <p className="text-[5px] text-[#666]">{q.options.length} opts • {q.timer}s {q.image ? '• 🖼️' : ''}</p>
+                          </div>
+                          <button onClick={() => loadFromQuestionBank(q)} className="px-1 py-0.5 bg-[#00d4ff] text-[#0f0f23] text-[5px]">EDIT</button>
+                          <button onClick={() => startQuizFromBank(q)} className="px-1 py-0.5 bg-[#00ff41] text-[#0f0f23] text-[5px]">▶</button>
+                          <button onClick={() => deleteFromQuestionBank(q.id)} className="px-1 py-0.5 bg-[#ff0000] text-white text-[5px]">✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {showQuestionBank && questionBank.length === 0 && (
+                    <p className="text-[6px] text-[#666] text-center py-2">No saved questions. Create one below!</p>
+                  )}
+
                   <input type="text" value={quizQuestion} onChange={(e) => setQuizQuestion(e.target.value)} placeholder="Question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ffff00] focus:outline-none" />
+                  
+                  {/* Image URL Input */}
+                  <div className="flex gap-1 items-center">
+                    <span className="text-[6px] text-[#666]">🖼️</span>
+                    <input type="text" value={quizImage} onChange={(e) => setQuizImage(e.target.value)} placeholder="Image URL (optional)" className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ff00ff] focus:outline-none" />
+                  </div>
+                  {quizImage && (
+                    <div className="relative w-full h-20 bg-[#1a1a3e] border border-[#ff00ff] overflow-hidden">
+                      <img src={quizImage} alt="Preview" className="w-full h-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    </div>
+                  )}
+
                   {quizOptions.map((opt, i) => (
                     <div key={i} className="flex gap-1 items-center">
                       <button onClick={() => setQuizCorrectAnswer(i)} className={`w-4 h-4 border flex items-center justify-center text-[8px] ${quizCorrectAnswer === i ? 'bg-[#00ff41] border-[#00ff41] text-[#0f0f23]' : 'border-[#444] text-[#444]'}`}>
@@ -1544,9 +1668,14 @@ export default function TeacherLiveClassRoomPage() {
                     <input type="number" value={quizTimer} onChange={(e) => setQuizTimer(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))} className="w-12 bg-[#1a1a3e] text-white text-[8px] px-1 py-0.5 border border-[#444] text-center" />
                     <span className="text-[6px] text-[#666]">sec</span>
                   </div>
-                  <button onClick={startQuiz} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[7px] font-bold disabled:opacity-50">
-                    🚀 START QUIZ
-                  </button>
+                  <div className="flex gap-1">
+                    <button onClick={saveToQuestionBank} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="flex-1 px-2 py-1 bg-[#00d4ff] border-2 border-[#00d4ff] text-[#0f0f23] text-[6px] font-bold disabled:opacity-50">
+                      💾 SAVE TO BANK
+                    </button>
+                    <button onClick={startQuiz} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="flex-1 px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[6px] font-bold disabled:opacity-50">
+                      🚀 START NOW
+                    </button>
+                  </div>
                 </div>
               )}
 
