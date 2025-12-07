@@ -22,6 +22,10 @@ import {
   MessageCircle,
   Send,
   X,
+  BarChart3,
+  Plus,
+  Trash2,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -82,6 +86,18 @@ export default function TeacherLiveClassRoomPage() {
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Poll state
+  const [showPoll, setShowPoll] = useState(false);
+  const [activePoll, setActivePoll] = useState<{
+    id: string;
+    question: string;
+    options: string[];
+    votes: Record<string, string>; // oderId -> option
+    isActive: boolean;
+  } | null>(null);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState(["", ""]);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -418,6 +434,13 @@ export default function TeacherLiveClassRoomPage() {
           // Received chat message
           setChatMessages((prev) => [...prev, payload]);
           setUnreadCount((prev) => prev + 1);
+        })
+        .on("broadcast", { event: "poll-vote" }, ({ payload }) => {
+          // Student voted on poll
+          setActivePoll((prev) => {
+            if (!prev || prev.id !== payload.pollId) return prev;
+            return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
+          });
         })
         .subscribe(async (status) => {
           console.log("Channel status:", status);
@@ -891,6 +914,40 @@ export default function TeacherLiveClassRoomPage() {
     setChatInput("");
   };
 
+  // Poll functions
+  const createPoll = () => {
+    if (!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2) return;
+    const poll = {
+      id: `poll-${Date.now()}`,
+      question: pollQuestion.trim(),
+      options: pollOptions.filter(o => o.trim()),
+      votes: {},
+      isActive: true,
+    };
+    setActivePoll(poll);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "poll-start",
+      payload: poll,
+    });
+    setPollQuestion("");
+    setPollOptions(["", ""]);
+  };
+
+  const endPoll = () => {
+    if (!activePoll) return;
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "poll-end",
+      payload: { pollId: activePoll.id },
+    });
+    setActivePoll((prev) => prev ? { ...prev, isActive: false } : null);
+  };
+
+  const clearPoll = () => {
+    setActivePoll(null);
+  };
+
   // Auto-scroll chat and reset unread when chat is opened
   useEffect(() => {
     if (showChat) {
@@ -1014,6 +1071,13 @@ export default function TeacherLiveClassRoomPage() {
               {raisedHands.length}
             </div>
           )}
+          <button
+            onClick={() => setShowPoll(!showPoll)}
+            className={`relative bg-[#0f0f23] border p-0.5 transition-colors ${activePoll?.isActive ? 'border-[#00ff41] text-[#00ff41]' : 'border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]'}`}
+          >
+            <BarChart3 className="h-2 w-2" />
+            {activePoll?.isActive && <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#00ff41] rounded-full animate-pulse" />}
+          </button>
           <button
             onClick={() => {
               setShowChat(!showChat);
@@ -1236,48 +1300,23 @@ export default function TeacherLiveClassRoomPage() {
                 <h3 className="text-[#00ff41] text-[8px] font-bold flex items-center gap-1">
                   <MessageCircle className="h-3 w-3" /> CHAT
                 </h3>
-                <button
-                  onClick={() => setShowChat(false)}
-                  className="text-[#00d4ff] hover:text-white"
-                >
+                <button onClick={() => setShowChat(false)} className="text-[#00d4ff] hover:text-white">
                   <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
                 {chatMessages.length === 0 ? (
-                  <p className="text-[#444] text-[8px] text-center py-4">
-                    NO MESSAGES YET
-                  </p>
+                  <p className="text-[#444] text-[8px] text-center py-4">NO MESSAGES YET</p>
                 ) : (
                   chatMessages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`p-2 border ${
-                        msg.isTeacher
-                          ? "bg-[#00ff41]/10 border-[#00ff41] ml-4"
-                          : "bg-[#0f0f23] border-[#00d4ff] mr-4"
-                      }`}
-                    >
+                    <div key={msg.id} className={`p-2 border ${msg.isTeacher ? "bg-[#00ff41]/10 border-[#00ff41] ml-4" : "bg-[#0f0f23] border-[#00d4ff] mr-4"}`}>
                       <div className="flex items-center gap-1 mb-0.5">
-                        <span
-                          className={`text-[7px] font-bold ${
-                            msg.isTeacher ? "text-[#00ff41]" : "text-[#00d4ff]"
-                          }`}
-                        >
-                          {msg.isTeacher ? "👑 " : ""}
-                          {msg.senderName}
-                          {msg.isTeacher ? " (You)" : ""}
+                        <span className={`text-[7px] font-bold ${msg.isTeacher ? "text-[#00ff41]" : "text-[#00d4ff]"}`}>
+                          {msg.isTeacher ? "👑 " : ""}{msg.senderName}{msg.isTeacher ? " (You)" : ""}
                         </span>
-                        <span className="text-[6px] text-[#666]">
-                          {new Date(msg.timestamp).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                        <span className="text-[6px] text-[#666]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                       </div>
-                      <p className="text-white text-[8px] break-words">
-                        {msg.message}
-                      </p>
+                      <p className="text-white text-[8px] break-words">{msg.message}</p>
                     </div>
                   ))
                 )}
@@ -1285,21 +1324,74 @@ export default function TeacherLiveClassRoomPage() {
               </div>
               <div className="p-2 border-t-2 border-[#00d4ff]">
                 <div className="flex gap-1">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && sendChatMessage()}
-                    placeholder="Type message..."
-                    className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none"
-                  />
-                  <button
-                    onClick={sendChatMessage}
-                    className="px-2 py-1 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] hover:bg-[#0f0f23] hover:text-[#00ff41] transition-colors"
-                  >
+                  <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChatMessage()} placeholder="Type message..." className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none" />
+                  <button onClick={sendChatMessage} className="px-2 py-1 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] hover:bg-[#0f0f23] hover:text-[#00ff41] transition-colors">
                     <Send className="h-3 w-3" />
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Poll Panel */}
+        <AnimatePresence>
+          {showPoll && (
+            <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 300, opacity: 1 }} exit={{ width: 0, opacity: 0 }} className="bg-[#1a1a3e] border-l-4 border-[#ff00ff] flex flex-col overflow-hidden">
+              <div className="p-2 border-b-2 border-[#ff00ff] flex items-center justify-between">
+                <h3 className="text-[#ff00ff] text-[8px] font-bold flex items-center gap-1"><BarChart3 className="h-3 w-3" /> POLL</h3>
+                <button onClick={() => setShowPoll(false)} className="text-[#ff00ff] hover:text-white"><X className="h-4 w-4" /></button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+                {activePoll ? (
+                  <div className="space-y-2">
+                    <div className="p-2 bg-[#0f0f23] border-2 border-[#ff00ff]">
+                      <p className="text-[#ff00ff] text-[8px] font-bold mb-2">{activePoll.question}</p>
+                      {activePoll.options.map((opt, i) => {
+                        const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
+                        const totalVotes = Object.keys(activePoll.votes).length;
+                        const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                        return (
+                          <div key={i} className="mb-1">
+                            <div className="flex justify-between text-[7px] text-white mb-0.5">
+                              <span>{opt}</span>
+                              <span>{voteCount} ({percent}%)</span>
+                            </div>
+                            <div className="h-2 bg-[#0f0f23] border border-[#00d4ff]">
+                              <div className="h-full bg-[#00ff41] transition-all" style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <p className="text-[6px] text-[#666] mt-2">Total votes: {Object.keys(activePoll.votes).length}</p>
+                    </div>
+                    <div className="flex gap-1">
+                      {activePoll.isActive ? (
+                        <button onClick={endPoll} className="flex-1 px-2 py-1 bg-[#ff0000] border-2 border-[#ff0000] text-white text-[7px] hover:bg-[#0f0f23] hover:text-[#ff0000]">END POLL</button>
+                      ) : (
+                        <button onClick={clearPoll} className="flex-1 px-2 py-1 bg-[#00d4ff] border-2 border-[#00d4ff] text-[#0f0f23] text-[7px] hover:bg-[#0f0f23] hover:text-[#00d4ff]">CLEAR</button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Enter question..." className="w-full bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#ff00ff] focus:border-[#00ff41] focus:outline-none" />
+                    {pollOptions.map((opt, i) => (
+                      <div key={i} className="flex gap-1">
+                        <input type="text" value={opt} onChange={(e) => { const newOpts = [...pollOptions]; newOpts[i] = e.target.value; setPollOptions(newOpts); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none" />
+                        {pollOptions.length > 2 && <button onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))} className="text-[#ff0000]"><Trash2 className="h-3 w-3" /></button>}
+                      </div>
+                    ))}
+                    {pollOptions.length < 5 && (
+                      <button onClick={() => setPollOptions([...pollOptions, ""])} className="w-full px-2 py-1 border-2 border-dashed border-[#00d4ff] text-[#00d4ff] text-[7px] flex items-center justify-center gap-1 hover:bg-[#00d4ff]/10">
+                        <Plus className="h-3 w-3" /> ADD OPTION
+                      </button>
+                    )}
+                    <button onClick={createPoll} disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1.5 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] text-[8px] font-bold hover:bg-[#0f0f23] hover:text-[#00ff41] disabled:opacity-50 disabled:cursor-not-allowed">
+                      START POLL
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

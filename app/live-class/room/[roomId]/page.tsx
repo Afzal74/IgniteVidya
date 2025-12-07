@@ -18,6 +18,8 @@ import {
   MessageCircle,
   Send,
   X,
+  BarChart3,
+  Check,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -70,6 +72,17 @@ export default function LiveClassRoomPage() {
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Poll state
+  const [activePoll, setActivePoll] = useState<{
+    id: string;
+    question: string;
+    options: string[];
+    votes: Record<string, string>;
+    isActive: boolean;
+    myVote?: string;
+  } | null>(null);
+  const [showPollNotification, setShowPollNotification] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -388,6 +401,22 @@ export default function LiveClassRoomPage() {
         // Received chat message
         setChatMessages((prev) => [...prev, payload]);
         setUnreadCount((prev) => prev + 1);
+      })
+      .on("broadcast", { event: "poll-start" }, ({ payload }) => {
+        // Teacher started a poll
+        setActivePoll({ ...payload, myVote: undefined });
+        setShowPollNotification(true);
+      })
+      .on("broadcast", { event: "poll-end" }, ({ payload }) => {
+        // Teacher ended the poll
+        setActivePoll((prev) => prev && prev.id === payload.pollId ? { ...prev, isActive: false } : prev);
+      })
+      .on("broadcast", { event: "poll-vote" }, ({ payload }) => {
+        // Someone voted (update vote count)
+        setActivePoll((prev) => {
+          if (!prev || prev.id !== payload.pollId) return prev;
+          return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
+        });
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -912,6 +941,18 @@ export default function LiveClassRoomPage() {
     }
   }, [showChat, chatMessages]);
 
+  // Vote on poll
+  const votePoll = (option: string) => {
+    if (!activePoll || !activePoll.isActive || activePoll.myVote) return;
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "poll-vote",
+      payload: { pollId: activePoll.id, oderId: participantId, option },
+    });
+    setActivePoll((prev) => prev ? { ...prev, myVote: option, votes: { ...prev.votes, [participantId]: option } } : null);
+    setShowPollNotification(false);
+  };
+
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-900">
@@ -943,6 +984,17 @@ export default function LiveClassRoomPage() {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          {activePoll && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPollNotification(true)}
+              className={`h-7 px-2 relative ${activePoll.isActive && !activePoll.myVote ? 'text-pink-400 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+            >
+              <BarChart3 className="h-3 w-3" />
+              {activePoll.isActive && !activePoll.myVote && <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full" />}
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="sm"
@@ -1304,6 +1356,77 @@ export default function LiveClassRoomPage() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Poll Modal */}
+      <AnimatePresence>
+        {showPollNotification && activePoll && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => !activePoll.isActive && setShowPollNotification(false)}
+          >
+            <motion.div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-gray-800 border-2 border-pink-500 rounded-xl p-4 w-full max-w-sm shadow-[0_0_30px_rgba(236,72,153,0.3)]"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-pink-400 font-bold flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" /> Poll
+                </h3>
+                <button onClick={() => setShowPollNotification(false)} className="text-gray-400 hover:text-white">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-white font-medium mb-4">{activePoll.question}</p>
+              <div className="space-y-2">
+                {activePoll.options.map((opt, i) => {
+                  const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
+                  const totalVotes = Object.keys(activePoll.votes).length;
+                  const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                  const isMyVote = activePoll.myVote === opt;
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => votePoll(opt)}
+                      disabled={!activePoll.isActive || !!activePoll.myVote}
+                      className={`w-full p-3 rounded-lg border-2 text-left transition-all ${
+                        isMyVote
+                          ? "border-green-500 bg-green-500/20"
+                          : activePoll.myVote
+                          ? "border-gray-600 bg-gray-700/50"
+                          : "border-gray-600 hover:border-pink-500 hover:bg-pink-500/10"
+                      } ${!activePoll.isActive || activePoll.myVote ? "cursor-default" : "cursor-pointer"}`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-white text-sm flex items-center gap-2">
+                          {isMyVote && <Check className="h-4 w-4 text-green-400" />}
+                          {opt}
+                        </span>
+                        {(activePoll.myVote || !activePoll.isActive) && (
+                          <span className="text-gray-400 text-xs">{voteCount} ({percent}%)</span>
+                        )}
+                      </div>
+                      {(activePoll.myVote || !activePoll.isActive) && (
+                        <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                          <div className={`h-full transition-all ${isMyVote ? "bg-green-500" : "bg-pink-500"}`} style={{ width: `${percent}%` }} />
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {activePoll.myVote && activePoll.isActive && (
+                <p className="text-green-400 text-xs text-center mt-3">✓ You voted for "{activePoll.myVote}"</p>
+              )}
+              {!activePoll.isActive && (
+                <p className="text-gray-400 text-xs text-center mt-3">Poll has ended</p>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Controls - Mobile responsive */}
       <div className="bg-gray-800 border-t border-gray-700 px-2 md:px-4 py-1.5 md:py-2">
