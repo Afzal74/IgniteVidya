@@ -65,10 +65,19 @@ export default function LiveClassRoomPage() {
   const [activeSpeaker, setActiveSpeaker] = useState<string | null>(null);
   const [spotlightUser, setSpotlightUser] = useState<string | null>(null); // Double-click to spotlight
   const [speakingUsers, setSpeakingUsers] = useState<Set<string>>(new Set());
-  
+
   // Chat state
   const [showChat, setShowChat] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{id: string; sender: string; senderName: string; message: string; timestamp: number; isTeacher?: boolean}>>([]);
+  const [chatMessages, setChatMessages] = useState<
+    Array<{
+      id: string;
+      sender: string;
+      senderName: string;
+      message: string;
+      timestamp: number;
+      isTeacher?: boolean;
+    }>
+  >([]);
   const [chatInput, setChatInput] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -93,6 +102,8 @@ export default function LiveClassRoomPage() {
     myAnswer?: number;
     correctAnswer?: number;
     isActive: boolean;
+    leaderboard?: Array<{ oderId: string; name: string; points: number }>;
+    myPoints?: number;
   } | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -420,22 +431,54 @@ export default function LiveClassRoomPage() {
       })
       .on("broadcast", { event: "poll-end" }, ({ payload }) => {
         // Teacher ended the poll
-        setActivePoll((prev) => prev && prev.id === payload.pollId ? { ...prev, isActive: false } : prev);
+        setActivePoll((prev) =>
+          prev && prev.id === payload.pollId
+            ? { ...prev, isActive: false }
+            : prev
+        );
       })
       .on("broadcast", { event: "poll-vote" }, ({ payload }) => {
         // Someone voted (update vote count)
         setActivePoll((prev) => {
           if (!prev || prev.id !== payload.pollId) return prev;
-          return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
+          return {
+            ...prev,
+            votes: { ...prev.votes, [payload.oderId]: payload.option },
+          };
         });
       })
       .on("broadcast", { event: "quiz-start" }, ({ payload }) => {
         // Teacher started a quiz
-        setActiveQuiz({ ...payload, myAnswer: undefined, correctAnswer: undefined });
+        setActiveQuiz({
+          ...payload,
+          myAnswer: undefined,
+          correctAnswer: undefined,
+        });
       })
       .on("broadcast", { event: "quiz-end" }, ({ payload }) => {
-        // Teacher ended the quiz - reveal correct answer
-        setActiveQuiz((prev) => prev && prev.id === payload.quizId ? { ...prev, isActive: false, correctAnswer: payload.correctAnswer } : prev);
+        // Teacher ended the quiz - reveal correct answer and leaderboard
+        setActiveQuiz((prev) => {
+          if (!prev || prev.id !== payload.quizId) return prev;
+          // Calculate my points if I answered correctly
+          let myPoints = 0;
+          if (
+            prev.myAnswer === payload.correctAnswer &&
+            prev.timeLeft !== undefined
+          ) {
+            // Find my entry in leaderboard to get exact points
+            const myEntry = payload.leaderboard?.find(
+              (e: any) => e.oderId === participantId
+            );
+            myPoints = myEntry?.points || 0;
+          }
+          return {
+            ...prev,
+            isActive: false,
+            correctAnswer: payload.correctAnswer,
+            leaderboard: payload.leaderboard,
+            myPoints,
+          };
+        });
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -968,19 +1011,38 @@ export default function LiveClassRoomPage() {
       event: "poll-vote",
       payload: { pollId: activePoll.id, oderId: participantId, option },
     });
-    setActivePoll((prev) => prev ? { ...prev, myVote: option, votes: { ...prev.votes, [participantId]: option } } : null);
+    setActivePoll((prev) =>
+      prev
+        ? {
+            ...prev,
+            myVote: option,
+            votes: { ...prev.votes, [participantId]: option },
+          }
+        : null
+    );
     setShowPollNotification(false);
   };
 
   // Answer quiz
   const answerQuiz = (answerIndex: number) => {
-    if (!activeQuiz || !activeQuiz.isActive || activeQuiz.myAnswer !== undefined) return;
+    if (
+      !activeQuiz ||
+      !activeQuiz.isActive ||
+      activeQuiz.myAnswer !== undefined
+    )
+      return;
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-answer",
-      payload: { quizId: activeQuiz.id, oderId: participantId, answer: answerIndex, name: participantName, time: activeQuiz.timeLeft },
+      payload: {
+        quizId: activeQuiz.id,
+        oderId: participantId,
+        answer: answerIndex,
+        name: participantName,
+        time: activeQuiz.timeLeft,
+      },
     });
-    setActiveQuiz((prev) => prev ? { ...prev, myAnswer: answerIndex } : null);
+    setActiveQuiz((prev) => (prev ? { ...prev, myAnswer: answerIndex } : null));
   };
 
   // Quiz timer
@@ -989,7 +1051,8 @@ export default function LiveClassRoomPage() {
     const timer = setInterval(() => {
       setActiveQuiz((prev) => {
         if (!prev || !prev.isActive) return prev;
-        if (prev.timeLeft <= 1) return { ...prev, timeLeft: 0, isActive: false };
+        if (prev.timeLeft <= 1)
+          return { ...prev, timeLeft: 0, isActive: false };
         return { ...prev, timeLeft: prev.timeLeft - 1 };
       });
     }, 1000);
@@ -1032,16 +1095,25 @@ export default function LiveClassRoomPage() {
               variant="ghost"
               size="sm"
               onClick={() => setShowPollNotification(true)}
-              className={`h-7 px-2 relative ${activePoll.isActive && !activePoll.myVote ? 'text-pink-400 animate-pulse' : 'text-gray-400 hover:text-white'}`}
+              className={`h-7 px-2 relative ${
+                activePoll.isActive && !activePoll.myVote
+                  ? "text-pink-400 animate-pulse"
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
               <BarChart3 className="h-3 w-3" />
-              {activePoll.isActive && !activePoll.myVote && <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full" />}
+              {activePoll.isActive && !activePoll.myVote && (
+                <span className="absolute -top-1 -right-1 w-2 h-2 bg-pink-500 rounded-full" />
+              )}
             </Button>
           )}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => { setShowChat(!showChat); if (!showChat) setUnreadCount(0); }}
+            onClick={() => {
+              setShowChat(!showChat);
+              if (!showChat) setUnreadCount(0);
+            }}
             className="text-gray-400 hover:text-white h-7 px-2 relative"
           >
             <MessageCircle className="h-3 w-3" />
@@ -1347,42 +1419,79 @@ export default function LiveClassRoomPage() {
                 <h3 className="text-white text-xs font-semibold flex items-center gap-1">
                   <MessageCircle className="h-3 w-3" /> Chat
                 </h3>
-                <button onClick={() => setShowChat(false)} className="text-gray-400 hover:text-white">
+                <button
+                  onClick={() => setShowChat(false)}
+                  className="text-gray-400 hover:text-white"
+                >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
               {/* Active Quiz in Chat */}
               {activeQuiz && (
-                <div className={`p-3 border-b-2 ${activeQuiz.isActive ? 'border-yellow-500 bg-yellow-500/10' : activeQuiz.myAnswer === activeQuiz.correctAnswer ? 'border-green-500 bg-green-500/10' : 'border-red-500 bg-red-500/10'}`}>
+                <div
+                  className={`p-3 border-b-2 ${
+                    activeQuiz.isActive
+                      ? "border-yellow-500 bg-yellow-500/10"
+                      : activeQuiz.myAnswer === activeQuiz.correctAnswer
+                      ? "border-green-500 bg-green-500/10"
+                      : "border-red-500 bg-red-500/10"
+                  }`}
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-yellow-400 text-xs font-bold flex items-center gap-1">🎯 Quiz</span>
+                    <span className="text-yellow-400 text-xs font-bold flex items-center gap-1">
+                      🎯 Quiz
+                    </span>
                     {activeQuiz.isActive && (
-                      <span className={`text-sm font-bold ${activeQuiz.timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-green-400'}`}>{activeQuiz.timeLeft}s</span>
+                      <span
+                        className={`text-sm font-bold ${
+                          activeQuiz.timeLeft <= 5
+                            ? "text-red-400 animate-pulse"
+                            : "text-green-400"
+                        }`}
+                      >
+                        {activeQuiz.timeLeft}s
+                      </span>
                     )}
                   </div>
-                  <p className="text-white text-sm mb-3">{activeQuiz.question}</p>
+                  <p className="text-white text-sm mb-3">
+                    {activeQuiz.question}
+                  </p>
                   <div className="space-y-2">
                     {activeQuiz.options.map((opt, i) => {
                       const isMyAnswer = activeQuiz.myAnswer === i;
                       const isCorrect = activeQuiz.correctAnswer === i;
-                      const showResult = !activeQuiz.isActive && activeQuiz.correctAnswer !== undefined;
+                      const showResult =
+                        !activeQuiz.isActive &&
+                        activeQuiz.correctAnswer !== undefined;
                       return (
                         <button
                           key={i}
                           onClick={() => answerQuiz(i)}
-                          disabled={!activeQuiz.isActive || activeQuiz.myAnswer !== undefined}
+                          disabled={
+                            !activeQuiz.isActive ||
+                            activeQuiz.myAnswer !== undefined
+                          }
                           className={`w-full p-2 rounded-lg border-2 text-left text-xs transition-all ${
-                            showResult && isCorrect ? 'border-green-500 bg-green-500/20 text-green-400' :
-                            showResult && isMyAnswer && !isCorrect ? 'border-red-500 bg-red-500/20 text-red-400' :
-                            isMyAnswer ? 'border-blue-500 bg-blue-500/20 text-blue-400' :
-                            activeQuiz.isActive && activeQuiz.myAnswer === undefined ? 'border-gray-600 hover:border-yellow-500 hover:bg-yellow-500/10 text-white' :
-                            'border-gray-700 text-gray-400'
+                            showResult && isCorrect
+                              ? "border-green-500 bg-green-500/20 text-green-400"
+                              : showResult && isMyAnswer && !isCorrect
+                              ? "border-red-500 bg-red-500/20 text-red-400"
+                              : isMyAnswer
+                              ? "border-blue-500 bg-blue-500/20 text-blue-400"
+                              : activeQuiz.isActive &&
+                                activeQuiz.myAnswer === undefined
+                              ? "border-gray-600 hover:border-yellow-500 hover:bg-yellow-500/10 text-white"
+                              : "border-gray-700 text-gray-400"
                           }`}
                         >
                           <span className="flex items-center gap-2">
-                            {showResult && isCorrect && <Check className="h-4 w-4 text-green-400" />}
-                            {showResult && isMyAnswer && !isCorrect && <X className="h-4 w-4 text-red-400" />}
+                            {showResult && isCorrect && (
+                              <Check className="h-4 w-4 text-green-400" />
+                            )}
+                            {showResult && isMyAnswer && !isCorrect && (
+                              <X className="h-4 w-4 text-red-400" />
+                            )}
                             {opt}
                           </span>
                         </button>
@@ -1390,19 +1499,86 @@ export default function LiveClassRoomPage() {
                     })}
                   </div>
                   {activeQuiz.myAnswer !== undefined && activeQuiz.isActive && (
-                    <p className="text-blue-400 text-[10px] text-center mt-2">✓ Answer submitted! Waiting for results...</p>
-                  )}
-                  {!activeQuiz.isActive && activeQuiz.correctAnswer !== undefined && (
-                    <p className={`text-[10px] text-center mt-2 ${activeQuiz.myAnswer === activeQuiz.correctAnswer ? 'text-green-400' : 'text-red-400'}`}>
-                      {activeQuiz.myAnswer === activeQuiz.correctAnswer ? '🎉 Correct!' : activeQuiz.myAnswer !== undefined ? '❌ Wrong answer' : '⏰ Time\'s up!'}
+                    <p className="text-blue-400 text-[10px] text-center mt-2">
+                      ✓ Answer submitted! Waiting for results...
                     </p>
                   )}
+                  {!activeQuiz.isActive &&
+                    activeQuiz.correctAnswer !== undefined && (
+                      <div className="mt-2">
+                        <p
+                          className={`text-[10px] text-center ${
+                            activeQuiz.myAnswer === activeQuiz.correctAnswer
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {activeQuiz.myAnswer === activeQuiz.correctAnswer
+                            ? `🎉 Correct! +${
+                                activeQuiz.myPoints?.toLocaleString() || 0
+                              } pts`
+                            : activeQuiz.myAnswer !== undefined
+                            ? "❌ Wrong answer"
+                            : "⏰ Time's up!"}
+                        </p>
+                        {/* Leaderboard */}
+                        {activeQuiz.leaderboard &&
+                          activeQuiz.leaderboard.length > 0 && (
+                            <div className="mt-2 p-2 bg-gray-800/50 rounded-lg border border-yellow-500/30">
+                              <p className="text-yellow-400 text-[10px] font-bold mb-1 text-center">
+                                🏆 Top 5
+                              </p>
+                              <div className="space-y-1">
+                                {activeQuiz.leaderboard.map((entry, i) => (
+                                  <div
+                                    key={entry.oderId}
+                                    className={`flex items-center justify-between text-[9px] px-1 py-0.5 rounded ${
+                                      entry.oderId === participantId
+                                        ? "bg-blue-500/20 border border-blue-500"
+                                        : ""
+                                    }`}
+                                  >
+                                    <span className="flex items-center gap-1">
+                                      <span>
+                                        {i === 0
+                                          ? "🥇"
+                                          : i === 1
+                                          ? "🥈"
+                                          : i === 2
+                                          ? "🥉"
+                                          : `${i + 1}.`}
+                                      </span>
+                                      <span
+                                        className={
+                                          entry.oderId === participantId
+                                            ? "text-blue-400"
+                                            : "text-white"
+                                        }
+                                      >
+                                        {entry.name}
+                                        {entry.oderId === participantId
+                                          ? " (You)"
+                                          : ""}
+                                      </span>
+                                    </span>
+                                    <span className="text-green-400 font-bold">
+                                      +{entry.points.toLocaleString()}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                      </div>
+                    )}
                 </div>
               )}
 
               <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
                 {chatMessages.length === 0 ? (
-                  <p className="text-gray-500 text-xs text-center py-4">No messages yet</p>
+                  <p className="text-gray-500 text-xs text-center py-4">
+                    No messages yet
+                  </p>
                 ) : (
                   chatMessages.map((msg) => (
                     <div
@@ -1416,14 +1592,29 @@ export default function LiveClassRoomPage() {
                       }`}
                     >
                       <div className="flex items-center gap-1 mb-0.5">
-                        <span className={`text-[10px] font-semibold ${msg.isTeacher ? "text-yellow-400" : msg.sender === participantId ? "text-blue-400" : "text-gray-300"}`}>
-                          {msg.isTeacher ? "👑 " : ""}{msg.senderName}{msg.sender === participantId ? " (You)" : ""}
+                        <span
+                          className={`text-[10px] font-semibold ${
+                            msg.isTeacher
+                              ? "text-yellow-400"
+                              : msg.sender === participantId
+                              ? "text-blue-400"
+                              : "text-gray-300"
+                          }`}
+                        >
+                          {msg.isTeacher ? "👑 " : ""}
+                          {msg.senderName}
+                          {msg.sender === participantId ? " (You)" : ""}
                         </span>
                         <span className="text-[8px] text-gray-500">
-                          {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       </div>
-                      <p className="text-white text-xs break-words">{msg.message}</p>
+                      <p className="text-white text-xs break-words">
+                        {msg.message}
+                      </p>
                     </div>
                   ))
                 )}
@@ -1439,7 +1630,11 @@ export default function LiveClassRoomPage() {
                     placeholder="Type a message..."
                     className="flex-1 bg-gray-700 text-white text-xs px-2 py-1.5 rounded border border-gray-600 focus:border-blue-500 focus:outline-none"
                   />
-                  <Button size="sm" onClick={sendChatMessage} className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700">
+                  <Button
+                    size="sm"
+                    onClick={sendChatMessage}
+                    className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700"
+                  >
                     <Send className="h-3 w-3" />
                   </Button>
                 </div>
@@ -1457,7 +1652,9 @@ export default function LiveClassRoomPage() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-            onClick={() => !activePoll.isActive && setShowPollNotification(false)}
+            onClick={() =>
+              !activePoll.isActive && setShowPollNotification(false)
+            }
           >
             <motion.div
               onClick={(e) => e.stopPropagation()}
@@ -1467,16 +1664,26 @@ export default function LiveClassRoomPage() {
                 <h3 className="text-pink-400 font-bold flex items-center gap-2">
                   <BarChart3 className="h-5 w-5" /> Poll
                 </h3>
-                <button onClick={() => setShowPollNotification(false)} className="text-gray-400 hover:text-white">
+                <button
+                  onClick={() => setShowPollNotification(false)}
+                  className="text-gray-400 hover:text-white"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
-              <p className="text-white font-medium mb-4">{activePoll.question}</p>
+              <p className="text-white font-medium mb-4">
+                {activePoll.question}
+              </p>
               <div className="space-y-2">
                 {activePoll.options.map((opt, i) => {
-                  const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
+                  const voteCount = Object.values(activePoll.votes).filter(
+                    (v) => v === opt
+                  ).length;
                   const totalVotes = Object.keys(activePoll.votes).length;
-                  const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
+                  const percent =
+                    totalVotes > 0
+                      ? Math.round((voteCount / totalVotes) * 100)
+                      : 0;
                   const isMyVote = activePoll.myVote === opt;
                   return (
                     <button
@@ -1489,20 +1696,33 @@ export default function LiveClassRoomPage() {
                           : activePoll.myVote
                           ? "border-gray-600 bg-gray-700/50"
                           : "border-gray-600 hover:border-pink-500 hover:bg-pink-500/10"
-                      } ${!activePoll.isActive || activePoll.myVote ? "cursor-default" : "cursor-pointer"}`}
+                      } ${
+                        !activePoll.isActive || activePoll.myVote
+                          ? "cursor-default"
+                          : "cursor-pointer"
+                      }`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-white text-sm flex items-center gap-2">
-                          {isMyVote && <Check className="h-4 w-4 text-green-400" />}
+                          {isMyVote && (
+                            <Check className="h-4 w-4 text-green-400" />
+                          )}
                           {opt}
                         </span>
                         {(activePoll.myVote || !activePoll.isActive) && (
-                          <span className="text-gray-400 text-xs">{voteCount} ({percent}%)</span>
+                          <span className="text-gray-400 text-xs">
+                            {voteCount} ({percent}%)
+                          </span>
                         )}
                       </div>
                       {(activePoll.myVote || !activePoll.isActive) && (
                         <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                          <div className={`h-full transition-all ${isMyVote ? "bg-green-500" : "bg-pink-500"}`} style={{ width: `${percent}%` }} />
+                          <div
+                            className={`h-full transition-all ${
+                              isMyVote ? "bg-green-500" : "bg-pink-500"
+                            }`}
+                            style={{ width: `${percent}%` }}
+                          />
                         </div>
                       )}
                     </button>
@@ -1510,10 +1730,14 @@ export default function LiveClassRoomPage() {
                 })}
               </div>
               {activePoll.myVote && activePoll.isActive && (
-                <p className="text-green-400 text-xs text-center mt-3">✓ You voted for "{activePoll.myVote}"</p>
+                <p className="text-green-400 text-xs text-center mt-3">
+                  ✓ You voted for "{activePoll.myVote}"
+                </p>
               )}
               {!activePoll.isActive && (
-                <p className="text-gray-400 text-xs text-center mt-3">Poll has ended</p>
+                <p className="text-gray-400 text-xs text-center mt-3">
+                  Poll has ended
+                </p>
               )}
             </motion.div>
           </motion.div>

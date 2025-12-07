@@ -115,6 +115,9 @@ export default function TeacherLiveClassRoomPage() {
     isActive: boolean;
   } | null>(null);
 
+  // Leaderboard state (accumulates across quizzes)
+  const [leaderboard, setLeaderboard] = useState<Record<string, { name: string; points: number; correct: number }>>({});
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -999,15 +1002,43 @@ export default function TeacherLiveClassRoomPage() {
 
   const endQuiz = () => {
     if (!activeQuiz) return;
+    
+    // Calculate points for correct answers (100 points per second remaining)
+    const results: Array<{ oderId: string; name: string; points: number }> = [];
+    Object.entries(activeQuiz.answers).forEach(([oderId, data]) => {
+      if (data.answer === activeQuiz.correctAnswer) {
+        const points = data.time * 100; // 100 points per second remaining
+        results.push({ oderId, name: data.name, points });
+        // Update leaderboard
+        setLeaderboard((prev) => ({
+          ...prev,
+          [oderId]: {
+            name: data.name,
+            points: (prev[oderId]?.points || 0) + points,
+            correct: (prev[oderId]?.correct || 0) + 1,
+          },
+        }));
+      }
+    });
+    
+    // Sort by points and get top 5
+    const top5 = results.sort((a, b) => b.points - a.points).slice(0, 5);
+    
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-end",
-      payload: { quizId: activeQuiz.id, correctAnswer: activeQuiz.correctAnswer },
+      payload: { quizId: activeQuiz.id, correctAnswer: activeQuiz.correctAnswer, leaderboard: top5 },
     });
     setActiveQuiz((prev) => prev ? { ...prev, isActive: false } : null);
   };
 
   const clearQuiz = () => setActiveQuiz(null);
+  
+  // Get sorted leaderboard for display
+  const sortedLeaderboard = Object.entries(leaderboard)
+    .map(([id, data]) => ({ id, ...data }))
+    .sort((a, b) => b.points - a.points)
+    .slice(0, 5);
 
   // Quiz timer
   useEffect(() => {
@@ -1414,6 +1445,30 @@ export default function TeacherLiveClassRoomPage() {
                     ) : (
                       <button onClick={clearQuiz} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {/* Leaderboard */}
+              {sortedLeaderboard.length > 0 && (
+                <div className="p-2 border-b-2 border-[#00ff41] bg-[#00ff41]/5">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#00ff41] text-[7px] font-bold">🏆 LEADERBOARD</span>
+                    <button onClick={() => setLeaderboard({})} className="text-[5px] text-[#666] hover:text-white">RESET</button>
+                  </div>
+                  <div className="space-y-1">
+                    {sortedLeaderboard.map((entry, i) => (
+                      <div key={entry.id} className={`flex items-center justify-between p-1 border ${i === 0 ? 'border-[#ffff00] bg-[#ffff00]/10' : i === 1 ? 'border-[#c0c0c0] bg-[#c0c0c0]/10' : i === 2 ? 'border-[#cd7f32] bg-[#cd7f32]/10' : 'border-[#444]'}`}>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[8px]">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
+                          <span className="text-white text-[7px] truncate max-w-[80px]">{entry.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-[#00ff41] text-[7px] font-bold">{entry.points.toLocaleString()}</span>
+                          <span className="text-[5px] text-[#666] ml-1">({entry.correct}✓)</span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
