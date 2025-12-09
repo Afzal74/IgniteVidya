@@ -633,7 +633,7 @@ export default function LiveClassRoomPage() {
           pendingWhiteboardDraws.current.push({ type: "text", ...payload });
           return;
         }
-        ctx.font = `${payload.size}px Arial`;
+        ctx.font = `${payload.size}px ${payload.font || "Arial"}`;
         ctx.fillStyle = payload.color;
         ctx.fillText(payload.text, payload.x, payload.y);
       })
@@ -1269,7 +1269,7 @@ export default function LiveClassRoomPage() {
             ctx.lineTo(payload.x!, payload.y!);
             ctx.stroke();
           } else if (payload.type === "text") {
-            ctx.font = `${payload.size}px Arial`;
+            ctx.font = `${payload.size}px ${payload.font || "Arial"}`;
             ctx.fillStyle = payload.color;
             ctx.fillText(payload.text, payload.x, payload.y);
           } else if (payload.type === "shape") {

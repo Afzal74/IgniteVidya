@@ -184,9 +184,13 @@ export default function TeacherLiveClassRoomPage() {
   const [isEraser, setIsEraser] = useState(false);
   const [whiteboardTool, setWhiteboardTool] = useState<"draw" | "text" | "shape" | "image">("draw");
   const [textSize, setTextSize] = useState(20);
+  const [textFont, setTextFont] = useState("Arial");
   const [selectedShape, setSelectedShape] = useState<"rectangle" | "circle" | "line" | "arrow">("rectangle");
   const [whiteboardHistory, setWhiteboardHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [textInputPos, setTextInputPos] = useState<{ x: number; y: number } | null>(null);
+  const [textInputValue, setTextInputValue] = useState("");
+  const textInputRef = useRef<HTMLInputElement>(null);
   const whiteboardRef = useRef<HTMLCanvasElement>(null);
   const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
   const whiteboardInitialized = useRef(false);
@@ -1333,17 +1337,23 @@ export default function TeacherLiveClassRoomPage() {
     });
   };
 
-  // Add text to whiteboard
-  const addTextToWhiteboard = (x: number, y: number) => {
-    const text = prompt("Enter text:");
-    if (!text) return;
+  // Show inline text input on whiteboard
+  const showTextInput = (x: number, y: number) => {
+    setTextInputPos({ x, y });
+    setTextInputValue("");
+    setTimeout(() => textInputRef.current?.focus(), 50);
+  };
+
+  // Commit text to whiteboard
+  const commitText = () => {
+    if (!textInputValue.trim() || !textInputPos) return;
     
     const ctx = whiteboardCtxRef.current;
     if (!ctx) return;
     
-    ctx.font = `${textSize}px Arial`;
+    ctx.font = `${textSize}px ${textFont}`;
     ctx.fillStyle = brushColor;
-    ctx.fillText(text, x, y);
+    ctx.fillText(textInputValue, textInputPos.x, textInputPos.y);
     
     saveToHistory();
     
@@ -1351,8 +1361,17 @@ export default function TeacherLiveClassRoomPage() {
     channelRef.current?.send({
       type: "broadcast",
       event: "whiteboard-text",
-      payload: { x, y, text, color: brushColor, size: textSize },
+      payload: { x: textInputPos.x, y: textInputPos.y, text: textInputValue, color: brushColor, size: textSize, font: textFont },
     });
+    
+    setTextInputPos(null);
+    setTextInputValue("");
+  };
+
+  // Cancel text input
+  const cancelTextInput = () => {
+    setTextInputPos(null);
+    setTextInputValue("");
   };
 
   // Draw shape on whiteboard
@@ -1464,7 +1483,7 @@ export default function TeacherLiveClassRoomPage() {
     }
 
     if (whiteboardTool === "text") {
-      addTextToWhiteboard(x, y);
+      showTextInput(x, y);
       return;
     }
 
@@ -2953,18 +2972,37 @@ export default function TeacherLiveClassRoomPage() {
                     </div>
                   )}
                   
-                  {/* Text Size (when text tool active) */}
+                  {/* Text Options (when text tool active) */}
                   {whiteboardTool === "text" && (
-                    <select
-                      value={textSize}
-                      onChange={(e) => setTextSize(Number(e.target.value))}
-                      className="bg-[#0f0f23] text-white text-[8px] px-1 py-0.5 border border-[#00d4ff]"
-                    >
-                      <option value={14}>Small</option>
-                      <option value={20}>Medium</option>
-                      <option value={28}>Large</option>
-                      <option value={40}>XL</option>
-                    </select>
+                    <>
+                      <select
+                        value={textFont}
+                        onChange={(e) => setTextFont(e.target.value)}
+                        className="bg-[#0f0f23] text-white text-[8px] px-1 py-0.5 border border-[#00d4ff]"
+                      >
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times</option>
+                        <option value="Courier New">Courier</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Comic Sans MS">Comic Sans</option>
+                        <option value="Impact">Impact</option>
+                        <option value="Trebuchet MS">Trebuchet</option>
+                      </select>
+                      <select
+                        value={textSize}
+                        onChange={(e) => setTextSize(Number(e.target.value))}
+                        className="bg-[#0f0f23] text-white text-[8px] px-1 py-0.5 border border-[#00d4ff]"
+                      >
+                        <option value={12}>12px</option>
+                        <option value={16}>16px</option>
+                        <option value={20}>20px</option>
+                        <option value={24}>24px</option>
+                        <option value={32}>32px</option>
+                        <option value={48}>48px</option>
+                        <option value={64}>64px</option>
+                      </select>
+                    </>
                   )}
                   
                   {/* Color Picker */}
@@ -3048,7 +3086,7 @@ export default function TeacherLiveClassRoomPage() {
                 </div>
               </div>
               {/* Canvas */}
-              <div className="flex-1 p-2 min-h-[400px]">
+              <div className="flex-1 p-2 min-h-[400px] relative">
                 <canvas
                   ref={whiteboardRef}
                   onMouseDown={startDrawing}
@@ -3065,6 +3103,40 @@ export default function TeacherLiveClassRoomPage() {
                   }`}
                   style={{ minHeight: "400px" }}
                 />
+                {/* Inline Text Input */}
+                {textInputPos && (
+                  <div
+                    className="absolute flex items-center gap-1 bg-white border-2 border-[#00d4ff] rounded shadow-lg p-1"
+                    style={{ left: textInputPos.x + 8, top: textInputPos.y + 8 }}
+                  >
+                    <input
+                      ref={textInputRef}
+                      type="text"
+                      value={textInputValue}
+                      onChange={(e) => setTextInputValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitText();
+                        if (e.key === "Escape") cancelTextInput();
+                      }}
+                      placeholder="Type text..."
+                      className="px-2 py-1 text-black outline-none min-w-[150px]"
+                      style={{ fontSize: `${Math.min(textSize, 24)}px`, fontFamily: textFont }}
+                      autoFocus
+                    />
+                    <button
+                      onClick={commitText}
+                      className="px-2 py-1 bg-[#00ff41] text-black text-xs font-bold hover:bg-[#00cc33]"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={cancelTextInput}
+                      className="px-2 py-1 bg-[#ff0000] text-white text-xs font-bold hover:bg-[#cc0000]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
