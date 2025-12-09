@@ -132,6 +132,12 @@ export default function LiveClassRoomPage() {
   const [subtitlesVisible, setSubtitlesVisible] = useState(true);
   const [currentSubtitle, setCurrentSubtitle] = useState("");
 
+  // Live Reactions state
+  const [floatingReactions, setFloatingReactions] = useState<
+    Array<{ id: string; emoji: string; x: number; senderName: string }>
+  >([]);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -550,6 +556,23 @@ export default function LiveClassRoomPage() {
       .on("broadcast", { event: "subtitle-clear" }, () => {
         // Teacher stopped subtitles
         setCurrentSubtitle("");
+      })
+      .on("broadcast", { event: "reaction" }, ({ payload }) => {
+        // Someone sent a reaction
+        const reactionId = `${payload.senderId}-${Date.now()}`;
+        const newReaction = {
+          id: reactionId,
+          emoji: payload.emoji,
+          x: Math.random() * 80 + 10, // Random x position (10-90%)
+          senderName: payload.senderName,
+        };
+        setFloatingReactions((prev) => [...prev, newReaction]);
+        // Remove after animation
+        setTimeout(() => {
+          setFloatingReactions((prev) =>
+            prev.filter((r) => r.id !== reactionId)
+          );
+        }, 3000);
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -1096,6 +1119,33 @@ export default function LiveClassRoomPage() {
     }
   };
 
+  // Send reaction
+  const sendReaction = (emoji: string) => {
+    if (!channelRef.current) return;
+    channelRef.current.send({
+      type: "broadcast",
+      event: "reaction",
+      payload: {
+        senderId: participantId,
+        senderName: participantName || "Student",
+        emoji,
+      },
+    });
+    // Also show locally
+    const reactionId = `${participantId}-${Date.now()}`;
+    const newReaction = {
+      id: reactionId,
+      emoji,
+      x: Math.random() * 80 + 10,
+      senderName: participantName || "You",
+    };
+    setFloatingReactions((prev) => [...prev, newReaction]);
+    setTimeout(() => {
+      setFloatingReactions((prev) => prev.filter((r) => r.id !== reactionId));
+    }, 3000);
+    setShowReactionPicker(false);
+  };
+
   // Auto-scroll chat and reset unread when chat is opened
   useEffect(() => {
     if (showChat) {
@@ -1180,6 +1230,28 @@ export default function LiveClassRoomPage() {
       ref={containerRef}
       className="h-screen pt-16 bg-gray-900 flex flex-col overflow-hidden"
     >
+      {/* Floating Reactions Overlay */}
+      <div className="fixed inset-0 top-16 pointer-events-none z-50 overflow-hidden">
+        <AnimatePresence>
+          {floatingReactions.map((reaction) => (
+            <motion.div
+              key={reaction.id}
+              initial={{ y: "100vh", opacity: 1, scale: 0.5 }}
+              animate={{ y: "-100vh", opacity: [1, 1, 0], scale: [0.5, 1.2, 1] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 3, ease: "easeOut" }}
+              className="absolute bottom-0"
+              style={{ left: `${reaction.x}%` }}
+            >
+              <div className="flex flex-col items-center">
+                <span className="text-3xl md:text-4xl drop-shadow-lg">{reaction.emoji}</span>
+                <span className="text-[8px] text-white bg-black/50 px-1 rounded mt-1">{reaction.senderName}</span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+
       {/* Header - Compact */}
       <div className="bg-gray-800 border-b border-gray-700 px-3 py-2 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
@@ -1976,6 +2048,44 @@ export default function LiveClassRoomPage() {
           >
             CC
           </Button>
+          {/* Reaction Button */}
+          <div className="relative">
+            <Button
+              onClick={() => setShowReactionPicker(!showReactionPicker)}
+              size="sm"
+              className={`rounded-full w-9 h-9 md:w-10 md:h-10 ${
+                showReactionPicker
+                  ? "bg-pink-600 hover:bg-pink-700"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
+              title="Send reaction"
+            >
+              <span className="text-base">😀</span>
+            </Button>
+            {/* Reaction Picker Popup */}
+            <AnimatePresence>
+              {showReactionPicker && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                  className="absolute bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-xl z-50"
+                >
+                  <div className="flex gap-1">
+                    {["👍", "❤️", "😂", "👏", "🎉", "🤔", "😮", "🔥"].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => sendReaction(emoji)}
+                        className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center hover:bg-gray-700 rounded-lg transition-colors text-xl md:text-2xl"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <div className="w-px h-5 md:h-6 bg-gray-700 mx-0.5 md:mx-1" />
           <Button
             onClick={leaveClass}

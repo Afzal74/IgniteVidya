@@ -168,6 +168,11 @@ export default function TeacherLiveClassRoomPage() {
   const [isRecognitionSupported, setIsRecognitionSupported] = useState(false);
   const subtitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Live Reactions state
+  const [floatingReactions, setFloatingReactions] = useState<
+    Array<{ id: string; emoji: string; x: number; senderName: string }>
+  >([]);
+
   // Poll state
   const [showPoll, setShowPoll] = useState(false);
   const [activePoll, setActivePoll] = useState<{
@@ -603,6 +608,23 @@ export default function TeacherLiveClassRoomPage() {
               },
             };
           });
+        })
+        .on("broadcast", { event: "reaction" }, ({ payload }) => {
+          // Student sent a reaction
+          const reactionId = `${payload.senderId}-${Date.now()}`;
+          const newReaction = {
+            id: reactionId,
+            emoji: payload.emoji,
+            x: Math.random() * 80 + 10, // Random x position (10-90%)
+            senderName: payload.senderName,
+          };
+          setFloatingReactions((prev) => [...prev, newReaction]);
+          // Remove after animation
+          setTimeout(() => {
+            setFloatingReactions((prev) =>
+              prev.filter((r) => r.id !== reactionId)
+            );
+          }, 3000);
         })
         .subscribe(async (status) => {
           console.log("Channel status:", status);
@@ -1601,6 +1623,36 @@ export default function TeacherLiveClassRoomPage() {
           backgroundSize: "50px 50px",
         }}
       />
+
+      {/* Floating Reactions Overlay */}
+      <div className="fixed inset-0 top-16 pointer-events-none z-50 overflow-hidden">
+        <AnimatePresence>
+          {floatingReactions.map((reaction) => (
+            <motion.div
+              key={reaction.id}
+              initial={{ y: "100vh", opacity: 1, scale: 0.5 }}
+              animate={{
+                y: "-100vh",
+                opacity: [1, 1, 0],
+                scale: [0.5, 1.2, 1],
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 3, ease: "easeOut" }}
+              className="absolute bottom-0"
+              style={{ left: `${reaction.x}%` }}
+            >
+              <div className="flex flex-col items-center">
+                <span className="text-3xl md:text-4xl drop-shadow-lg">
+                  {reaction.emoji}
+                </span>
+                <span className="text-[8px] text-white bg-black/50 px-1 rounded mt-1">
+                  {reaction.senderName}
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
 
       {/* Header - Compact */}
       <div className="bg-[#1a1a3e] border-b-2 border-[#00ff41] px-3 py-1.5 flex items-center justify-between relative z-10 flex-shrink-0">
