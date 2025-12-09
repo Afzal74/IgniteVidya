@@ -2688,7 +2688,14 @@ export default function TeacherLiveClassRoomPage() {
                   </button>
                   {/* Close */}
                   <button
-                    onClick={() => setShowWhiteboard(false)}
+                    onClick={() => {
+                      setShowWhiteboard(false);
+                      channelRef.current?.send({
+                        type: "broadcast",
+                        event: "whiteboard-close",
+                        payload: {},
+                      });
+                    }}
                     className="p-1 border-2 border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]"
                   >
                     <X className="h-4 w-4" />
