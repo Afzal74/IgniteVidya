@@ -24,6 +24,9 @@ import {
   X,
   BarChart3,
   Check,
+  Pencil,
+  Eraser,
+  Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -172,6 +175,19 @@ export default function TeacherLiveClassRoomPage() {
   const [floatingReactions, setFloatingReactions] = useState<
     Array<{ id: string; emoji: string; x: number; senderName: string }>
   >([]);
+
+  // Whiteboard state
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [brushColor, setBrushColor] = useState("#ff0000");
+  const [brushSize, setBrushSize] = useState(3);
+  const [isEraser, setIsEraser] = useState(false);
+  const whiteboardRef = useRef<HTMLCanvasElement>(null);
+  const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  // Background blur state
+  const [isBlurEnabled, setIsBlurEnabled] = useState(false);
+  const [blurIntensity, setBlurIntensity] = useState(10); // 0-20
 
   // Poll state
   const [showPoll, setShowPoll] = useState(false);
@@ -1052,7 +1068,7 @@ export default function TeacherLiveClassRoomPage() {
               clearTimeout(subtitleTimeoutRef.current);
             }
 
-            // Auto-hide subtitles after 3 seconds of silence
+            // Auto-hide subtitles after 2 seconds of silence (faster clear)
             subtitleTimeoutRef.current = setTimeout(() => {
               setCurrentSubtitle("");
               channelRef.current?.send({
@@ -1060,14 +1076,20 @@ export default function TeacherLiveClassRoomPage() {
                 event: "subtitle-clear",
                 payload: {},
               });
-            }, 3000);
+            }, 2000);
           }
         };
 
         recognition.onerror = (event) => {
+          // Ignore "no-speech" errors - this is normal when user is silent
+          if (event.error === "no-speech" || event.error === "aborted") {
+            return; // Silent ignore - not an actual error
+          }
           console.error("Speech recognition error:", event.error);
           if (event.error === "not-allowed") {
             setMediaError("Microphone permission denied for subtitles");
+          } else if (event.error === "network") {
+            setMediaError("Network error - check your connection");
           }
         };
 
@@ -1219,6 +1241,123 @@ export default function TeacherLiveClassRoomPage() {
     (a, b) => a + b,
     0
   );
+
+  // Whiteboard functions
+  const initWhiteboard = useCallback(() => {
+    const canvas = whiteboardRef.current;
+    if (!canvas) return;
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushSize;
+      whiteboardCtxRef.current = ctx;
+      
+      // Fill with white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }, [brushColor, brushSize]);
+
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+
+    setIsDrawing(true);
+    
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+    
+    if ('touches' in e) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    // Broadcast start point
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-draw",
+      payload: { type: "start", x, y, color: isEraser ? "#ffffff" : brushColor, size: isEraser ? brushSize * 3 : brushSize },
+    });
+  };
+
+  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    let x, y;
+    
+    if ('touches' in e) {
+      e.preventDefault();
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+
+    ctx.strokeStyle = isEraser ? "#ffffff" : brushColor;
+    ctx.lineWidth = isEraser ? brushSize * 3 : brushSize;
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    
+    // Broadcast draw point
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-draw",
+      payload: { type: "draw", x, y, color: isEraser ? "#ffffff" : brushColor, size: isEraser ? brushSize * 3 : brushSize },
+    });
+  };
+
+  const stopDrawing = () => {
+    if (isDrawing) {
+      setIsDrawing(false);
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "whiteboard-draw",
+        payload: { type: "end" },
+      });
+    }
+  };
+
+  const clearWhiteboard = () => {
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+    
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Broadcast clear
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-clear",
+      payload: {},
+    });
+  };
+
+  // Initialize whiteboard when shown
+  useEffect(() => {
+    if (showWhiteboard) {
+      setTimeout(initWhiteboard, 100);
+    }
+  }, [showWhiteboard, initWhiteboard]);
 
   // Subtitle functions
   useEffect(() => {
@@ -1754,6 +1893,7 @@ export default function TeacherLiveClassRoomPage() {
                       isActiveSpeaker={v.isActiveSpeaker}
                       subtitlesEnabled={subtitlesEnabled}
                       currentSubtitle={currentSubtitle}
+                      isBlurEnabled={isBlurEnabled}
                     />
                   ))}
           </div>
@@ -2490,6 +2630,91 @@ export default function TeacherLiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
+      {/* Whiteboard Modal */}
+      <AnimatePresence>
+        {showWhiteboard && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-[#1a1a3e] border-4 border-[#ffff00] rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col"
+            >
+              {/* Whiteboard Header */}
+              <div className="flex items-center justify-between p-2 border-b-2 border-[#ffff00]">
+                <h3 className="text-[#ffff00] text-[10px] font-bold flex items-center gap-2">
+                  <Pencil className="h-4 w-4" /> WHITEBOARD
+                </h3>
+                <div className="flex items-center gap-2">
+                  {/* Color Picker */}
+                  <div className="flex gap-1">
+                    {["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff", "#ffffff", "#000000"].map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => { setBrushColor(color); setIsEraser(false); }}
+                        className={`w-5 h-5 rounded border-2 ${brushColor === color && !isEraser ? "border-white" : "border-transparent"}`}
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </div>
+                  {/* Brush Size */}
+                  <select
+                    value={brushSize}
+                    onChange={(e) => setBrushSize(Number(e.target.value))}
+                    className="bg-[#0f0f23] text-white text-[8px] px-1 py-0.5 border border-[#ffff00]"
+                  >
+                    <option value={2}>Thin</option>
+                    <option value={5}>Medium</option>
+                    <option value={10}>Thick</option>
+                  </select>
+                  {/* Eraser */}
+                  <button
+                    onClick={() => setIsEraser(!isEraser)}
+                    className={`p-1 border-2 ${isEraser ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]" : "border-[#ffff00] text-[#ffff00]"}`}
+                  >
+                    <Eraser className="h-4 w-4" />
+                  </button>
+                  {/* Clear */}
+                  <button
+                    onClick={clearWhiteboard}
+                    className="p-1 border-2 border-[#ff0000] text-[#ff0000] hover:bg-[#ff0000] hover:text-white"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                  {/* Close */}
+                  <button
+                    onClick={() => setShowWhiteboard(false)}
+                    className="p-1 border-2 border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              {/* Canvas */}
+              <div className="flex-1 p-2 min-h-[400px]">
+                <canvas
+                  ref={whiteboardRef}
+                  onMouseDown={startDrawing}
+                  onMouseMove={draw}
+                  onMouseUp={stopDrawing}
+                  onMouseLeave={stopDrawing}
+                  onTouchStart={startDrawing}
+                  onTouchMove={draw}
+                  onTouchEnd={stopDrawing}
+                  className="w-full h-full bg-white rounded cursor-crosshair touch-none"
+                  style={{ minHeight: "400px" }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Control Bar - Mobile responsive */}
       <div className="bg-[#1a1a3e] border-t-2 md:border-t-4 border-[#00ff41] px-2 md:px-4 py-1.5 md:py-2 relative z-10 flex-shrink-0">
         <div className="flex items-center justify-center gap-1.5 md:gap-2">
@@ -2555,6 +2780,30 @@ export default function TeacherLiveClassRoomPage() {
             }
           >
             <span className="text-[10px] md:text-[12px] font-bold">CC</span>
+          </button>
+          {/* Whiteboard Button */}
+          <button
+            onClick={() => setShowWhiteboard(!showWhiteboard)}
+            className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${
+              showWhiteboard
+                ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]"
+                : "bg-[#0f0f23] border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]"
+            }`}
+            title={showWhiteboard ? "Close whiteboard" : "Open whiteboard"}
+          >
+            <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          </button>
+          {/* Background Blur Button */}
+          <button
+            onClick={() => setIsBlurEnabled(!isBlurEnabled)}
+            className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${
+              isBlurEnabled
+                ? "bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]"
+                : "bg-[#0f0f23] border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]"
+            }`}
+            title={isBlurEnabled ? "Disable blur" : "Enable background blur"}
+          >
+            <span className="text-[10px] md:text-[12px] font-bold">BG</span>
           </button>
           <div className="w-0.5 h-5 md:h-6 bg-[#00ff41] mx-0.5 md:mx-1" />
           <button
@@ -2752,6 +3001,7 @@ function HostVideoTile({
   isActiveSpeaker,
   subtitlesEnabled,
   currentSubtitle,
+  isBlurEnabled,
 }: {
   stream: MediaStream | null;
   name: string;
@@ -2760,6 +3010,7 @@ function HostVideoTile({
   isActiveSpeaker?: boolean;
   subtitlesEnabled?: boolean;
   currentSubtitle?: string;
+  isBlurEnabled?: boolean;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -2797,13 +3048,25 @@ function HostVideoTile({
           : "border-[#ffff00]"
       } overflow-hidden relative transition-all duration-300`}
     >
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted={isLocal}
-        className={`w-full h-full object-cover ${showVideo ? "" : "hidden"}`}
-      />
+      {/* Video with optional blur effect */}
+      <div className="w-full h-full relative">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal}
+          className={`w-full h-full object-cover ${showVideo ? "" : "hidden"}`}
+          style={isBlurEnabled ? { filter: "blur(10px)", transform: "scale(1.1)" } : {}}
+        />
+        {/* Overlay for blur effect - shows person without blur */}
+        {isBlurEnabled && showVideo && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[60%] h-[80%] rounded-full overflow-hidden" style={{ boxShadow: "0 0 60px 30px rgba(0,0,0,0.5)" }}>
+              {/* This creates a "spotlight" effect on the person */}
+            </div>
+          </div>
+        )}
+      </div>
       {!showVideo && (
         <div className="w-full h-full flex flex-col items-center justify-center bg-[#0f0f23]">
           <div
@@ -2816,6 +3079,12 @@ function HostVideoTile({
           <p className="text-[#ffff00] text-xs md:text-sm mt-2 md:mt-4">
             {name}
           </p>
+        </div>
+      )}
+      {/* Blur indicator */}
+      {isBlurEnabled && showVideo && (
+        <div className="absolute top-2 right-2 px-1.5 py-0.5 bg-[#00d4ff]/80 text-[#0f0f23] text-[8px] font-bold rounded">
+          BG BLUR
         </div>
       )}
       {/* Speaking indicator */}

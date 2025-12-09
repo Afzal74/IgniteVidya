@@ -138,6 +138,14 @@ export default function LiveClassRoomPage() {
   >([]);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
 
+  // Whiteboard state (view only for students)
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const whiteboardRef = useRef<HTMLCanvasElement>(null);
+  const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  // Background blur state
+  const [isBlurEnabled, setIsBlurEnabled] = useState(false);
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -573,6 +581,36 @@ export default function LiveClassRoomPage() {
             prev.filter((r) => r.id !== reactionId)
           );
         }, 3000);
+      })
+      .on("broadcast", { event: "whiteboard-draw" }, ({ payload }) => {
+        // Teacher is drawing on whiteboard
+        const canvas = whiteboardRef.current;
+        const ctx = whiteboardCtxRef.current;
+        if (!canvas || !ctx) return;
+        
+        if (payload.type === "start") {
+          ctx.beginPath();
+          ctx.moveTo(payload.x, payload.y);
+          ctx.strokeStyle = payload.color;
+          ctx.lineWidth = payload.size;
+        } else if (payload.type === "draw") {
+          ctx.strokeStyle = payload.color;
+          ctx.lineWidth = payload.size;
+          ctx.lineTo(payload.x, payload.y);
+          ctx.stroke();
+        }
+        // Show whiteboard if not visible
+        if (!showWhiteboard) {
+          setShowWhiteboard(true);
+        }
+      })
+      .on("broadcast", { event: "whiteboard-clear" }, () => {
+        // Teacher cleared whiteboard
+        const canvas = whiteboardRef.current;
+        const ctx = whiteboardCtxRef.current;
+        if (!canvas || !ctx) return;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -1118,6 +1156,33 @@ export default function LiveClassRoomPage() {
       setDmUnreadCount(0);
     }
   };
+
+  // Initialize whiteboard canvas for viewing
+  const initStudentWhiteboard = useCallback(() => {
+    const canvas = whiteboardRef.current;
+    if (!canvas) return;
+    
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      whiteboardCtxRef.current = ctx;
+      
+      // Fill with white background
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+  }, []);
+
+  // Initialize whiteboard when shown
+  useEffect(() => {
+    if (showWhiteboard) {
+      setTimeout(initStudentWhiteboard, 100);
+    }
+  }, [showWhiteboard, initStudentWhiteboard]);
 
   // Send reaction
   const sendReaction = (emoji: string) => {
@@ -1892,6 +1957,46 @@ export default function LiveClassRoomPage() {
         </AnimatePresence>
       </div>
 
+      {/* Whiteboard Modal (View Only for Students) */}
+      <AnimatePresence>
+        {showWhiteboard && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              className="bg-gray-800 border-2 border-yellow-500 rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col"
+            >
+              {/* Whiteboard Header */}
+              <div className="flex items-center justify-between p-2 border-b border-yellow-500">
+                <h3 className="text-yellow-400 text-sm font-bold flex items-center gap-2">
+                  ✏️ Teacher's Whiteboard
+                </h3>
+                <button
+                  onClick={() => setShowWhiteboard(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              {/* Canvas (View Only) */}
+              <div className="flex-1 p-2 min-h-[400px]">
+                <canvas
+                  ref={whiteboardRef}
+                  className="w-full h-full bg-white rounded"
+                  style={{ minHeight: "400px" }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Poll Modal */}
       <AnimatePresence>
         {showPollNotification && activePoll && (
@@ -2086,6 +2191,19 @@ export default function LiveClassRoomPage() {
               )}
             </AnimatePresence>
           </div>
+          {/* Background Blur Button */}
+          <Button
+            onClick={() => setIsBlurEnabled(!isBlurEnabled)}
+            size="sm"
+            className={`rounded-full w-9 h-9 md:w-10 md:h-10 text-[10px] md:text-xs font-bold ${
+              isBlurEnabled
+                ? "bg-cyan-600 hover:bg-cyan-700 text-white"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
+            title={isBlurEnabled ? "Disable blur" : "Enable background blur"}
+          >
+            BG
+          </Button>
           <div className="w-px h-5 md:h-6 bg-gray-700 mx-0.5 md:mx-1" />
           <Button
             onClick={leaveClass}
