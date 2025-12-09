@@ -625,6 +625,73 @@ export default function LiveClassRoomPage() {
         // Teacher closed whiteboard
         setShowWhiteboard(false);
       })
+      .on("broadcast", { event: "whiteboard-text" }, ({ payload }) => {
+        // Teacher added text
+        setShowWhiteboard(true);
+        const ctx = whiteboardCtxRef.current;
+        if (!ctx) {
+          pendingWhiteboardDraws.current.push({ type: "text", ...payload });
+          return;
+        }
+        ctx.font = `${payload.size}px Arial`;
+        ctx.fillStyle = payload.color;
+        ctx.fillText(payload.text, payload.x, payload.y);
+      })
+      .on("broadcast", { event: "whiteboard-shape" }, ({ payload }) => {
+        // Teacher drew a shape
+        setShowWhiteboard(true);
+        const ctx = whiteboardCtxRef.current;
+        if (!ctx) {
+          pendingWhiteboardDraws.current.push({ type: "shape", ...payload });
+          return;
+        }
+        ctx.strokeStyle = payload.color;
+        ctx.lineWidth = payload.size;
+        ctx.fillStyle = payload.color + "33";
+        
+        if (payload.shape === "rectangle") {
+          ctx.strokeRect(payload.startX, payload.startY, payload.endX - payload.startX, payload.endY - payload.startY);
+          ctx.fillRect(payload.startX, payload.startY, payload.endX - payload.startX, payload.endY - payload.startY);
+        } else if (payload.shape === "circle") {
+          const radius = Math.sqrt(Math.pow(payload.endX - payload.startX, 2) + Math.pow(payload.endY - payload.startY, 2));
+          ctx.beginPath();
+          ctx.arc(payload.startX, payload.startY, radius, 0, 2 * Math.PI);
+          ctx.stroke();
+          ctx.fill();
+        } else if (payload.shape === "line") {
+          ctx.beginPath();
+          ctx.moveTo(payload.startX, payload.startY);
+          ctx.lineTo(payload.endX, payload.endY);
+          ctx.stroke();
+        } else if (payload.shape === "arrow") {
+          ctx.beginPath();
+          ctx.moveTo(payload.startX, payload.startY);
+          ctx.lineTo(payload.endX, payload.endY);
+          ctx.stroke();
+          const angle = Math.atan2(payload.endY - payload.startY, payload.endX - payload.startX);
+          const headLength = 15;
+          ctx.beginPath();
+          ctx.moveTo(payload.endX, payload.endY);
+          ctx.lineTo(payload.endX - headLength * Math.cos(angle - Math.PI / 6), payload.endY - headLength * Math.sin(angle - Math.PI / 6));
+          ctx.moveTo(payload.endX, payload.endY);
+          ctx.lineTo(payload.endX - headLength * Math.cos(angle + Math.PI / 6), payload.endY - headLength * Math.sin(angle + Math.PI / 6));
+          ctx.stroke();
+        }
+      })
+      .on("broadcast", { event: "whiteboard-image" }, ({ payload }) => {
+        // Teacher added an image
+        setShowWhiteboard(true);
+        const ctx = whiteboardCtxRef.current;
+        if (!ctx) {
+          pendingWhiteboardDraws.current.push({ type: "image", ...payload });
+          return;
+        }
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, payload.x, payload.y, payload.width, payload.height);
+        };
+        img.src = payload.dataUrl;
+      })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
         if (status === "SUBSCRIBED") {
@@ -1190,7 +1257,7 @@ export default function LiveClassRoomPage() {
       
       // Process any pending draw commands
       if (pendingWhiteboardDraws.current.length > 0) {
-        pendingWhiteboardDraws.current.forEach((payload) => {
+        pendingWhiteboardDraws.current.forEach((payload: any) => {
           if (payload.type === "start") {
             ctx.beginPath();
             ctx.moveTo(payload.x!, payload.y!);
@@ -1201,6 +1268,35 @@ export default function LiveClassRoomPage() {
             ctx.lineWidth = payload.size!;
             ctx.lineTo(payload.x!, payload.y!);
             ctx.stroke();
+          } else if (payload.type === "text") {
+            ctx.font = `${payload.size}px Arial`;
+            ctx.fillStyle = payload.color;
+            ctx.fillText(payload.text, payload.x, payload.y);
+          } else if (payload.type === "shape") {
+            ctx.strokeStyle = payload.color;
+            ctx.lineWidth = payload.size;
+            ctx.fillStyle = payload.color + "33";
+            if (payload.shape === "rectangle") {
+              ctx.strokeRect(payload.startX, payload.startY, payload.endX - payload.startX, payload.endY - payload.startY);
+              ctx.fillRect(payload.startX, payload.startY, payload.endX - payload.startX, payload.endY - payload.startY);
+            } else if (payload.shape === "circle") {
+              const radius = Math.sqrt(Math.pow(payload.endX - payload.startX, 2) + Math.pow(payload.endY - payload.startY, 2));
+              ctx.beginPath();
+              ctx.arc(payload.startX, payload.startY, radius, 0, 2 * Math.PI);
+              ctx.stroke();
+              ctx.fill();
+            } else if (payload.shape === "line" || payload.shape === "arrow") {
+              ctx.beginPath();
+              ctx.moveTo(payload.startX, payload.startY);
+              ctx.lineTo(payload.endX, payload.endY);
+              ctx.stroke();
+            }
+          } else if (payload.type === "image") {
+            const img = new Image();
+            img.onload = () => {
+              ctx.drawImage(img, payload.x, payload.y, payload.width, payload.height);
+            };
+            img.src = payload.dataUrl;
           }
         });
         pendingWhiteboardDraws.current = [];

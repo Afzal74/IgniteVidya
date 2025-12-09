@@ -182,8 +182,16 @@ export default function TeacherLiveClassRoomPage() {
   const [brushColor, setBrushColor] = useState("#ff0000");
   const [brushSize, setBrushSize] = useState(3);
   const [isEraser, setIsEraser] = useState(false);
+  const [whiteboardTool, setWhiteboardTool] = useState<"draw" | "text" | "shape" | "image">("draw");
+  const [textSize, setTextSize] = useState(20);
+  const [selectedShape, setSelectedShape] = useState<"rectangle" | "circle" | "line" | "arrow">("rectangle");
+  const [whiteboardHistory, setWhiteboardHistory] = useState<ImageData[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const whiteboardRef = useRef<HTMLCanvasElement>(null);
   const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const whiteboardInitialized = useRef(false);
+  const shapeStartPos = useRef<{ x: number; y: number } | null>(null);
+  const tempCanvas = useRef<HTMLCanvasElement | null>(null);
 
   // Background blur state
   const [isBlurEnabled, setIsBlurEnabled] = useState(false);
@@ -1247,30 +1255,203 @@ export default function TeacherLiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     if (!canvas) return;
     
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    // Only initialize once - don't clear on color/size change
+    if (whiteboardInitialized.current && whiteboardCtxRef.current) {
+      return;
+    }
+    
+    canvas.width = canvas.offsetWidth || 800;
+    canvas.height = canvas.offsetHeight || 600;
     
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.strokeStyle = brushColor;
-      ctx.lineWidth = brushSize;
       whiteboardCtxRef.current = ctx;
       
       // Fill with white background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Save initial state to history
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      setWhiteboardHistory([imageData]);
+      setHistoryIndex(0);
+      
+      whiteboardInitialized.current = true;
     }
-  }, [brushColor, brushSize]);
+  }, []);
+
+  // Save canvas state to history
+  const saveToHistory = () => {
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+    
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const newHistory = whiteboardHistory.slice(0, historyIndex + 1);
+    newHistory.push(imageData);
+    setWhiteboardHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+  };
+
+  // Undo function
+  const undoWhiteboard = () => {
+    if (historyIndex <= 0) return;
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+    
+    const newIndex = historyIndex - 1;
+    ctx.putImageData(whiteboardHistory[newIndex], 0, 0);
+    setHistoryIndex(newIndex);
+    
+    // Broadcast undo
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-undo",
+      payload: {},
+    });
+  };
+
+  // Redo function
+  const redoWhiteboard = () => {
+    if (historyIndex >= whiteboardHistory.length - 1) return;
+    const canvas = whiteboardRef.current;
+    const ctx = whiteboardCtxRef.current;
+    if (!canvas || !ctx) return;
+    
+    const newIndex = historyIndex + 1;
+    ctx.putImageData(whiteboardHistory[newIndex], 0, 0);
+    setHistoryIndex(newIndex);
+    
+    // Broadcast redo
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-redo",
+      payload: {},
+    });
+  };
+
+  // Add text to whiteboard
+  const addTextToWhiteboard = (x: number, y: number) => {
+    const text = prompt("Enter text:");
+    if (!text) return;
+    
+    const ctx = whiteboardCtxRef.current;
+    if (!ctx) return;
+    
+    ctx.font = `${textSize}px Arial`;
+    ctx.fillStyle = brushColor;
+    ctx.fillText(text, x, y);
+    
+    saveToHistory();
+    
+    // Broadcast text
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-text",
+      payload: { x, y, text, color: brushColor, size: textSize },
+    });
+  };
+
+  // Draw shape on whiteboard
+  const drawShape = (startX: number, startY: number, endX: number, endY: number) => {
+    const ctx = whiteboardCtxRef.current;
+    if (!ctx) return;
+    
+    ctx.strokeStyle = brushColor;
+    ctx.lineWidth = brushSize;
+    ctx.fillStyle = brushColor + "33"; // Semi-transparent fill
+    
+    if (selectedShape === "rectangle") {
+      const width = endX - startX;
+      const height = endY - startY;
+      ctx.strokeRect(startX, startY, width, height);
+      ctx.fillRect(startX, startY, width, height);
+    } else if (selectedShape === "circle") {
+      const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+      ctx.beginPath();
+      ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+      ctx.stroke();
+      ctx.fill();
+    } else if (selectedShape === "line") {
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+    } else if (selectedShape === "arrow") {
+      // Draw line
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(endX, endY);
+      ctx.stroke();
+      // Draw arrowhead
+      const angle = Math.atan2(endY - startY, endX - startX);
+      const headLength = 15;
+      ctx.beginPath();
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - headLength * Math.cos(angle - Math.PI / 6), endY - headLength * Math.sin(angle - Math.PI / 6));
+      ctx.moveTo(endX, endY);
+      ctx.lineTo(endX - headLength * Math.cos(angle + Math.PI / 6), endY - headLength * Math.sin(angle + Math.PI / 6));
+      ctx.stroke();
+    }
+    
+    // Broadcast shape
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-shape",
+      payload: { shape: selectedShape, startX, startY, endX, endY, color: brushColor, size: brushSize },
+    });
+  };
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = whiteboardRef.current;
+        const ctx = whiteboardCtxRef.current;
+        if (!canvas || !ctx) return;
+        
+        // Scale image to fit (max 300px)
+        const maxSize = 300;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height);
+          width *= ratio;
+          height *= ratio;
+        }
+        
+        // Draw at center
+        const x = (canvas.width - width) / 2;
+        const y = (canvas.height - height) / 2;
+        ctx.drawImage(img, x, y, width, height);
+        
+        saveToHistory();
+        
+        // Broadcast image
+        channelRef.current?.send({
+          type: "broadcast",
+          event: "whiteboard-image",
+          payload: { dataUrl: event.target?.result, x, y, width, height },
+        });
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
 
-    setIsDrawing(true);
-    
     const rect = canvas.getBoundingClientRect();
     let x, y;
     
@@ -1282,6 +1463,23 @@ export default function TeacherLiveClassRoomPage() {
       y = e.clientY - rect.top;
     }
 
+    if (whiteboardTool === "text") {
+      addTextToWhiteboard(x, y);
+      return;
+    }
+
+    if (whiteboardTool === "shape") {
+      shapeStartPos.current = { x, y };
+      // Save current canvas state for shape preview
+      tempCanvas.current = document.createElement("canvas");
+      tempCanvas.current.width = canvas.width;
+      tempCanvas.current.height = canvas.height;
+      tempCanvas.current.getContext("2d")?.drawImage(canvas, 0, 0);
+      setIsDrawing(true);
+      return;
+    }
+
+    setIsDrawing(true);
     ctx.beginPath();
     ctx.moveTo(x, y);
     
@@ -1312,6 +1510,32 @@ export default function TeacherLiveClassRoomPage() {
       y = e.clientY - rect.top;
     }
 
+    if (whiteboardTool === "shape" && shapeStartPos.current && tempCanvas.current) {
+      // Preview shape by restoring temp canvas and drawing shape
+      ctx.drawImage(tempCanvas.current, 0, 0);
+      ctx.strokeStyle = brushColor;
+      ctx.lineWidth = brushSize;
+      ctx.fillStyle = brushColor + "33";
+      
+      const startX = shapeStartPos.current.x;
+      const startY = shapeStartPos.current.y;
+      
+      if (selectedShape === "rectangle") {
+        ctx.strokeRect(startX, startY, x - startX, y - startY);
+      } else if (selectedShape === "circle") {
+        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+        ctx.stroke();
+      } else if (selectedShape === "line" || selectedShape === "arrow") {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      }
+      return;
+    }
+
     ctx.strokeStyle = isEraser ? "#ffffff" : brushColor;
     ctx.lineWidth = isEraser ? brushSize * 3 : brushSize;
     ctx.lineTo(x, y);
@@ -1325,15 +1549,44 @@ export default function TeacherLiveClassRoomPage() {
     });
   };
 
-  const stopDrawing = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      channelRef.current?.send({
-        type: "broadcast",
-        event: "whiteboard-draw",
-        payload: { type: "end" },
-      });
+  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    
+    if (whiteboardTool === "shape" && shapeStartPos.current && e) {
+      const canvas = whiteboardRef.current;
+      if (!canvas) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      let x, y;
+      if ('touches' in e && e.changedTouches) {
+        x = e.changedTouches[0].clientX - rect.left;
+        y = e.changedTouches[0].clientY - rect.top;
+      } else if ('clientX' in e) {
+        x = e.clientX - rect.left;
+        y = e.clientY - rect.top;
+      } else {
+        x = shapeStartPos.current.x;
+        y = shapeStartPos.current.y;
+      }
+      
+      // Restore and draw final shape
+      if (tempCanvas.current) {
+        whiteboardCtxRef.current?.drawImage(tempCanvas.current, 0, 0);
+      }
+      drawShape(shapeStartPos.current.x, shapeStartPos.current.y, x, y);
+      shapeStartPos.current = null;
+      tempCanvas.current = null;
+      saveToHistory();
+    } else if (whiteboardTool === "draw") {
+      saveToHistory();
     }
+    
+    setIsDrawing(false);
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "whiteboard-draw",
+      payload: { type: "end" },
+    });
   };
 
   const clearWhiteboard = () => {
@@ -2643,25 +2896,89 @@ export default function TeacherLiveClassRoomPage() {
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0.9 }}
-              className="bg-[#1a1a3e] border-4 border-[#ffff00] rounded-lg w-full max-w-4xl max-h-[80vh] flex flex-col"
+              className="bg-[#1a1a3e] border-4 border-[#ffff00] rounded-lg w-full max-w-5xl max-h-[90vh] flex flex-col"
             >
               {/* Whiteboard Header */}
-              <div className="flex items-center justify-between p-2 border-b-2 border-[#ffff00]">
+              <div className="flex flex-wrap items-center justify-between p-2 border-b-2 border-[#ffff00] gap-2">
                 <h3 className="text-[#ffff00] text-[10px] font-bold flex items-center gap-2">
                   <Pencil className="h-4 w-4" /> WHITEBOARD
                 </h3>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Tool Selection */}
+                  <div className="flex gap-1 border-r border-[#444] pr-2">
+                    <button
+                      onClick={() => { setWhiteboardTool("draw"); setIsEraser(false); }}
+                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "draw" && !isEraser ? "bg-[#00ff41] border-[#00ff41] text-[#0f0f23]" : "border-[#00ff41] text-[#00ff41]"}`}
+                      title="Draw"
+                    >
+                      <Pencil className="h-3 w-3" />
+                    </button>
+                    <button
+                      onClick={() => setWhiteboardTool("text")}
+                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "text" ? "bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]" : "border-[#00d4ff] text-[#00d4ff]"}`}
+                      title="Text"
+                    >
+                      T
+                    </button>
+                    <button
+                      onClick={() => setWhiteboardTool("shape")}
+                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "shape" ? "bg-[#ff00ff] border-[#ff00ff] text-[#0f0f23]" : "border-[#ff00ff] text-[#ff00ff]"}`}
+                      title="Shapes"
+                    >
+                      ▢
+                    </button>
+                    <label className="p-1 border-2 border-[#ffff00] text-[#ffff00] cursor-pointer hover:bg-[#ffff00] hover:text-[#0f0f23]" title="Add Image">
+                      🖼
+                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                    </label>
+                  </div>
+                  
+                  {/* Shape Selection (when shape tool active) */}
+                  {whiteboardTool === "shape" && (
+                    <div className="flex gap-1 border-r border-[#444] pr-2">
+                      {[
+                        { shape: "rectangle" as const, icon: "▢" },
+                        { shape: "circle" as const, icon: "○" },
+                        { shape: "line" as const, icon: "╱" },
+                        { shape: "arrow" as const, icon: "→" },
+                      ].map(({ shape, icon }) => (
+                        <button
+                          key={shape}
+                          onClick={() => setSelectedShape(shape)}
+                          className={`w-6 h-6 border text-[10px] ${selectedShape === shape ? "bg-[#ff00ff] border-[#ff00ff] text-white" : "border-[#ff00ff] text-[#ff00ff]"}`}
+                        >
+                          {icon}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* Text Size (when text tool active) */}
+                  {whiteboardTool === "text" && (
+                    <select
+                      value={textSize}
+                      onChange={(e) => setTextSize(Number(e.target.value))}
+                      className="bg-[#0f0f23] text-white text-[8px] px-1 py-0.5 border border-[#00d4ff]"
+                    >
+                      <option value={14}>Small</option>
+                      <option value={20}>Medium</option>
+                      <option value={28}>Large</option>
+                      <option value={40}>XL</option>
+                    </select>
+                  )}
+                  
                   {/* Color Picker */}
                   <div className="flex gap-1">
                     {["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff", "#ffffff", "#000000"].map((color) => (
                       <button
                         key={color}
                         onClick={() => { setBrushColor(color); setIsEraser(false); }}
-                        className={`w-5 h-5 rounded border-2 ${brushColor === color && !isEraser ? "border-white" : "border-transparent"}`}
+                        className={`w-5 h-5 rounded border-2 ${brushColor === color && !isEraser ? "border-white scale-110" : "border-transparent"}`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
+                  
                   {/* Brush Size */}
                   <select
                     value={brushSize}
@@ -2671,25 +2988,52 @@ export default function TeacherLiveClassRoomPage() {
                     <option value={2}>Thin</option>
                     <option value={5}>Medium</option>
                     <option value={10}>Thick</option>
+                    <option value={20}>XL</option>
                   </select>
+                  
                   {/* Eraser */}
                   <button
-                    onClick={() => setIsEraser(!isEraser)}
+                    onClick={() => { setIsEraser(!isEraser); setWhiteboardTool("draw"); }}
                     className={`p-1 border-2 ${isEraser ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]" : "border-[#ffff00] text-[#ffff00]"}`}
+                    title="Eraser"
                   >
                     <Eraser className="h-4 w-4" />
                   </button>
+                  
+                  {/* Undo/Redo */}
+                  <div className="flex gap-1 border-l border-[#444] pl-2">
+                    <button
+                      onClick={undoWhiteboard}
+                      disabled={historyIndex <= 0}
+                      className="p-1 border-2 border-[#00d4ff] text-[#00d4ff] disabled:opacity-30 hover:bg-[#00d4ff] hover:text-[#0f0f23]"
+                      title="Undo"
+                    >
+                      ↩
+                    </button>
+                    <button
+                      onClick={redoWhiteboard}
+                      disabled={historyIndex >= whiteboardHistory.length - 1}
+                      className="p-1 border-2 border-[#00d4ff] text-[#00d4ff] disabled:opacity-30 hover:bg-[#00d4ff] hover:text-[#0f0f23]"
+                      title="Redo"
+                    >
+                      ↪
+                    </button>
+                  </div>
+                  
                   {/* Clear */}
                   <button
                     onClick={clearWhiteboard}
                     className="p-1 border-2 border-[#ff0000] text-[#ff0000] hover:bg-[#ff0000] hover:text-white"
+                    title="Clear All"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  
                   {/* Close */}
                   <button
                     onClick={() => {
                       setShowWhiteboard(false);
+                      whiteboardInitialized.current = false;
                       channelRef.current?.send({
                         type: "broadcast",
                         event: "whiteboard-close",
@@ -2697,6 +3041,7 @@ export default function TeacherLiveClassRoomPage() {
                       });
                     }}
                     className="p-1 border-2 border-[#00d4ff] text-[#00d4ff] hover:bg-[#00d4ff] hover:text-[#0f0f23]"
+                    title="Close"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -2708,12 +3053,16 @@ export default function TeacherLiveClassRoomPage() {
                   ref={whiteboardRef}
                   onMouseDown={startDrawing}
                   onMouseMove={draw}
-                  onMouseUp={stopDrawing}
-                  onMouseLeave={stopDrawing}
+                  onMouseUp={(e) => stopDrawing(e)}
+                  onMouseLeave={() => stopDrawing()}
                   onTouchStart={startDrawing}
                   onTouchMove={draw}
-                  onTouchEnd={stopDrawing}
-                  className="w-full h-full bg-white rounded cursor-crosshair touch-none"
+                  onTouchEnd={(e) => stopDrawing(e)}
+                  className={`w-full h-full bg-white rounded touch-none ${
+                    whiteboardTool === "text" ? "cursor-text" : 
+                    whiteboardTool === "shape" ? "cursor-crosshair" : 
+                    isEraser ? "cursor-cell" : "cursor-crosshair"
+                  }`}
                   style={{ minHeight: "400px" }}
                 />
               </div>
