@@ -128,6 +128,10 @@ export default function LiveClassRoomPage() {
   // Cumulative leaderboard for student (persists across questions)
   const [cumulativeLeaderboard, setCumulativeLeaderboard] = useState<Array<{ oderId: string; name: string; points: number }>>([]);
 
+  // Subtitle state
+  const [subtitlesVisible, setSubtitlesVisible] = useState(true);
+  const [currentSubtitle, setCurrentSubtitle] = useState("");
+
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioAnalyzersRef = useRef<
@@ -538,6 +542,14 @@ export default function LiveClassRoomPage() {
         setTimeout(() => {
           setCumulativeLeaderboard([]);
         }, 10000); // Clear after 10 seconds
+      })
+      .on("broadcast", { event: "subtitle-update" }, ({ payload }) => {
+        // Received subtitle from teacher
+        setCurrentSubtitle(payload.text);
+      })
+      .on("broadcast", { event: "subtitle-clear" }, () => {
+        // Teacher stopped subtitles
+        setCurrentSubtitle("");
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -1287,6 +1299,8 @@ export default function LiveClassRoomPage() {
                 isSpeaking={speakingUsers.has("teacher")}
                 isActiveSpeaker={activeSpeaker === "teacher"}
                 onDoubleClick={() => {}}
+                subtitlesVisible={subtitlesVisible}
+                currentSubtitle={currentSubtitle}
               />
             )}
           </div>
@@ -1950,6 +1964,18 @@ export default function LiveClassRoomPage() {
           >
             <Hand className="h-3.5 w-3.5 md:h-4 md:w-4" />
           </Button>
+          <Button
+            onClick={() => setSubtitlesVisible(!subtitlesVisible)}
+            size="sm"
+            className={`rounded-full w-9 h-9 md:w-10 md:h-10 text-[10px] md:text-xs font-bold ${
+              subtitlesVisible
+                ? "bg-purple-600 hover:bg-purple-700 text-white"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
+            title={subtitlesVisible ? "Hide subtitles" : "Show subtitles"}
+          >
+            CC
+          </Button>
           <div className="w-px h-5 md:h-6 bg-gray-700 mx-0.5 md:mx-1" />
           <Button
             onClick={leaveClass}
@@ -1970,11 +1996,15 @@ function TeacherVideoTile({
   isSpeaking,
   isActiveSpeaker,
   onDoubleClick,
+  subtitlesVisible,
+  currentSubtitle,
 }: {
   stream: MediaStream | null;
   isSpeaking?: boolean;
   isActiveSpeaker?: boolean;
   onDoubleClick?: () => void;
+  subtitlesVisible?: boolean;
+  currentSubtitle?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -2063,6 +2093,13 @@ function TeacherVideoTile({
       <div className="absolute bottom-2 md:bottom-3 left-2 md:left-3 px-1.5 md:px-2 py-0.5 md:py-1 bg-black/70 rounded text-white text-xs md:text-sm flex items-center gap-1 md:gap-2">
         <span className="text-yellow-400">👑</span>Teacher (Host)
       </div>
+      
+      {/* Subtitle Overlay - Small and Unobtrusive */}
+      {subtitlesVisible && currentSubtitle && (
+        <div className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full border border-purple-500/50 max-w-[80%] transition-opacity duration-300">
+          <p className="text-[10px] md:text-xs text-center truncate">{currentSubtitle}</p>
+        </div>
+      )}
     </div>
   );
 }

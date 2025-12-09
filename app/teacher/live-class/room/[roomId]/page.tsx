@@ -27,6 +27,58 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
+// Speech Recognition API types
+declare global {
+  interface Window {
+    SpeechRecognition: typeof SpeechRecognition;
+    webkitSpeechRecognition: typeof SpeechRecognition;
+  }
+}
+
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: SpeechRecognitionErrorEvent) => void;
+  onend: () => void;
+}
+
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  item(index: number): SpeechRecognitionResult;
+  [index: number]: SpeechRecognitionResult;
+}
+
+interface SpeechRecognitionResult {
+  length: number;
+  item(index: number): SpeechRecognitionAlternative;
+  [index: number]: SpeechRecognitionAlternative;
+  isFinal: boolean;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+  message: string;
+}
+
+declare var SpeechRecognition: {
+  prototype: SpeechRecognition;
+  new (): SpeechRecognition;
+};
+
 interface Participant {
   id: string;
   student_name: string;
@@ -86,18 +138,35 @@ export default function TeacherLiveClassRoomPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // Direct Message (DM) state
-  const [dmTarget, setDmTarget] = useState<{ id: string; name: string } | null>(null);
-  const [dmMessages, setDmMessages] = useState<Record<string, Array<{
-    id: string;
-    sender: string;
-    senderName: string;
-    message: string;
-    timestamp: number;
-    isTeacher?: boolean;
-  }>>>({});
+  const [dmTarget, setDmTarget] = useState<{ id: string; name: string } | null>(
+    null
+  );
+  const [dmMessages, setDmMessages] = useState<
+    Record<
+      string,
+      Array<{
+        id: string;
+        sender: string;
+        senderName: string;
+        message: string;
+        timestamp: number;
+        isTeacher?: boolean;
+      }>
+    >
+  >({});
   const [dmInput, setDmInput] = useState("");
-  const [dmUnreadCounts, setDmUnreadCounts] = useState<Record<string, number>>({});
+  const [dmUnreadCounts, setDmUnreadCounts] = useState<Record<string, number>>(
+    {}
+  );
   const dmEndRef = useRef<HTMLDivElement>(null);
+
+  // Subtitle state
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(false);
+  const [currentSubtitle, setCurrentSubtitle] = useState("");
+  const [subtitleLanguage, setSubtitleLanguage] = useState("en-US");
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const [isRecognitionSupported, setIsRecognitionSupported] = useState(false);
+  const subtitleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Poll state
   const [showPoll, setShowPoll] = useState(false);
@@ -130,18 +199,22 @@ export default function TeacherLiveClassRoomPage() {
   } | null>(null);
 
   // Quiz Stack state - queue of questions to ask
-  const [quizStack, setQuizStack] = useState<Array<{
-    id: string;
-    question: string;
-    options: string[];
-    correctAnswer: number;
-    timer: number;
-  }>>([]);
+  const [quizStack, setQuizStack] = useState<
+    Array<{
+      id: string;
+      question: string;
+      options: string[];
+      correctAnswer: number;
+      timer: number;
+    }>
+  >([]);
   const [showLeaderboardBreak, setShowLeaderboardBreak] = useState(false);
   const [quizSessionActive, setQuizSessionActive] = useState(false);
 
   // Leaderboard state (accumulates across quizzes)
-  const [leaderboard, setLeaderboard] = useState<Record<string, { name: string; points: number; correct: number }>>({});
+  const [leaderboard, setLeaderboard] = useState<
+    Record<string, { name: string; points: number; correct: number }>
+  >({});
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -506,15 +579,29 @@ export default function TeacherLiveClassRoomPage() {
           // Student voted on poll
           setActivePoll((prev) => {
             if (!prev || prev.id !== payload.pollId) return prev;
-            return { ...prev, votes: { ...prev.votes, [payload.oderId]: payload.option } };
+            return {
+              ...prev,
+              votes: { ...prev.votes, [payload.oderId]: payload.option },
+            };
           });
         })
         .on("broadcast", { event: "quiz-answer" }, ({ payload }) => {
           // Student answered quiz
           setActiveQuiz((prev) => {
-            if (!prev || prev.id !== payload.quizId || !prev.isActive) return prev;
+            if (!prev || prev.id !== payload.quizId || !prev.isActive)
+              return prev;
             if (prev.answers[payload.oderId]) return prev; // Already answered
-            return { ...prev, answers: { ...prev.answers, [payload.oderId]: { answer: payload.answer, name: payload.name, time: payload.time } } };
+            return {
+              ...prev,
+              answers: {
+                ...prev.answers,
+                [payload.oderId]: {
+                  answer: payload.answer,
+                  name: payload.name,
+                  time: payload.time,
+                },
+              },
+            };
           });
         })
         .subscribe(async (status) => {
@@ -903,6 +990,85 @@ export default function TeacherLiveClassRoomPage() {
     }
   };
 
+  // Subtitle functions
+  const initializeSpeechRecognition = () => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        setIsRecognitionSupported(true);
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = subtitleLanguage;
+
+        recognition.onresult = (event) => {
+          let finalTranscript = "";
+          let interimTranscript = "";
+
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
+          }
+
+          const currentText = finalTranscript || interimTranscript;
+          if (currentText.trim()) {
+            setCurrentSubtitle(currentText);
+            // Broadcast to students
+            channelRef.current?.send({
+              type: "broadcast",
+              event: "subtitle-update",
+              payload: { text: currentText },
+            });
+
+            // Clear existing timeout
+            if (subtitleTimeoutRef.current) {
+              clearTimeout(subtitleTimeoutRef.current);
+            }
+
+            // Auto-hide subtitles after 3 seconds of silence
+            subtitleTimeoutRef.current = setTimeout(() => {
+              setCurrentSubtitle("");
+              channelRef.current?.send({
+                type: "broadcast",
+                event: "subtitle-clear",
+                payload: {},
+              });
+            }, 3000);
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.error("Speech recognition error:", event.error);
+          if (event.error === "not-allowed") {
+            setMediaError("Microphone permission denied for subtitles");
+          }
+        };
+
+        recognition.onend = () => {
+          // Auto-restart if subtitles are still enabled
+          if (subtitlesEnabled && recognitionRef.current) {
+            setTimeout(() => {
+              try {
+                recognitionRef.current?.start();
+              } catch (e) {
+                console.log("Recognition restart failed:", e);
+              }
+            }, 100);
+          }
+        };
+
+        recognitionRef.current = recognition;
+      } else {
+        setIsRecognitionSupported(false);
+      }
+    }
+  };
+
   const endClass = async () => {
     if (!confirm("End class?")) return;
 
@@ -1027,15 +1193,63 @@ export default function TeacherLiveClassRoomPage() {
   };
 
   // Get total DM unread count
-  const totalDmUnread = Object.values(dmUnreadCounts).reduce((a, b) => a + b, 0);
+  const totalDmUnread = Object.values(dmUnreadCounts).reduce(
+    (a, b) => a + b,
+    0
+  );
+
+  // Subtitle functions
+  useEffect(() => {
+    // Check if speech recognition is supported
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    setIsRecognitionSupported(!!SpeechRecognition);
+  }, []);
+
+  const toggleSubtitles = () => {
+    if (!isRecognitionSupported) {
+      setMediaError(
+        "Speech recognition not supported in this browser. Try Chrome or Edge."
+      );
+      return;
+    }
+
+    if (!subtitlesEnabled) {
+      // Start subtitles
+      if (!recognitionRef.current) {
+        initializeSpeechRecognition();
+      }
+
+      try {
+        recognitionRef.current?.start();
+        setSubtitlesEnabled(true);
+        setCurrentSubtitle("");
+      } catch (e) {
+        console.error("Failed to start speech recognition:", e);
+        setMediaError("Failed to start speech recognition");
+      }
+    } else {
+      // Stop subtitles
+      recognitionRef.current?.stop();
+      setSubtitlesEnabled(false);
+      setCurrentSubtitle("");
+      // Clear subtitles for students
+      channelRef.current?.send({
+        type: "broadcast",
+        event: "subtitle-clear",
+        payload: {},
+      });
+    }
+  };
 
   // Poll functions
   const createPoll = () => {
-    if (!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2) return;
+    if (!pollQuestion.trim() || pollOptions.filter((o) => o.trim()).length < 2)
+      return;
     const poll = {
       id: `poll-${Date.now()}`,
       question: pollQuestion.trim(),
-      options: pollOptions.filter(o => o.trim()),
+      options: pollOptions.filter((o) => o.trim()),
       votes: {},
       isActive: true,
     };
@@ -1056,7 +1270,7 @@ export default function TeacherLiveClassRoomPage() {
       event: "poll-end",
       payload: { pollId: activePoll.id },
     });
-    setActivePoll((prev) => prev ? { ...prev, isActive: false } : null);
+    setActivePoll((prev) => (prev ? { ...prev, isActive: false } : null));
   };
 
   const clearPoll = () => {
@@ -1064,10 +1278,10 @@ export default function TeacherLiveClassRoomPage() {
   };
 
   // Quiz Stack functions
-  
+
   // Add question to stack
   const addToQuizStack = () => {
-    const validOptions = quizOptions.filter(o => o.trim());
+    const validOptions = quizOptions.filter((o) => o.trim());
     if (!quizQuestion.trim() || validOptions.length < 2) return;
     const newQuestion = {
       id: `q-${Date.now()}`,
@@ -1076,7 +1290,7 @@ export default function TeacherLiveClassRoomPage() {
       correctAnswer: quizCorrectAnswer,
       timer: quizTimer,
     };
-    setQuizStack(prev => [...prev, newQuestion]);
+    setQuizStack((prev) => [...prev, newQuestion]);
     setQuizQuestion("");
     setQuizOptions(["", "", "", ""]);
     setQuizCorrectAnswer(0);
@@ -1084,7 +1298,7 @@ export default function TeacherLiveClassRoomPage() {
 
   // Remove question from stack
   const removeFromQuizStack = (id: string) => {
-    setQuizStack(prev => prev.filter(q => q.id !== id));
+    setQuizStack((prev) => prev.filter((q) => q.id !== id));
   };
 
   // Start the quiz session (runs through all questions in stack)
@@ -1126,8 +1340,8 @@ export default function TeacherLiveClassRoomPage() {
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-start",
-      payload: { 
-        ...quiz, 
+      payload: {
+        ...quiz,
         correctAnswer: undefined,
         questionNumber: index + 1,
         totalQuestions: quizStack.length,
@@ -1136,13 +1350,19 @@ export default function TeacherLiveClassRoomPage() {
   };
 
   // Current question index based on activeQuiz
-  const currentQuestionIndex = activeQuiz ? (activeQuiz.questionNumber || 1) - 1 : -1;
+  const currentQuestionIndex = activeQuiz
+    ? (activeQuiz.questionNumber || 1) - 1
+    : -1;
 
   const endQuiz = () => {
     if (!activeQuiz) return;
-    
+
     // Calculate points for correct answers (100 points per second remaining)
-    const questionResults: Array<{ oderId: string; name: string; points: number }> = [];
+    const questionResults: Array<{
+      oderId: string;
+      name: string;
+      points: number;
+    }> = [];
     Object.entries(activeQuiz.answers).forEach(([oderId, data]) => {
       if (data.answer === activeQuiz.correctAnswer) {
         const points = data.time * 100; // 100 points per second remaining
@@ -1162,28 +1382,33 @@ export default function TeacherLiveClassRoomPage() {
     // Get updated cumulative leaderboard for display
     // We need to calculate it here since setState is async
     const updatedLeaderboard = { ...leaderboard };
-    questionResults.forEach(r => {
+    questionResults.forEach((r) => {
       updatedLeaderboard[r.oderId] = {
         name: r.name,
         points: (updatedLeaderboard[r.oderId]?.points || 0) + r.points,
         correct: (updatedLeaderboard[r.oderId]?.correct || 0) + 1,
       };
     });
-    
+
     // Sort cumulative leaderboard
     const sortedCumulative = Object.entries(updatedLeaderboard)
-      .map(([id, data]) => ({ oderId: id, name: data.name, points: data.points }))
+      .map(([id, data]) => ({
+        oderId: id,
+        name: data.name,
+        points: data.points,
+      }))
       .sort((a, b) => b.points - a.points);
-    
+
     const top5 = sortedCumulative.slice(0, 5);
-    const isLastQuestion = activeQuiz.questionNumber === activeQuiz.totalQuestions;
-    
+    const isLastQuestion =
+      activeQuiz.questionNumber === activeQuiz.totalQuestions;
+
     channelRef.current?.send({
       type: "broadcast",
       event: "quiz-end",
-      payload: { 
-        quizId: activeQuiz.id, 
-        correctAnswer: activeQuiz.correctAnswer, 
+      payload: {
+        quizId: activeQuiz.id,
+        correctAnswer: activeQuiz.correctAnswer,
         leaderboard: top5,
         fullLeaderboard: sortedCumulative,
         totalParticipants: Object.keys(activeQuiz.answers).length,
@@ -1192,9 +1417,9 @@ export default function TeacherLiveClassRoomPage() {
         isLastQuestion,
       },
     });
-    
-    setActiveQuiz((prev) => prev ? { ...prev, isActive: false } : null);
-    
+
+    setActiveQuiz((prev) => (prev ? { ...prev, isActive: false } : null));
+
     // Show leaderboard break before next question
     if (quizSessionActive && !isLastQuestion) {
       setShowLeaderboardBreak(true);
@@ -1234,7 +1459,7 @@ export default function TeacherLiveClassRoomPage() {
     setQuizStack([]);
     setQuizSessionActive(false);
   };
-  
+
   // Get sorted leaderboard for display
   const sortedLeaderboard = Object.entries(leaderboard)
     .map(([id, data]) => ({ id, ...data }))
@@ -1264,6 +1489,27 @@ export default function TeacherLiveClassRoomPage() {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [showChat, chatMessages]);
+
+  // Initialize speech recognition on mount
+  useEffect(() => {
+    initializeSpeechRecognition();
+    return () => {
+      // Cleanup on unmount
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      if (subtitleTimeoutRef.current) {
+        clearTimeout(subtitleTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Update recognition language when changed
+  useEffect(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.lang = subtitleLanguage;
+    }
+  }, [subtitleLanguage]);
 
   if (loading)
     return (
@@ -1454,6 +1700,8 @@ export default function TeacherLiveClassRoomPage() {
                       isLocal={v.isLocal}
                       isSpeaking={v.isSpeaking}
                       isActiveSpeaker={v.isActiveSpeaker}
+                      subtitlesEnabled={subtitlesEnabled}
+                      currentSubtitle={currentSubtitle}
                     />
                   ))}
           </div>
@@ -1578,7 +1826,10 @@ export default function TeacherLiveClassRoomPage() {
                       <div className="flex items-center gap-0.5">
                         {/* DM Button */}
                         <button
-                          onClick={() => { openDm(p.id, p.student_name); setShowChat(true); }}
+                          onClick={() => {
+                            openDm(p.id, p.student_name);
+                            setShowChat(true);
+                          }}
                           className="relative text-[#00d4ff] hover:text-white"
                         >
                           <MessageCircle className="h-3 w-3" />
@@ -1617,30 +1868,61 @@ export default function TeacherLiveClassRoomPage() {
                 <>
                   <div className="p-2 border-b-2 border-[#ff00ff] flex items-center justify-between bg-[#ff00ff]/10">
                     <div className="flex items-center gap-1">
-                      <button onClick={closeDm} className="text-[#ff00ff] hover:text-white">
+                      <button
+                        onClick={closeDm}
+                        className="text-[#ff00ff] hover:text-white"
+                      >
                         ←
                       </button>
                       <h3 className="text-[#ff00ff] text-[8px] font-bold">
                         💬 DM: {dmTarget.name}
                       </h3>
                     </div>
-                    <button onClick={() => { closeDm(); setShowChat(false); }} className="text-[#00d4ff] hover:text-white">
+                    <button
+                      onClick={() => {
+                        closeDm();
+                        setShowChat(false);
+                      }}
+                      className="text-[#00d4ff] hover:text-white"
+                    >
                       <X className="h-4 w-4" />
                     </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
                     {(dmMessages[dmTarget.id] || []).length === 0 ? (
-                      <p className="text-[#444] text-[8px] text-center py-4">Start a private conversation</p>
+                      <p className="text-[#444] text-[8px] text-center py-4">
+                        Start a private conversation
+                      </p>
                     ) : (
                       (dmMessages[dmTarget.id] || []).map((msg) => (
-                        <div key={msg.id} className={`p-2 border ${msg.isTeacher ? "bg-[#00ff41]/10 border-[#00ff41] ml-4" : "bg-[#ff00ff]/10 border-[#ff00ff] mr-4"}`}>
+                        <div
+                          key={msg.id}
+                          className={`p-2 border ${
+                            msg.isTeacher
+                              ? "bg-[#00ff41]/10 border-[#00ff41] ml-4"
+                              : "bg-[#ff00ff]/10 border-[#ff00ff] mr-4"
+                          }`}
+                        >
                           <div className="flex items-center gap-1 mb-0.5">
-                            <span className={`text-[7px] font-bold ${msg.isTeacher ? "text-[#00ff41]" : "text-[#ff00ff]"}`}>
+                            <span
+                              className={`text-[7px] font-bold ${
+                                msg.isTeacher
+                                  ? "text-[#00ff41]"
+                                  : "text-[#ff00ff]"
+                              }`}
+                            >
                               {msg.isTeacher ? "👑 You" : msg.senderName}
                             </span>
-                            <span className="text-[6px] text-[#666]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                            <span className="text-[6px] text-[#666]">
+                              {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
                           </div>
-                          <p className="text-white text-[8px] break-words">{msg.message}</p>
+                          <p className="text-white text-[8px] break-words">
+                            {msg.message}
+                          </p>
                         </div>
                       ))
                     )}
@@ -1648,229 +1930,512 @@ export default function TeacherLiveClassRoomPage() {
                   </div>
                   <div className="p-2 border-t-2 border-[#ff00ff]">
                     <div className="flex gap-1">
-                      <input type="text" value={dmInput} onChange={(e) => setDmInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendDmMessage()} placeholder={`Message ${dmTarget.name}...`} className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#ff00ff] focus:border-[#00ff41] focus:outline-none" />
-                      <button onClick={sendDmMessage} className="px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white hover:bg-[#0f0f23] transition-colors">
+                      <input
+                        type="text"
+                        value={dmInput}
+                        onChange={(e) => setDmInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && sendDmMessage()}
+                        placeholder={`Message ${dmTarget.name}...`}
+                        className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#ff00ff] focus:border-[#00ff41] focus:outline-none"
+                      />
+                      <button
+                        onClick={sendDmMessage}
+                        className="px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white hover:bg-[#0f0f23] transition-colors"
+                      >
                         <Send className="h-3 w-3" />
                       </button>
                     </div>
                   </div>
                 </>
               ) : (
-              <>
-              <div className="p-2 border-b-2 border-[#00d4ff] flex items-center justify-between">
-                <h3 className="text-[#00ff41] text-[8px] font-bold flex items-center gap-1">
-                  <MessageCircle className="h-3 w-3" /> CHAT
-                  {totalDmUnread > 0 && <span className="ml-1 px-1 py-0.5 bg-[#ff0000] text-white text-[5px] rounded">{totalDmUnread} DM</span>}
-                </h3>
-                <div className="flex items-center gap-1">
-                  <button onClick={() => { setShowPoll(!showPoll); setShowQuizForm(false); }} className={`px-1.5 py-0.5 border text-[6px] ${showPoll || activePoll ? 'bg-[#ff00ff] border-[#ff00ff] text-white' : 'border-[#ff00ff] text-[#ff00ff] hover:bg-[#ff00ff] hover:text-white'}`}>
-                    📊 POLL
-                  </button>
-                  <button onClick={() => { setShowQuizForm(!showQuizForm); setShowPoll(false); }} className={`px-1.5 py-0.5 border text-[6px] ${showQuizForm || activeQuiz ? 'bg-[#ffff00] border-[#ffff00] text-[#0f0f23]' : 'border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]'}`}>
-                    🎯 QUIZ
-                  </button>
-                  <button onClick={() => setShowChat(false)} className="text-[#00d4ff] hover:text-white">
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Active Poll Display (inside chat) */}
-              {activePoll && (
-                <div className="p-2 border-b-2 border-[#ff00ff] bg-[#ff00ff]/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#ff00ff] text-[7px] font-bold">📊 LIVE POLL</span>
-                    {activePoll.isActive && <span className="w-2 h-2 bg-[#ff00ff] rounded-full animate-pulse" />}
-                  </div>
-                  <p className="text-white text-[8px] mb-2">{activePoll.question}</p>
-                  <div className="space-y-1 mb-2">
-                    {activePoll.options.map((opt, i) => {
-                      const voteCount = Object.values(activePoll.votes).filter(v => v === opt).length;
-                      const totalVotes = Object.keys(activePoll.votes).length;
-                      const percent = totalVotes > 0 ? Math.round((voteCount / totalVotes) * 100) : 0;
-                      return (
-                        <div key={i} className="mb-1">
-                          <div className="flex justify-between text-[7px] text-white mb-0.5">
-                            <span>{opt}</span>
-                            <span>{voteCount} ({percent}%)</span>
-                          </div>
-                          <div className="h-2 bg-[#0f0f23] border border-[#ff00ff]">
-                            <div className="h-full bg-[#ff00ff] transition-all" style={{ width: `${percent}%` }} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[6px] text-[#666]">{Object.keys(activePoll.votes).length} votes</span>
-                    {activePoll.isActive ? (
-                      <button onClick={endPoll} className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]">END</button>
-                    ) : (
-                      <button onClick={clearPoll} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Poll Form (inside chat) */}
-              {showPoll && !activePoll && (
-                <div className="p-2 border-b-2 border-[#ff00ff] bg-[#0f0f23] space-y-2">
-                  <input type="text" value={pollQuestion} onChange={(e) => setPollQuestion(e.target.value)} placeholder="Poll question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ff00ff] focus:outline-none" />
-                  {pollOptions.map((opt, i) => (
-                    <div key={i} className="flex gap-1 items-center">
-                      <input type="text" value={opt} onChange={(e) => { const n = [...pollOptions]; n[i] = e.target.value; setPollOptions(n); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ff00ff] focus:outline-none" />
-                      {pollOptions.length > 2 && <button onClick={() => setPollOptions(pollOptions.filter((_, idx) => idx !== i))} className="text-[#ff0000] text-[8px]">✕</button>}
+                <>
+                  <div className="p-2 border-b-2 border-[#00d4ff] flex items-center justify-between">
+                    <h3 className="text-[#00ff41] text-[8px] font-bold flex items-center gap-1">
+                      <MessageCircle className="h-3 w-3" /> CHAT
+                      {totalDmUnread > 0 && (
+                        <span className="ml-1 px-1 py-0.5 bg-[#ff0000] text-white text-[5px] rounded">
+                          {totalDmUnread} DM
+                        </span>
+                      )}
+                    </h3>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => {
+                          setShowPoll(!showPoll);
+                          setShowQuizForm(false);
+                        }}
+                        className={`px-1.5 py-0.5 border text-[6px] ${
+                          showPoll || activePoll
+                            ? "bg-[#ff00ff] border-[#ff00ff] text-white"
+                            : "border-[#ff00ff] text-[#ff00ff] hover:bg-[#ff00ff] hover:text-white"
+                        }`}
+                      >
+                        📊 POLL
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowQuizForm(!showQuizForm);
+                          setShowPoll(false);
+                        }}
+                        className={`px-1.5 py-0.5 border text-[6px] ${
+                          showQuizForm || activeQuiz
+                            ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]"
+                            : "border-[#ffff00] text-[#ffff00] hover:bg-[#ffff00] hover:text-[#0f0f23]"
+                        }`}
+                      >
+                        🎯 QUIZ
+                      </button>
+                      <button
+                        onClick={() => setShowChat(false)}
+                        className="text-[#00d4ff] hover:text-white"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-                  ))}
-                  {pollOptions.length < 5 && (
-                    <button onClick={() => setPollOptions([...pollOptions, ""])} className="w-full px-2 py-0.5 border border-dashed border-[#ff00ff] text-[#ff00ff] text-[6px] hover:bg-[#ff00ff]/10">
-                      + ADD OPTION
-                    </button>
-                  )}
-                  <button onClick={createPoll} disabled={!pollQuestion.trim() || pollOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white text-[7px] font-bold disabled:opacity-50">
-                    🚀 START POLL
-                  </button>
-                </div>
-              )}
+                  </div>
 
-              {/* Active Quiz Display */}
-              {activeQuiz && (
-                <div className="p-2 border-b-2 border-[#ffff00] bg-[#ffff00]/10">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#ffff00] text-[7px] font-bold">🎯 Q{activeQuiz.questionNumber}/{activeQuiz.totalQuestions}</span>
-                    <span className={`text-[8px] font-bold ${activeQuiz.timeLeft <= 5 ? 'text-[#ff0000] animate-pulse' : 'text-[#00ff41]'}`}>{activeQuiz.timeLeft}s</span>
-                  </div>
-                  <p className="text-white text-[8px] mb-2">{activeQuiz.question}</p>
-                  <div className="space-y-1 mb-2">
-                    {activeQuiz.options.map((opt, i) => {
-                      const answerCount = Object.values(activeQuiz.answers).filter(a => a.answer === i).length;
-                      const isCorrect = i === activeQuiz.correctAnswer;
-                      return (
-                        <div key={i} className={`p-1 border text-[7px] flex justify-between ${!activeQuiz.isActive && isCorrect ? 'border-[#00ff41] bg-[#00ff41]/20 text-[#00ff41]' : 'border-[#444] text-white'}`}>
-                          <span>{isCorrect && !activeQuiz.isActive ? '✓ ' : ''}{opt}</span>
-                          <span>{answerCount}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-[6px] text-[#666]">{Object.keys(activeQuiz.answers).length} answered</span>
-                    {activeQuiz.isActive ? (
-                      <button onClick={endQuiz} className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]">END</button>
-                    ) : showLeaderboardBreak && activeQuiz.questionNumber < activeQuiz.totalQuestions ? (
-                      <button onClick={continueToNextQuestion} className="px-2 py-0.5 bg-[#00ff41] border border-[#00ff41] text-[#0f0f23] text-[6px] animate-pulse">NEXT ▶</button>
-                    ) : (
-                      <button onClick={clearQuiz} className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]">CLEAR</button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Leaderboard */}
-              {sortedLeaderboard.length > 0 && (
-                <div className="p-2 border-b-2 border-[#00ff41] bg-[#00ff41]/5">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#00ff41] text-[7px] font-bold">🏆 LEADERBOARD</span>
-                    <button onClick={() => setLeaderboard({})} className="text-[5px] text-[#666] hover:text-white">RESET</button>
-                  </div>
-                  <div className="space-y-1">
-                    {sortedLeaderboard.map((entry, i) => (
-                      <div key={entry.id} className={`flex items-center justify-between p-1 border ${i === 0 ? 'border-[#ffff00] bg-[#ffff00]/10' : i === 1 ? 'border-[#c0c0c0] bg-[#c0c0c0]/10' : i === 2 ? 'border-[#cd7f32] bg-[#cd7f32]/10' : 'border-[#444]'}`}>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[8px]">{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</span>
-                          <span className="text-white text-[7px] truncate max-w-[80px]">{entry.name}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[#00ff41] text-[7px] font-bold">{entry.points.toLocaleString()}</span>
-                          <span className="text-[5px] text-[#666] ml-1">({entry.correct}✓)</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quiz Form - Stack Based */}
-              {showQuizForm && !activeQuiz && !quizSessionActive && (
-                <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2 max-h-[50vh] overflow-y-auto">
-                  {/* Quiz Stack Display */}
-                  {quizStack.length > 0 && (
-                    <div className="p-1 bg-[#1a1a3e] border border-[#ffff00]">
+                  {/* Active Poll Display (inside chat) */}
+                  {activePoll && (
+                    <div className="p-2 border-b-2 border-[#ff00ff] bg-[#ff00ff]/10">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[#ffff00] text-[6px] font-bold">📋 QUIZ STACK ({quizStack.length})</span>
-                        <button onClick={clearQuizStack} className="text-[5px] text-[#ff0000] hover:text-white">CLEAR ALL</button>
+                        <span className="text-[#ff00ff] text-[7px] font-bold">
+                          📊 LIVE POLL
+                        </span>
+                        {activePoll.isActive && (
+                          <span className="w-2 h-2 bg-[#ff00ff] rounded-full animate-pulse" />
+                        )}
                       </div>
-                      <div className="space-y-1 max-h-24 overflow-y-auto">
-                        {quizStack.map((q, i) => (
-                          <div key={q.id} className="flex items-center gap-1 p-1 bg-[#0f0f23] border border-[#444]">
-                            <span className="text-[#ffff00] text-[6px] font-bold w-4">{i + 1}.</span>
-                            <span className="text-white text-[6px] flex-1 truncate">{q.question}</span>
-                            <span className="text-[5px] text-[#666]">{q.timer}s</span>
-                            <button onClick={() => removeFromQuizStack(q.id)} className="text-[#ff0000] text-[6px]">✕</button>
+                      <p className="text-white text-[8px] mb-2">
+                        {activePoll.question}
+                      </p>
+                      <div className="space-y-1 mb-2">
+                        {activePoll.options.map((opt, i) => {
+                          const voteCount = Object.values(
+                            activePoll.votes
+                          ).filter((v) => v === opt).length;
+                          const totalVotes = Object.keys(
+                            activePoll.votes
+                          ).length;
+                          const percent =
+                            totalVotes > 0
+                              ? Math.round((voteCount / totalVotes) * 100)
+                              : 0;
+                          return (
+                            <div key={i} className="mb-1">
+                              <div className="flex justify-between text-[7px] text-white mb-0.5">
+                                <span>{opt}</span>
+                                <span>
+                                  {voteCount} ({percent}%)
+                                </span>
+                              </div>
+                              <div className="h-2 bg-[#0f0f23] border border-[#ff00ff]">
+                                <div
+                                  className="h-full bg-[#ff00ff] transition-all"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[6px] text-[#666]">
+                          {Object.keys(activePoll.votes).length} votes
+                        </span>
+                        {activePoll.isActive ? (
+                          <button
+                            onClick={endPoll}
+                            className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]"
+                          >
+                            END
+                          </button>
+                        ) : (
+                          <button
+                            onClick={clearPoll}
+                            className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]"
+                          >
+                            CLEAR
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Poll Form (inside chat) */}
+                  {showPoll && !activePoll && (
+                    <div className="p-2 border-b-2 border-[#ff00ff] bg-[#0f0f23] space-y-2">
+                      <input
+                        type="text"
+                        value={pollQuestion}
+                        onChange={(e) => setPollQuestion(e.target.value)}
+                        placeholder="Poll question..."
+                        className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ff00ff] focus:outline-none"
+                      />
+                      {pollOptions.map((opt, i) => (
+                        <div key={i} className="flex gap-1 items-center">
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) => {
+                              const n = [...pollOptions];
+                              n[i] = e.target.value;
+                              setPollOptions(n);
+                            }}
+                            placeholder={`Option ${i + 1}`}
+                            className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ff00ff] focus:outline-none"
+                          />
+                          {pollOptions.length > 2 && (
+                            <button
+                              onClick={() =>
+                                setPollOptions(
+                                  pollOptions.filter((_, idx) => idx !== i)
+                                )
+                              }
+                              className="text-[#ff0000] text-[8px]"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      {pollOptions.length < 5 && (
+                        <button
+                          onClick={() => setPollOptions([...pollOptions, ""])}
+                          className="w-full px-2 py-0.5 border border-dashed border-[#ff00ff] text-[#ff00ff] text-[6px] hover:bg-[#ff00ff]/10"
+                        >
+                          + ADD OPTION
+                        </button>
+                      )}
+                      <button
+                        onClick={createPoll}
+                        disabled={
+                          !pollQuestion.trim() ||
+                          pollOptions.filter((o) => o.trim()).length < 2
+                        }
+                        className="w-full px-2 py-1 bg-[#ff00ff] border-2 border-[#ff00ff] text-white text-[7px] font-bold disabled:opacity-50"
+                      >
+                        🚀 START POLL
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Active Quiz Display */}
+                  {activeQuiz && (
+                    <div className="p-2 border-b-2 border-[#ffff00] bg-[#ffff00]/10">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[#ffff00] text-[7px] font-bold">
+                          🎯 Q{activeQuiz.questionNumber}/
+                          {activeQuiz.totalQuestions}
+                        </span>
+                        <span
+                          className={`text-[8px] font-bold ${
+                            activeQuiz.timeLeft <= 5
+                              ? "text-[#ff0000] animate-pulse"
+                              : "text-[#00ff41]"
+                          }`}
+                        >
+                          {activeQuiz.timeLeft}s
+                        </span>
+                      </div>
+                      <p className="text-white text-[8px] mb-2">
+                        {activeQuiz.question}
+                      </p>
+                      <div className="space-y-1 mb-2">
+                        {activeQuiz.options.map((opt, i) => {
+                          const answerCount = Object.values(
+                            activeQuiz.answers
+                          ).filter((a) => a.answer === i).length;
+                          const isCorrect = i === activeQuiz.correctAnswer;
+                          return (
+                            <div
+                              key={i}
+                              className={`p-1 border text-[7px] flex justify-between ${
+                                !activeQuiz.isActive && isCorrect
+                                  ? "border-[#00ff41] bg-[#00ff41]/20 text-[#00ff41]"
+                                  : "border-[#444] text-white"
+                              }`}
+                            >
+                              <span>
+                                {isCorrect && !activeQuiz.isActive ? "✓ " : ""}
+                                {opt}
+                              </span>
+                              <span>{answerCount}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[6px] text-[#666]">
+                          {Object.keys(activeQuiz.answers).length} answered
+                        </span>
+                        {activeQuiz.isActive ? (
+                          <button
+                            onClick={endQuiz}
+                            className="px-2 py-0.5 bg-[#ff0000] border border-[#ff0000] text-white text-[6px]"
+                          >
+                            END
+                          </button>
+                        ) : showLeaderboardBreak &&
+                          activeQuiz.questionNumber <
+                            activeQuiz.totalQuestions ? (
+                          <button
+                            onClick={continueToNextQuestion}
+                            className="px-2 py-0.5 bg-[#00ff41] border border-[#00ff41] text-[#0f0f23] text-[6px] animate-pulse"
+                          >
+                            NEXT ▶
+                          </button>
+                        ) : (
+                          <button
+                            onClick={clearQuiz}
+                            className="px-2 py-0.5 bg-[#00d4ff] border border-[#00d4ff] text-[#0f0f23] text-[6px]"
+                          >
+                            CLEAR
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Leaderboard */}
+                  {sortedLeaderboard.length > 0 && (
+                    <div className="p-2 border-b-2 border-[#00ff41] bg-[#00ff41]/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[#00ff41] text-[7px] font-bold">
+                          🏆 LEADERBOARD
+                        </span>
+                        <button
+                          onClick={() => setLeaderboard({})}
+                          className="text-[5px] text-[#666] hover:text-white"
+                        >
+                          RESET
+                        </button>
+                      </div>
+                      <div className="space-y-1">
+                        {sortedLeaderboard.map((entry, i) => (
+                          <div
+                            key={entry.id}
+                            className={`flex items-center justify-between p-1 border ${
+                              i === 0
+                                ? "border-[#ffff00] bg-[#ffff00]/10"
+                                : i === 1
+                                ? "border-[#c0c0c0] bg-[#c0c0c0]/10"
+                                : i === 2
+                                ? "border-[#cd7f32] bg-[#cd7f32]/10"
+                                : "border-[#444]"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1">
+                              <span className="text-[8px]">
+                                {i === 0
+                                  ? "🥇"
+                                  : i === 1
+                                  ? "🥈"
+                                  : i === 2
+                                  ? "🥉"
+                                  : `${i + 1}.`}
+                              </span>
+                              <span className="text-white text-[7px] truncate max-w-[80px]">
+                                {entry.name}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[#00ff41] text-[7px] font-bold">
+                                {entry.points.toLocaleString()}
+                              </span>
+                              <span className="text-[5px] text-[#666] ml-1">
+                                ({entry.correct}✓)
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
-                      <button onClick={startQuizSession} className="w-full mt-2 px-2 py-1.5 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] text-[7px] font-bold">
-                        🚀 START QUIZ SESSION ({quizStack.length} questions)
+                    </div>
+                  )}
+
+                  {/* Quiz Form - Stack Based */}
+                  {showQuizForm && !activeQuiz && !quizSessionActive && (
+                    <div className="p-2 border-b-2 border-[#ffff00] bg-[#0f0f23] space-y-2 max-h-[50vh] overflow-y-auto">
+                      {/* Quiz Stack Display */}
+                      {quizStack.length > 0 && (
+                        <div className="p-1 bg-[#1a1a3e] border border-[#ffff00]">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[#ffff00] text-[6px] font-bold">
+                              📋 QUIZ STACK ({quizStack.length})
+                            </span>
+                            <button
+                              onClick={clearQuizStack}
+                              className="text-[5px] text-[#ff0000] hover:text-white"
+                            >
+                              CLEAR ALL
+                            </button>
+                          </div>
+                          <div className="space-y-1 max-h-24 overflow-y-auto">
+                            {quizStack.map((q, i) => (
+                              <div
+                                key={q.id}
+                                className="flex items-center gap-1 p-1 bg-[#0f0f23] border border-[#444]"
+                              >
+                                <span className="text-[#ffff00] text-[6px] font-bold w-4">
+                                  {i + 1}.
+                                </span>
+                                <span className="text-white text-[6px] flex-1 truncate">
+                                  {q.question}
+                                </span>
+                                <span className="text-[5px] text-[#666]">
+                                  {q.timer}s
+                                </span>
+                                <button
+                                  onClick={() => removeFromQuizStack(q.id)}
+                                  className="text-[#ff0000] text-[6px]"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            onClick={startQuizSession}
+                            className="w-full mt-2 px-2 py-1.5 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] text-[7px] font-bold"
+                          >
+                            🚀 START QUIZ SESSION ({quizStack.length} questions)
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Add Question Form */}
+                      <p className="text-[6px] text-[#666]">
+                        Add questions to stack:
+                      </p>
+                      <input
+                        type="text"
+                        value={quizQuestion}
+                        onChange={(e) => setQuizQuestion(e.target.value)}
+                        placeholder="Question..."
+                        className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ffff00] focus:outline-none"
+                      />
+
+                      {quizOptions.map((opt, i) => (
+                        <div key={i} className="flex gap-1 items-center">
+                          <button
+                            onClick={() => setQuizCorrectAnswer(i)}
+                            className={`w-4 h-4 border flex items-center justify-center text-[8px] ${
+                              quizCorrectAnswer === i
+                                ? "bg-[#00ff41] border-[#00ff41] text-[#0f0f23]"
+                                : "border-[#444] text-[#444]"
+                            }`}
+                          >
+                            {quizCorrectAnswer === i ? "✓" : i + 1}
+                          </button>
+                          <input
+                            type="text"
+                            value={opt}
+                            onChange={(e) => {
+                              const n = [...quizOptions];
+                              n[i] = e.target.value;
+                              setQuizOptions(n);
+                            }}
+                            placeholder={`Option ${i + 1}`}
+                            className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ffff00] focus:outline-none"
+                          />
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-2">
+                        <span className="text-[6px] text-[#666]">Timer:</span>
+                        <input
+                          type="number"
+                          value={quizTimer}
+                          onChange={(e) =>
+                            setQuizTimer(
+                              Math.max(
+                                5,
+                                Math.min(120, parseInt(e.target.value) || 30)
+                              )
+                            )
+                          }
+                          className="w-12 bg-[#1a1a3e] text-white text-[8px] px-1 py-0.5 border border-[#444] text-center"
+                        />
+                        <span className="text-[6px] text-[#666]">sec</span>
+                      </div>
+                      <button
+                        onClick={addToQuizStack}
+                        disabled={
+                          !quizQuestion.trim() ||
+                          quizOptions.filter((o) => o.trim()).length < 2
+                        }
+                        className="w-full px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[7px] font-bold disabled:opacity-50"
+                      >
+                        + ADD TO STACK
                       </button>
                     </div>
                   )}
 
-                  {/* Add Question Form */}
-                  <p className="text-[6px] text-[#666]">Add questions to stack:</p>
-                  <input type="text" value={quizQuestion} onChange={(e) => setQuizQuestion(e.target.value)} placeholder="Question..." className="w-full bg-[#1a1a3e] text-white text-[8px] px-2 py-1 border border-[#ffff00] focus:outline-none" />
-
-                  {quizOptions.map((opt, i) => (
-                    <div key={i} className="flex gap-1 items-center">
-                      <button onClick={() => setQuizCorrectAnswer(i)} className={`w-4 h-4 border flex items-center justify-center text-[8px] ${quizCorrectAnswer === i ? 'bg-[#00ff41] border-[#00ff41] text-[#0f0f23]' : 'border-[#444] text-[#444]'}`}>
-                        {quizCorrectAnswer === i ? '✓' : i + 1}
-                      </button>
-                      <input type="text" value={opt} onChange={(e) => { const n = [...quizOptions]; n[i] = e.target.value; setQuizOptions(n); }} placeholder={`Option ${i + 1}`} className="flex-1 bg-[#1a1a3e] text-white text-[7px] px-2 py-0.5 border border-[#444] focus:border-[#ffff00] focus:outline-none" />
-                    </div>
-                  ))}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[6px] text-[#666]">Timer:</span>
-                    <input type="number" value={quizTimer} onChange={(e) => setQuizTimer(Math.max(5, Math.min(120, parseInt(e.target.value) || 30)))} className="w-12 bg-[#1a1a3e] text-white text-[8px] px-1 py-0.5 border border-[#444] text-center" />
-                    <span className="text-[6px] text-[#666]">sec</span>
+                  <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
+                    {chatMessages.length === 0 ? (
+                      <p className="text-[#444] text-[8px] text-center py-4">
+                        NO MESSAGES YET
+                      </p>
+                    ) : (
+                      chatMessages.map((msg) => (
+                        <div
+                          key={msg.id}
+                          className={`p-2 border ${
+                            msg.isTeacher
+                              ? "bg-[#00ff41]/10 border-[#00ff41] ml-4"
+                              : "bg-[#0f0f23] border-[#00d4ff] mr-4"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1 mb-0.5">
+                            <span
+                              className={`text-[7px] font-bold ${
+                                msg.isTeacher
+                                  ? "text-[#00ff41]"
+                                  : "text-[#00d4ff]"
+                              }`}
+                            >
+                              {msg.isTeacher ? "👑 " : ""}
+                              {msg.senderName}
+                              {msg.isTeacher ? " (You)" : ""}
+                            </span>
+                            <span className="text-[6px] text-[#666]">
+                              {new Date(msg.timestamp).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-white text-[8px] break-words">
+                            {msg.message}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                    <div ref={chatEndRef} />
                   </div>
-                  <button onClick={addToQuizStack} disabled={!quizQuestion.trim() || quizOptions.filter(o => o.trim()).length < 2} className="w-full px-2 py-1 bg-[#ffff00] border-2 border-[#ffff00] text-[#0f0f23] text-[7px] font-bold disabled:opacity-50">
-                    + ADD TO STACK
-                  </button>
-                </div>
-              )}
-
-              <div className="flex-1 overflow-y-auto p-2 space-y-2 min-h-0">
-                {chatMessages.length === 0 ? (
-                  <p className="text-[#444] text-[8px] text-center py-4">NO MESSAGES YET</p>
-                ) : (
-                  chatMessages.map((msg) => (
-                    <div key={msg.id} className={`p-2 border ${msg.isTeacher ? "bg-[#00ff41]/10 border-[#00ff41] ml-4" : "bg-[#0f0f23] border-[#00d4ff] mr-4"}`}>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className={`text-[7px] font-bold ${msg.isTeacher ? "text-[#00ff41]" : "text-[#00d4ff]"}`}>
-                          {msg.isTeacher ? "👑 " : ""}{msg.senderName}{msg.isTeacher ? " (You)" : ""}
-                        </span>
-                        <span className="text-[6px] text-[#666]">{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
-                      </div>
-                      <p className="text-white text-[8px] break-words">{msg.message}</p>
+                  <div className="p-2 border-t-2 border-[#00d4ff]">
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && sendChatMessage()
+                        }
+                        placeholder="Type message..."
+                        className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none"
+                      />
+                      <button
+                        onClick={sendChatMessage}
+                        className="px-2 py-1 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] hover:bg-[#0f0f23] hover:text-[#00ff41] transition-colors"
+                      >
+                        <Send className="h-3 w-3" />
+                      </button>
                     </div>
-                  ))
-                )}
-                <div ref={chatEndRef} />
-              </div>
-              <div className="p-2 border-t-2 border-[#00d4ff]">
-                <div className="flex gap-1">
-                  <input type="text" value={chatInput} onChange={(e) => setChatInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && sendChatMessage()} placeholder="Type message..." className="flex-1 bg-[#0f0f23] text-white text-[8px] px-2 py-1.5 border-2 border-[#00d4ff] focus:border-[#00ff41] focus:outline-none" />
-                  <button onClick={sendChatMessage} className="px-2 py-1 bg-[#00ff41] border-2 border-[#00ff41] text-[#0f0f23] hover:bg-[#0f0f23] hover:text-[#00ff41] transition-colors">
-                    <Send className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-              </>
+                  </div>
+                </>
               )}
             </motion.div>
           )}
         </AnimatePresence>
-
       </div>
 
       {/* Control Bar - Mobile responsive */}
@@ -1917,6 +2482,27 @@ export default function TeacherLiveClassRoomPage() {
             ) : (
               <ScreenShare className="h-4 w-4" />
             )}
+          </button>
+          {/* Subtitle Button */}
+          <button
+            onClick={toggleSubtitles}
+            disabled={!isRecognitionSupported}
+            className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${
+              subtitlesEnabled
+                ? "bg-[#ff00ff] border-[#ff00ff] text-white"
+                : isRecognitionSupported
+                ? "bg-[#0f0f23] border-[#ff00ff] text-[#ff00ff] hover:bg-[#ff00ff] hover:text-[#0f0f23]"
+                : "bg-[#444] border-[#444] text-[#666] cursor-not-allowed"
+            }`}
+            title={
+              !isRecognitionSupported
+                ? "Speech recognition not supported"
+                : subtitlesEnabled
+                ? "Stop subtitles"
+                : "Start subtitles"
+            }
+          >
+            <span className="text-[10px] md:text-[12px] font-bold">CC</span>
           </button>
           <div className="w-0.5 h-5 md:h-6 bg-[#00ff41] mx-0.5 md:mx-1" />
           <button
@@ -2112,12 +2698,16 @@ function HostVideoTile({
   isLocal,
   isSpeaking,
   isActiveSpeaker,
+  subtitlesEnabled,
+  currentSubtitle,
 }: {
   stream: MediaStream | null;
   name: string;
   isLocal: boolean;
   isSpeaking?: boolean;
   isActiveSpeaker?: boolean;
+  subtitlesEnabled?: boolean;
+  currentSubtitle?: string;
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showVideo, setShowVideo] = useState(false);
@@ -2204,6 +2794,15 @@ function HostVideoTile({
         <span>👑</span>
         {name}
       </div>
+
+      {/* Subtitle Overlay - Small and Unobtrusive */}
+      {subtitlesEnabled && currentSubtitle && (
+        <div className="absolute bottom-8 md:bottom-12 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full border border-[#ff00ff]/50 max-w-[80%] transition-opacity duration-300">
+          <p className="text-[10px] md:text-xs text-center truncate">
+            {currentSubtitle}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
