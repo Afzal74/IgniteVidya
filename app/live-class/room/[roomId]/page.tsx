@@ -142,6 +142,7 @@ export default function LiveClassRoomPage() {
   const [showWhiteboard, setShowWhiteboard] = useState(false);
   const whiteboardRef = useRef<HTMLCanvasElement>(null);
   const whiteboardCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const pendingWhiteboardDraws = useRef<Array<{ type: string; x?: number; y?: number; color?: string; size?: number }>>([]);
 
   // Background blur state
   const [isBlurEnabled, setIsBlurEnabled] = useState(false);
@@ -584,9 +585,17 @@ export default function LiveClassRoomPage() {
       })
       .on("broadcast", { event: "whiteboard-draw" }, ({ payload }) => {
         // Teacher is drawing on whiteboard
+        // Show whiteboard first if not visible
+        setShowWhiteboard(true);
+        
         const canvas = whiteboardRef.current;
         const ctx = whiteboardCtxRef.current;
-        if (!canvas || !ctx) return;
+        
+        // If canvas not ready yet, queue the draw command
+        if (!canvas || !ctx) {
+          pendingWhiteboardDraws.current.push(payload);
+          return;
+        }
         
         if (payload.type === "start") {
           ctx.beginPath();
@@ -599,10 +608,6 @@ export default function LiveClassRoomPage() {
           ctx.lineTo(payload.x, payload.y);
           ctx.stroke();
         }
-        // Show whiteboard if not visible
-        if (!showWhiteboard) {
-          setShowWhiteboard(true);
-        }
       })
       .on("broadcast", { event: "whiteboard-clear" }, () => {
         // Teacher cleared whiteboard
@@ -611,6 +616,14 @@ export default function LiveClassRoomPage() {
         if (!canvas || !ctx) return;
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+      })
+      .on("broadcast", { event: "whiteboard-open" }, () => {
+        // Teacher opened whiteboard
+        setShowWhiteboard(true);
+      })
+      .on("broadcast", { event: "whiteboard-close" }, () => {
+        // Teacher closed whiteboard
+        setShowWhiteboard(false);
       })
       .subscribe((status) => {
         console.log("WebRTC channel status:", status);
@@ -1162,8 +1175,8 @@ export default function LiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     if (!canvas) return;
     
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
+    canvas.width = canvas.offsetWidth || 800;
+    canvas.height = canvas.offsetHeight || 600;
     
     const ctx = canvas.getContext("2d");
     if (ctx) {
@@ -1174,6 +1187,24 @@ export default function LiveClassRoomPage() {
       // Fill with white background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Process any pending draw commands
+      if (pendingWhiteboardDraws.current.length > 0) {
+        pendingWhiteboardDraws.current.forEach((payload) => {
+          if (payload.type === "start") {
+            ctx.beginPath();
+            ctx.moveTo(payload.x!, payload.y!);
+            ctx.strokeStyle = payload.color!;
+            ctx.lineWidth = payload.size!;
+          } else if (payload.type === "draw") {
+            ctx.strokeStyle = payload.color!;
+            ctx.lineWidth = payload.size!;
+            ctx.lineTo(payload.x!, payload.y!);
+            ctx.stroke();
+          }
+        });
+        pendingWhiteboardDraws.current = [];
+      }
     }
   }, []);
 

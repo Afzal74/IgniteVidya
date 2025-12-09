@@ -2783,7 +2783,16 @@ export default function TeacherLiveClassRoomPage() {
           </button>
           {/* Whiteboard Button */}
           <button
-            onClick={() => setShowWhiteboard(!showWhiteboard)}
+            onClick={() => {
+              const newState = !showWhiteboard;
+              setShowWhiteboard(newState);
+              // Broadcast whiteboard visibility to students
+              channelRef.current?.send({
+                type: "broadcast",
+                event: newState ? "whiteboard-open" : "whiteboard-close",
+                payload: {},
+              });
+            }}
             className={`w-9 h-9 md:w-10 md:h-10 border-2 flex items-center justify-center transition-colors ${
               showWhiteboard
                 ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]"
