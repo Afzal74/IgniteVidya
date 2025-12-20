@@ -58,6 +58,31 @@ export default function PhotosynthesisGame() {
     }
   };
 
+  // Touch handlers for mobile
+  const handleTouchItem = (itemId: string) => {
+    if (draggedItem === itemId) {
+      setDraggedItem(null);
+    } else {
+      setDraggedItem(itemId);
+    }
+  };
+
+  const handleTouchSlot = (slotIndex: number) => {
+    if (draggedItem) {
+      const newSlots = [...slots];
+      const previousSlotIndex = newSlots.indexOf(draggedItem);
+      if (previousSlotIndex !== -1) {
+        newSlots[previousSlotIndex] = null;
+      }
+      newSlots[slotIndex] = draggedItem;
+      setSlots(newSlots);
+      setDraggedItem(null);
+    } else if (slots[slotIndex]) {
+      // If slot has item, select it for moving
+      setDraggedItem(slots[slotIndex]);
+    }
+  };
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
   };
@@ -66,6 +91,7 @@ export default function PhotosynthesisGame() {
     setSlots([null, null, null]);
     setProgress(0);
     setIsComplete(false);
+    setDraggedItem(null);
   };
 
   const getItemById = (id: string | null) => {
@@ -75,13 +101,12 @@ export default function PhotosynthesisGame() {
 
   return (
     <div
-      className="w-full h-full relative"
+      className="w-full h-full relative overflow-hidden"
       style={{
         backgroundImage: "url(/background_photosynthesis.jpg)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
-        minHeight: "70vh",
       }}
     >
       {/* Overlay */}
@@ -92,7 +117,7 @@ export default function PhotosynthesisGame() {
         .pixel-font {
           font-family: 'Courier New', monospace;
           font-weight: bold;
-          letter-spacing: 2px;
+          letter-spacing: 1px;
           image-rendering: pixelated;
           image-rendering: -moz-crisp-edges;
           image-rendering: crisp-edges;
@@ -100,10 +125,20 @@ export default function PhotosynthesisGame() {
       `}</style>
 
       {/* Game Content */}
-      <div className="relative z-10 h-full flex flex-col justify-center items-center p-4 md:p-8">
+      <div className="relative z-10 h-full flex flex-col justify-center items-center p-1 sm:p-2 md:p-3">
+        {/* Title - At Top */}
+        <div className="text-center mb-1 sm:mb-2 md:mb-3">
+          <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-green-700 pixel-font">
+            GAME TIME!
+          </h1>
+          <p className="text-[10px] sm:text-xs md:text-sm text-black font-bold pixel-font px-1">
+            Test your knowledge through a little game
+          </p>
+        </div>
+
         {/* Progress Bar */}
-        <div className="w-full max-w-4xl mb-6">
-          <div className="w-full h-4 bg-white/40 rounded-full overflow-hidden border-4 border-white/60">
+        <div className="w-full max-w-4xl mb-1 sm:mb-1.5">
+          <div className="w-full h-1 sm:h-1.5 md:h-2 bg-white/40 rounded-full overflow-hidden border border-white/60">
             <motion.div
               className="h-full bg-green-500"
               initial={{ width: 0 }}
@@ -113,19 +148,69 @@ export default function PhotosynthesisGame() {
           </div>
         </div>
 
-        {/* Title */}
-        <div className="text-center mb-6">
-          <h1 className="text-4xl md:text-5xl font-bold text-green-700 mb-3 pixel-font">
-            GAME TIME!
-          </h1>
-          <p className="text-xl md:text-2xl text-black font-bold pixel-font">
-            Lets test your knowledge through a little game
-          </p>
-        </div>
+        {/* Equation Area - Mobile: Stacked layout */}
+        <div className="w-full max-w-5xl bg-white/95 backdrop-blur-sm rounded-md sm:rounded-lg md:rounded-xl p-1 sm:p-1.5 md:p-2 mb-1 sm:mb-1.5 shadow-md">
+          {/* Mobile Layout - Stacked */}
+          <div className="flex sm:hidden flex-col items-center gap-0.5 text-[10px] font-bold pixel-font">
+            <div className="flex items-center gap-0.5">
+              <span className="text-purple-600">6CO₂</span>
+              <span className="text-gray-700">+</span>
+              {/* Slot 1 - H2O */}
+              <div
+                onClick={() => handleTouchSlot(0)}
+                className={`w-10 h-5 rounded border border-dashed flex items-center justify-center transition-all ${
+                  slots[0]
+                    ? "bg-blue-50 border-blue-400"
+                    : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400"
+                }`}
+              >
+                {slots[0] && (
+                  <span className="text-[8px] pixel-font" style={{ color: getItemById(slots[0])?.color }}>
+                    {getItemById(slots[0])?.label}
+                  </span>
+                )}
+              </div>
+              <span className="text-gray-700">+</span>
+              <span className="text-orange-500 text-[8px]">Sun</span>
+            </div>
+            <span className="text-gray-700 text-xs">↓</span>
+            <div className="flex items-center gap-0.5">
+              {/* Slot 2 - C6H12O6 */}
+              <div
+                onClick={() => handleTouchSlot(1)}
+                className={`w-12 h-5 rounded border border-dashed flex items-center justify-center transition-all ${
+                  slots[1]
+                    ? "bg-red-50 border-red-400"
+                    : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400"
+                }`}
+              >
+                {slots[1] && (
+                  <span className="text-[8px] pixel-font" style={{ color: getItemById(slots[1])?.color }}>
+                    {getItemById(slots[1])?.label}
+                  </span>
+                )}
+              </div>
+              <span className="text-gray-700">+</span>
+              {/* Slot 3 - 6O2 */}
+              <div
+                onClick={() => handleTouchSlot(2)}
+                className={`w-8 h-5 rounded border border-dashed flex items-center justify-center transition-all ${
+                  slots[2]
+                    ? "bg-blue-50 border-blue-400"
+                    : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400"
+                }`}
+              >
+                {slots[2] && (
+                  <span className="text-[8px] pixel-font" style={{ color: getItemById(slots[2])?.color }}>
+                    {getItemById(slots[2])?.label}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
 
-        {/* Equation Area */}
-        <div className="w-full max-w-5xl bg-white/95 backdrop-blur-sm rounded-3xl p-6 md:p-8 mb-6 shadow-2xl overflow-x-auto">
-          <div className="flex items-center justify-center gap-2 md:gap-3 text-xl md:text-2xl font-bold pixel-font whitespace-nowrap min-w-max">
+          {/* Desktop Layout - Horizontal */}
+          <div className="hidden sm:flex items-center justify-center gap-0.5 md:gap-1 text-[10px] md:text-xs lg:text-sm font-bold pixel-font flex-wrap">
             <span className="text-purple-600">6CO₂</span>
             <span className="text-gray-700">+</span>
 
@@ -133,15 +218,16 @@ export default function PhotosynthesisGame() {
             <div
               onDrop={() => handleDrop(0)}
               onDragOver={handleDragOver}
-              className={`w-24 md:w-32 h-12 md:h-14 rounded-2xl border-4 border-dashed flex items-center justify-center transition-all flex-shrink-0 ${
+              onClick={() => handleTouchSlot(0)}
+              className={`w-10 md:w-12 lg:w-16 h-5 md:h-6 lg:h-8 rounded border border-dashed flex items-center justify-center transition-all cursor-pointer ${
                 slots[0]
                   ? "bg-blue-50 border-blue-400"
-                  : "bg-gray-50 border-gray-400 hover:border-gray-500"
+                  : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400 hover:border-gray-500"
               }`}
             >
-              {slots[0] ? (
+              {slots[0] && (
                 <span
-                  className="cursor-move text-lg md:text-xl pixel-font"
+                  className="cursor-move text-[8px] md:text-[10px] lg:text-xs pixel-font"
                   draggable
                   onDragStart={() => handleDragStart(slots[0]!)}
                   onDragEnd={handleDragEnd}
@@ -149,26 +235,27 @@ export default function PhotosynthesisGame() {
                 >
                   {getItemById(slots[0])?.label}
                 </span>
-              ) : null}
+              )}
             </div>
 
-            <span className="text-gray-700 flex-shrink-0">+</span>
-            <span className="text-orange-500 flex-shrink-0">Sunlight</span>
-            <span className="text-gray-700 text-2xl md:text-3xl flex-shrink-0">→</span>
+            <span className="text-gray-700">+</span>
+            <span className="text-orange-500 text-[8px] md:text-[10px] lg:text-xs">Sunlight</span>
+            <span className="text-gray-700 text-xs md:text-sm lg:text-base">→</span>
 
             {/* Slot 2 - C6H12O6 */}
             <div
               onDrop={() => handleDrop(1)}
               onDragOver={handleDragOver}
-              className={`w-32 md:w-40 h-12 md:h-14 rounded-2xl border-4 border-dashed flex items-center justify-center transition-all flex-shrink-0 ${
+              onClick={() => handleTouchSlot(1)}
+              className={`w-12 md:w-16 lg:w-20 h-5 md:h-6 lg:h-8 rounded border border-dashed flex items-center justify-center transition-all cursor-pointer ${
                 slots[1]
                   ? "bg-red-50 border-red-400"
-                  : "bg-gray-50 border-gray-400 hover:border-gray-500"
+                  : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400 hover:border-gray-500"
               }`}
             >
-              {slots[1] ? (
+              {slots[1] && (
                 <span
-                  className="cursor-move text-lg md:text-xl pixel-font"
+                  className="cursor-move text-[8px] md:text-[10px] lg:text-xs pixel-font"
                   draggable
                   onDragStart={() => handleDragStart(slots[1]!)}
                   onDragEnd={handleDragEnd}
@@ -176,24 +263,25 @@ export default function PhotosynthesisGame() {
                 >
                   {getItemById(slots[1])?.label}
                 </span>
-              ) : null}
+              )}
             </div>
 
-            <span className="text-gray-700 flex-shrink-0">+</span>
+            <span className="text-gray-700">+</span>
 
             {/* Slot 3 - 6O2 */}
             <div
               onDrop={() => handleDrop(2)}
               onDragOver={handleDragOver}
-              className={`w-20 md:w-28 h-12 md:h-14 rounded-2xl border-4 border-dashed flex items-center justify-center transition-all flex-shrink-0 ${
+              onClick={() => handleTouchSlot(2)}
+              className={`w-8 md:w-10 lg:w-14 h-5 md:h-6 lg:h-8 rounded border border-dashed flex items-center justify-center transition-all cursor-pointer ${
                 slots[2]
                   ? "bg-blue-50 border-blue-400"
-                  : "bg-gray-50 border-gray-400 hover:border-gray-500"
+                  : draggedItem ? "bg-yellow-50 border-yellow-400 animate-pulse" : "bg-gray-50 border-gray-400 hover:border-gray-500"
               }`}
             >
-              {slots[2] ? (
+              {slots[2] && (
                 <span
-                  className="cursor-move text-lg md:text-xl pixel-font"
+                  className="cursor-move text-[8px] md:text-[10px] lg:text-xs pixel-font"
                   draggable
                   onDragStart={() => handleDragStart(slots[2]!)}
                   onDragEnd={handleDragEnd}
@@ -201,14 +289,14 @@ export default function PhotosynthesisGame() {
                 >
                   {getItemById(slots[2])?.label}
                 </span>
-              ) : null}
+              )}
             </div>
           </div>
         </div>
 
         {/* Draggable Items Area */}
-        <div className="w-full max-w-4xl bg-white/85 backdrop-blur-sm rounded-3xl p-6 shadow-xl">
-          <div className="flex items-center justify-center gap-6 flex-wrap">
+        <div className="w-full max-w-4xl bg-white/85 backdrop-blur-sm rounded p-0.5 sm:p-1 md:p-1.5 shadow-sm">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1 md:gap-1.5 flex-wrap">
             {availableItems.map((item) => {
               const isPlaced = slots.includes(item.id);
               if (isPlaced) return null;
@@ -219,13 +307,16 @@ export default function PhotosynthesisGame() {
                   draggable
                   onDragStart={() => handleDragStart(item.id)}
                   onDragEnd={handleDragEnd}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="cursor-move bg-white rounded-2xl px-6 md:px-8 py-4 md:py-5 shadow-lg border-4 hover:shadow-xl transition-all"
+                  onClick={() => handleTouchItem(item.id)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`cursor-pointer bg-white rounded px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 shadow-sm border hover:shadow transition-all ${
+                    draggedItem === item.id ? "ring-1 ring-yellow-400 ring-offset-1" : ""
+                  }`}
                   style={{ borderColor: item.color }}
                 >
                   <span
-                    className="text-2xl md:text-3xl font-bold pixel-font"
+                    className="text-[10px] sm:text-xs md:text-sm font-bold pixel-font"
                     style={{ color: item.color }}
                   >
                     {item.label}
@@ -234,6 +325,11 @@ export default function PhotosynthesisGame() {
               );
             })}
           </div>
+          {draggedItem && (
+            <p className="text-center text-[8px] sm:text-[10px] text-gray-600 mt-0.5 pixel-font">
+              Tap a slot
+            </p>
+          )}
         </div>
 
         {/* Success Message */}
@@ -241,17 +337,15 @@ export default function PhotosynthesisGame() {
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="mt-6 w-full max-w-4xl bg-green-500 text-white rounded-3xl p-8 text-center shadow-2xl"
+            className="mt-1 w-full max-w-4xl bg-green-500 text-white rounded p-1 sm:p-1.5 md:p-2 text-center shadow"
           >
-            <h2 className="text-3xl md:text-4xl font-bold mb-3 pixel-font">
-              🎉 Congratulations!
+            <h2 className="text-[10px] sm:text-xs md:text-sm font-bold pixel-font">
+              🎉 Correct!
             </h2>
-            <p className="text-xl md:text-2xl mb-6 pixel-font">
-              You've completed the photosynthesis equation correctly!
-            </p>
             <Button
               onClick={resetGame}
-              className="bg-white text-green-600 hover:bg-gray-100 text-lg px-8 py-3 pixel-font"
+              size="sm"
+              className="bg-white text-green-600 hover:bg-gray-100 text-[8px] sm:text-[10px] md:text-xs px-1.5 sm:px-2 py-0.5 pixel-font h-auto mt-0.5"
             >
               Play Again
             </Button>
