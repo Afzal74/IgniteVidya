@@ -415,156 +415,160 @@ export default function Grade6EnglishPage() {
   return (
     <GradeAccessGuard requiredGrade={6}>
       <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
-      {/* Global Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Animated Grid */}
-        <div className="absolute inset-0 opacity-30 dark:opacity-10">
-          <div className="h-full w-full bg-[linear-gradient(rgba(147,51,234,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(147,51,234,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(147,51,234,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(147,51,234,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
+        {/* Global Animated Background Elements */}
+        <div className="fixed inset-0 pointer-events-none">
+          {/* Animated Grid */}
+          <div className="absolute inset-0 opacity-30 dark:opacity-10">
+            <div className="h-full w-full bg-[linear-gradient(rgba(147,51,234,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(147,51,234,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(147,51,234,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(147,51,234,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
+          </div>
+
+          {/* Floating Elements */}
+          {[...Array(6)].map((_, i) => {
+            const initialX = Math.random() * 1200;
+            const initialY = Math.random() * 800;
+            const duration = Math.random() * 15 + 10;
+            const delay = Math.random() * 10;
+
+            return (
+              <motion.div
+                key={`bg-shape-${i}`}
+                className={`absolute w-2 h-2 ${
+                  i % 3 === 0
+                    ? "bg-purple-400/60 dark:bg-purple-400/20"
+                    : i % 3 === 1
+                    ? "bg-pink-400/60 dark:bg-pink-400/20"
+                    : "bg-indigo-400/60 dark:bg-indigo-400/20"
+                } ${i % 2 === 0 ? "rounded-full" : "rotate-45"}`}
+                initial={{
+                  x: initialX,
+                  y: initialY,
+                }}
+                animate={{
+                  y: [initialY, initialY - 200, initialY],
+                  x: [
+                    initialX,
+                    initialX + (Math.random() * 200 - 100),
+                    initialX,
+                  ],
+                  rotate: [0, 360],
+                  opacity: [0.2, 0.6, 0.2],
+                }}
+                transition={{
+                  duration,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay,
+                }}
+              />
+            );
+          })}
         </div>
 
-        {/* Floating Elements */}
-        {[...Array(6)].map((_, i) => {
-          const initialX = Math.random() * 1200;
-          const initialY = Math.random() * 800;
-          const duration = Math.random() * 15 + 10;
-          const delay = Math.random() * 10;
+        {/* Animated Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
 
-          return (
-            <motion.div
-              key={`bg-shape-${i}`}
-              className={`absolute w-2 h-2 ${
-                i % 3 === 0
-                  ? "bg-purple-400/60 dark:bg-purple-400/20"
-                  : i % 3 === 1
-                  ? "bg-pink-400/60 dark:bg-pink-400/20"
-                  : "bg-indigo-400/60 dark:bg-indigo-400/20"
-              } ${i % 2 === 0 ? "rounded-full" : "rotate-45"}`}
-              initial={{
-                x: initialX,
-                y: initialY,
-              }}
-              animate={{
-                y: [initialY, initialY - 200, initialY],
-                x: [initialX, initialX + (Math.random() * 200 - 100), initialX],
-                rotate: [0, 360],
-                opacity: [0.2, 0.6, 0.2],
-              }}
-              transition={{
-                duration,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay,
-              }}
-            />
-          );
-        })}
-      </div>
+        {/* Gradient Orbs */}
+        <div className="absolute inset-0">
+          <motion.div
+            className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-400/25 to-pink-400/25 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.2, 1],
+              x: [0, 50, 0],
+              y: [0, -30, 0],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          <motion.div
+            className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-indigo-400/25 to-purple-400/25 dark:from-indigo-400/10 dark:to-purple-400/10 rounded-full blur-3xl"
+            animate={{
+              scale: [1, 1.3, 1],
+              x: [0, -40, 0],
+              y: [0, 20, 0],
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 2,
+            }}
+          />
+        </div>
 
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-50/30 via-white to-pink-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
+        {/* Header */}
+        <section className="pt-16 md:pt-20 lg:pt-24 pb-6 md:pb-8 px-3 md:px-4 lg:px-6 relative z-10">
+          <div className="max-w-7xl mx-auto">
+            {/* Back Button */}
+            <Link href="/grade/6">
+              <Button
+                variant="ghost"
+                className="mb-4 md:mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300 text-sm relative z-20"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">Back to Class 6</span>
+                <span className="sm:hidden">Back</span>
+              </Button>
+            </Link>
 
-      {/* Gradient Orbs */}
-      <div className="absolute inset-0">
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-purple-400/25 to-pink-400/25 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-indigo-400/25 to-purple-400/25 dark:from-indigo-400/10 dark:to-purple-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -40, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-      </div>
-
-      {/* Header */}
-      <section className="pt-16 md:pt-20 lg:pt-24 pb-6 md:pb-8 px-3 md:px-4 lg:px-6 relative z-10">
-        <div className="max-w-7xl mx-auto">
-          {/* Back Button */}
-          <Link href="/grade/6">
-            <Button
-              variant="ghost"
-              className="mb-4 md:mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300 text-sm relative z-20"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Back to Class 6</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
-          </Link>
-
-          {/* Page Header */}
-          <div className="text-center mb-8 md:mb-12">
-            <div className="mb-4 md:mb-6">
-              <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 dark:from-purple-400 dark:to-purple-600 flex items-center justify-center mx-auto shadow-lg">
-                <Book className="text-white h-8 w-8 md:h-10 md:w-10" />
+            {/* Page Header */}
+            <div className="text-center mb-8 md:mb-12">
+              <div className="mb-4 md:mb-6">
+                <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-gradient-to-br from-purple-500 to-purple-700 dark:from-purple-400 dark:to-purple-600 flex items-center justify-center mx-auto shadow-lg">
+                  <Book className="text-white h-8 w-8 md:h-10 md:w-10" />
+                </div>
               </div>
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-2 relative z-20">
+                <span className="block sm:hidden">English - Class 6</span>
+                <span className="hidden sm:block">English - Class 6</span>
+              </h1>
+              <p className="text-sm md:text-base lg:text-lg text-zinc-600 dark:text-zinc-400 px-4 relative z-20">
+                NCERT Honeysuckle • Reading, Writing, Grammar
+              </p>
             </div>
-            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-black dark:text-white mb-2 relative z-20">
-              <span className="block sm:hidden">English - Class 6</span>
-              <span className="hidden sm:block">English - Class 6</span>
-            </h1>
-            <p className="text-sm md:text-base lg:text-lg text-zinc-600 dark:text-zinc-400 px-4 relative z-20">
-              NCERT Honeysuckle • Reading, Writing, Grammar
-            </p>
+
+            {/* Grammar & Writing Skills - Now at the top */}
+            {renderChapterGrid(
+              grammarTopics,
+              "✏️ Grammar & Writing Skills",
+              Edit3
+            )}
+
+            {/* Prose Chapters */}
+            {renderChapterGrid(proseChapters, "📘 Prose (Chapters)", FileText)}
+
+            {/* Poems */}
+            {renderChapterGrid(poems, "🔹 Poems", Heart)}
+
+            {/* Quick Links */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {quickLinks.map((link, index) => {
+                const IconComponent = link.icon;
+                return (
+                  <Link key={index} href={link.href}>
+                    <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-4 text-center backdrop-blur-sm">
+                      <div
+                        className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getColorClasses(
+                          link.color
+                        )} flex items-center justify-center mx-auto mb-3`}
+                      >
+                        <IconComponent className="text-white h-5 w-5" />
+                      </div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
+                        {link.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 text-xs">
+                        {link.description}
+                      </p>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-
-          {/* Grammar & Writing Skills - Now at the top */}
-          {renderChapterGrid(
-            grammarTopics,
-            "✏️ Grammar & Writing Skills",
-            Edit3
-          )}
-
-          {/* Prose Chapters */}
-          {renderChapterGrid(proseChapters, "📘 Prose (Chapters)", FileText)}
-
-          {/* Poems */}
-          {renderChapterGrid(poems, "🔹 Poems", Heart)}
-
-          {/* Quick Links */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {quickLinks.map((link, index) => {
-              const IconComponent = link.icon;
-              return (
-                <Link key={index} href={link.href}>
-                  <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 hover:bg-white dark:hover:bg-zinc-700 transition-all duration-300 cursor-pointer p-4 text-center backdrop-blur-sm">
-                    <div
-                      className={`w-10 h-10 rounded-lg bg-gradient-to-br ${getColorClasses(
-                        link.color
-                      )} flex items-center justify-center mx-auto mb-3`}
-                    >
-                      <IconComponent className="text-white h-5 w-5" />
-                    </div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-1">
-                      {link.title}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 text-xs">
-                      {link.description}
-                    </p>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+        </section>
       </div>
     </GradeAccessGuard>
   );

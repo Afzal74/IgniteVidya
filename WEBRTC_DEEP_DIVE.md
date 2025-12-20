@@ -421,26 +421,26 @@ app/
 │     │                                    │                       │
 │     │                                 7. │ Initializes camera/mic│
 │     │                                    │                       │
-│     │  ◄───── "user-join" ──────────────│                       │
+│     │  ◄───── "user-join" ────────────── │                       │
 │     │                                    │                       │
 │  8. │ Creates RTCPeerConnection          │                       │
 │     │ Adds local tracks                  │                       │
 │     │ Creates SDP offer                  │                       │
 │     │                                    │                       │
-│     │─────────── SDP OFFER ────────────►│                       │
+│     │─────────── SDP OFFER ────────────► │                       │
 │     │                                    │                       │
 │     │                                 9. │ Creates RTCPeerConn   │
 │     │                                    │ Sets remote desc      │
 │     │                                    │ Creates SDP answer    │
 │     │                                    │                       │
-│     │◄────────── SDP ANSWER ────────────│                       │
+│     │◄────────── SDP ANSWER ──────────── │                       │
 │     │                                    │                       │
 │ 10. │ Sets remote description            │                       │
 │     │                                    │                       │
-│     │◄═══════ ICE CANDIDATES ══════════►│                       │
+│     │◄═══════ ICE CANDIDATES ══════════► │                       │
 │     │         (multiple exchanges)       │                       │
 │     │                                    │                       │
-│     │◄═══════════ CONNECTED ═══════════►│                       │
+│     │◄═══════════ CONNECTED ═══════════► │                       │
 │     │      Video/Audio streaming!        │                       │
 │     │                                    │                       │
 └─────────────────────────────────────────────────────────────────┘
