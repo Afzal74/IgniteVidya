@@ -248,7 +248,7 @@ export default function Navigation() {
               </div>
 
               {/* Mobile Actions */}
-              <div className="md:hidden flex items-center space-x-2">
+              <div className="md:hidden flex items-center space-x-1">
                 {teacherProfile ? (
                   <Link href="/teacher/dashboard">
                     <Button
@@ -256,27 +256,56 @@ export default function Navigation() {
                       size="icon"
                       onClick={() => playClickSound("secondary")}
                       onMouseEnter={() => playHoverSound("button")}
-                      className="rounded-xl"
+                      className="rounded-xl h-8 w-8"
                       title="Teacher Dashboard"
                     >
-                      <LayoutDashboard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                      <LayoutDashboard className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                       <span className="sr-only">Teacher Dashboard</span>
                     </Button>
                   </Link>
-                ) : (
-                  <Link href="/teacher/login">
+                ) : studentProfile ? (
+                  <Link href="/dashboard">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => playClickSound("secondary")}
                       onMouseEnter={() => playHoverSound("button")}
-                      className="rounded-xl"
-                      title="Teacher Login"
+                      className="rounded-xl h-8 w-8"
+                      title="Student Dashboard"
                     >
-                      <GraduationCap className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                      <span className="sr-only">Teacher Login</span>
+                      <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                      <span className="sr-only">Student Dashboard</span>
                     </Button>
                   </Link>
+                ) : (
+                  <>
+                    <Link href="/student/login">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playClickSound("secondary")}
+                        onMouseEnter={() => playHoverSound("button")}
+                        className="rounded-xl h-8 w-8"
+                        title="Student Login"
+                      >
+                        <User className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="sr-only">Student Login</span>
+                      </Button>
+                    </Link>
+                    <Link href="/teacher/login">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => playClickSound("secondary")}
+                        onMouseEnter={() => playHoverSound("button")}
+                        className="rounded-xl h-8 w-8"
+                        title="Teacher Login"
+                      >
+                        <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        <span className="sr-only">Teacher Login</span>
+                      </Button>
+                    </Link>
+                  </>
                 )}
 
                 <Button
@@ -287,13 +316,13 @@ export default function Navigation() {
                     toggleSound();
                   }}
                   onMouseEnter={() => playHoverSound("button")}
-                  className="rounded-xl"
+                  className="rounded-xl h-8 w-8"
                   title={soundEnabled ? "Disable sounds" : "Enable sounds"}
                 >
                   {soundEnabled ? (
-                    <Volume2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <Volume2 className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   ) : (
-                    <VolumeX className="h-5 w-5 text-gray-400 dark:text-gray-600" />
+                    <VolumeX className="h-4 w-4 text-gray-400 dark:text-gray-600" />
                   )}
                   <span className="sr-only">Toggle sound</span>
                 </Button>
@@ -306,10 +335,10 @@ export default function Navigation() {
                     setTheme(theme === "dark" ? "light" : "dark");
                   }}
                   onMouseEnter={() => playHoverSound("button")}
-                  className="rounded-xl"
+                  className="rounded-xl h-8 w-8"
                 >
-                  <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                  <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                  <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                  <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
                 </Button>
 
                 <Button
@@ -320,12 +349,12 @@ export default function Navigation() {
                     setIsOpen(!isOpen);
                   }}
                   onMouseEnter={() => playHoverSound("button")}
-                  className="rounded-xl"
+                  className="rounded-xl h-8 w-8"
                 >
                   {isOpen ? (
-                    <X className="h-5 w-5" />
+                    <X className="h-4 w-4" />
                   ) : (
-                    <Menu className="h-5 w-5" />
+                    <Menu className="h-4 w-4" />
                   )}
                 </Button>
               </div>
