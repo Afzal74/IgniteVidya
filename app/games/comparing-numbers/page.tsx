@@ -3,17 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
-  Star,
   Trophy,
   RotateCcw,
   Play,
-  Package,
-  Sparkles,
   Zap,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import RocketAscendingGame from "./rocket-game";
@@ -504,137 +500,7 @@ export default function ComparingNumbersGame() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black relative overflow-hidden">
-      {/* Global Animated Background Elements - matching home page */}
-      <div className="fixed inset-0 pointer-events-none">
-        {/* Animated Grid */}
-        <div className="absolute inset-0 opacity-30 dark:opacity-10">
-          <div className="h-full w-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
-        </div>
-
-        {/* Floating Geometric Shapes */}
-        {[...Array(8)].map((_, i) => {
-          const initialX = Math.random() * 1200;
-          const initialY = Math.random() * 800;
-          const duration = Math.random() * 15 + 10;
-          const delay = Math.random() * 10;
-
-          return (
-            <motion.div
-              key={`bg-shape-${i}`}
-              className={`absolute w-2 h-2 ${
-                i % 3 === 0
-                  ? "bg-blue-400/60 dark:bg-blue-400/20"
-                  : i % 3 === 1
-                  ? "bg-green-400/60 dark:bg-green-400/20"
-                  : "bg-purple-400/60 dark:bg-purple-400/20"
-              } ${i % 2 === 0 ? "rounded-full" : "rotate-45"}`}
-              initial={{
-                x: initialX,
-                y: initialY,
-              }}
-              animate={{
-                y: [initialY, initialY - 200, initialY],
-                x: [initialX, initialX + (Math.random() * 200 - 100), initialX],
-                rotate: [0, 360],
-                opacity: [0.2, 0.6, 0.2],
-              }}
-              transition={{
-                duration,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay,
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Animated Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
-
-      {/* Floating Particles */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(20)].map((_, i) => {
-          const initialX = Math.random() * 1200;
-          const initialY = Math.random() * 800;
-          const duration = Math.random() * 10 + 10;
-          const delay = Math.random() * 5;
-          const moveX = Math.random() * 100 - 50;
-
-          return (
-            <motion.div
-              key={`particle-${i}`}
-              className="absolute w-1 h-1 bg-blue-400/70 dark:bg-blue-400/30 rounded-full"
-              initial={{
-                x: initialX,
-                y: initialY,
-              }}
-              animate={{
-                y: [initialY, initialY - 100, initialY],
-                x: [initialX, initialX + moveX, initialX],
-                opacity: [0.3, 0.8, 0.3],
-              }}
-              transition={{
-                duration,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay,
-              }}
-            />
-          );
-        })}
-      </div>
-
-      {/* Gradient Orbs */}
-      <div className="absolute inset-0">
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-blue-400/25 to-purple-400/25 dark:from-blue-400/10 dark:to-purple-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-green-400/25 to-blue-400/25 dark:from-green-400/10 dark:to-blue-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -40, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 right-1/3 w-32 h-32 bg-gradient-to-r from-purple-400/35 to-pink-400/35 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-2xl"
-          animate={{
-            scale: [1, 1.4, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: "linear",
-            delay: 4,
-          }}
-        />
-      </div>
-
-      {/* Mesh Gradient Overlay */}
-      <div className="absolute inset-0 opacity-40 dark:opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.4),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.4),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.4),_transparent_50%)] dark:bg-[radial-gradient(circle_at_20%_80%,_rgba(120,119,198,0.3),_transparent_50%),radial-gradient(circle_at_80%_20%,_rgba(255,119,198,0.3),_transparent_50%),radial-gradient(circle_at_40%_40%,_rgba(120,219,255,0.3),_transparent_50%)] animate-pulse" />
-      </div>
-
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
       {/* Game Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-10">
         {particles.map((particle) => (
@@ -654,81 +520,72 @@ export default function ComparingNumbersGame() {
         ))}
       </div>
 
-      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6 relative">
+      <section className="pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative">
         <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          {/* Back Button */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-4"
+          >
             <Link href="/grade/6/mathematics/knowing-our-numbers">
               <Button
-                variant="ghost"
-                className="text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300 relative z-20"
+                variant="outline"
+                size="sm"
+                className="border-gray-700 hover:bg-gray-800 text-gray-300"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Learning
+                <ArrowLeft className="h-3 w-3 mr-1" />
+                Back
               </Button>
             </Link>
+          </motion.div>
 
-            <div className="text-center relative z-20">
-              <h1
-                className="text-3xl md:text-4xl font-bold text-black dark:text-white mb-2 flex items-center gap-2 justify-center"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "2px",
-                  textShadow:
-                    "2px 2px 0px rgba(0,0,0,0.3), -1px -1px 0px rgba(255,255,255,0.1)",
-                }}
-              >
-                <Sparkles className="h-8 w-8 text-yellow-400" />
-                NUMBER COMPARISON CHALLENGE
-                <Sparkles className="h-8 w-8 text-yellow-400" />
-              </h1>
-              <p className="text-zinc-600 dark:text-zinc-400">
-                Drag numbers to their correct category!
-              </p>
+          {/* Hero Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-4 md:mb-6"
+          >
+            <div className="mb-3 md:mb-4">
+              <span className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs md:text-sm font-semibold">
+                Number Comparison Challenge
+              </span>
             </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white mb-2">
+              Compare the Numbers!
+            </h1>
+            <p className="text-gray-400 text-xs sm:text-sm">
+              Drag numbers to their correct category
+            </p>
+          </motion.div>
 
-            <div className="w-24"></div>
-          </div>
-
-          {/* Game Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div
-                className="text-2xl font-bold text-blue-400"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "1px",
-                }}
-              >
+          {/* Game Stats - Compact Mobile Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-4 mb-4 sm:mb-6 md:mb-8"
+          >
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-purple-400">
                 {gameState.score}
               </div>
-              <div
-                className="text-sm text-gray-400"
-                style={{ fontFamily: "Courier New, monospace" }}
-              >
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
                 SCORE
               </div>
-            </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur relative">
-              <div
-                className="text-2xl font-bold text-purple-400"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "1px",
-                }}
-              >
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-pink-400">
                 {gameState.level}
               </div>
-              <div
-                className="text-sm text-gray-400"
-                style={{ fontFamily: "Courier New, monospace" }}
-              >
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
                 LEVEL
               </div>
-              {/* Level Progress Bar */}
-              <div className="mt-2 w-full bg-gray-700 rounded-full h-1.5">
+              <div className="mt-1 w-full bg-gray-700 rounded-full h-1">
                 <div
-                  className="bg-gradient-to-r from-purple-400 to-blue-500 h-1.5 rounded-full transition-all duration-500"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-1 rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(
                       100,
@@ -739,105 +596,76 @@ export default function ComparingNumbersGame() {
                   }}
                 ></div>
               </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {gameState.level * 100 -
-                  (gameState.score % (gameState.level * 100))}{" "}
-                to next
-              </div>
-            </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div
-                className="text-2xl font-bold text-red-400"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "1px",
-                }}
-              >
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">
                 {gameState.lives}
               </div>
-              <div
-                className="text-sm text-gray-400"
-                style={{ fontFamily: "Courier New, monospace" }}
-              >
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
                 LIVES
               </div>
-            </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div
-                className="text-2xl font-bold text-yellow-400"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "1px",
-                }}
-              >
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
                 {gameState.streak}
               </div>
-              <div
-                className="text-sm text-gray-400"
-                style={{ fontFamily: "Courier New, monospace" }}
-              >
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
                 STREAK
               </div>
-            </Card>
-            <Card className="bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div
-                className="text-2xl font-bold text-emerald-400"
-                style={{
-                  fontFamily: "Courier New, monospace",
-                  letterSpacing: "1px",
-                }}
-              >
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-cyan-400">
                 {gameState.combo}
               </div>
-              <div
-                className="text-sm text-gray-400"
-                style={{ fontFamily: "Courier New, monospace" }}
-              >
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
                 COMBO
               </div>
-            </Card>
-          </div>
-
+            </div>
+          </motion.div>
           {/* Start Game Button */}
           {!gameState.isPlaying && !gameState.gameOver && (
-            <div className="text-center mb-8">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-center mb-4 sm:mb-6 md:mb-8"
+            >
+              <Button
+                onClick={startGame}
+                className="w-full max-w-md bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                <Button
-                  onClick={startGame}
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-12 py-4 text-lg font-bold rounded-xl shadow-lg"
-                >
-                  <Play className="h-6 w-6 mr-3" />
-                  Start Challenge
-                </Button>
-              </motion.div>
-            </div>
+                <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                Start Challenge
+              </Button>
+            </motion.div>
           )}
 
           {/* Game Area */}
           {gameState.isPlaying && (
-            <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4 sm:space-y-6"
+            >
               {/* Numbers to Compare */}
-              <div className="text-center mb-4 md:mb-8 px-2">
-                <h2 className="text-lg md:text-2xl font-bold text-black dark:text-white mb-3 md:mb-6 relative z-20">
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-gray-700">
+                <h2 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-3 sm:mb-4 text-center">
                   Drag the numbers to the correct buckets:
                 </h2>
-                <div className="flex justify-center gap-3 sm:gap-6 md:gap-8 mb-4 md:mb-8">
+                <div className="flex justify-center gap-4 sm:gap-6 md:gap-8">
                   {numbers
                     .filter((n) => !n.isDropped)
                     .map((number, index) => (
                       <motion.div
                         key={number.id}
                         className={`
-                    w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold shadow-xl transform transition-all select-none
-                    ${
-                      number.isDragging
-                        ? "bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-blue-400/50 scale-110 rotate-2 cursor-grabbing"
-                        : "bg-gradient-to-br from-white to-gray-100 dark:from-gray-700 dark:to-gray-600 text-gray-800 dark:text-white hover:shadow-2xl hover:scale-105 hover:bg-gradient-to-br hover:from-blue-100 hover:to-blue-200 dark:hover:from-blue-800 dark:hover:to-blue-700 hover:text-blue-800 dark:hover:text-blue-100 cursor-pointer hover:cursor-grab"
-                    }
-                  `}
+                          w-14 h-14 sm:w-18 sm:h-18 md:w-24 md:h-24 rounded-xl flex items-center justify-center text-xl sm:text-2xl md:text-4xl font-bold shadow-xl transform transition-all select-none border-2
+                          ${
+                            number.isDragging
+                              ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-purple-400/50 scale-110 rotate-2 cursor-grabbing border-purple-400"
+                              : "bg-gray-700 text-white hover:shadow-2xl hover:scale-105 hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-600 cursor-pointer hover:cursor-grab border-gray-600 hover:border-purple-400"
+                          }
+                        `}
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{
@@ -874,18 +702,18 @@ export default function ComparingNumbersGame() {
               </div>
 
               {/* Bucket Drop Zones */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 px-2">
+              <div className="grid grid-cols-3 gap-2 sm:gap-4 md:gap-6">
                 {buckets.map((bucket, index) => (
                   <motion.div
                     key={bucket.id}
                     className={`
-                      relative min-h-[140px] sm:min-h-[160px] md:min-h-[200px] rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 text-center flex flex-col justify-center backdrop-blur transition-all duration-300 overflow-hidden
+                      relative min-h-[100px] sm:min-h-[130px] md:min-h-[160px] rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-6 text-center flex flex-col justify-center backdrop-blur transition-all duration-300 overflow-hidden border-2
                       ${
                         bucket.color === "emerald"
-                          ? "bg-gradient-to-br from-emerald-50/90 to-emerald-100/90 dark:from-emerald-900/40 dark:to-emerald-800/40 border-2 border-emerald-300/50 dark:border-emerald-500/30"
+                          ? "bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-400"
                           : bucket.color === "amber"
-                          ? "bg-gradient-to-br from-amber-50/90 to-amber-100/90 dark:from-amber-900/40 dark:to-amber-800/40 border-2 border-amber-300/50 dark:border-amber-500/30"
-                          : "bg-gradient-to-br from-rose-50/90 to-rose-100/90 dark:from-rose-900/40 dark:to-rose-800/40 border-2 border-rose-300/50 dark:border-rose-500/30"
+                          ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-400"
+                          : "bg-rose-500/10 border-rose-500/30 hover:border-rose-400"
                       }
                       ${
                         bucket.isHovered
@@ -923,128 +751,47 @@ export default function ComparingNumbersGame() {
                       }
                     }}
                   >
-                    {/* Wood Texture Background */}
-                    <div className="absolute inset-0 opacity-10 dark:opacity-5">
+                    {/* Bucket Icon */}
+                    <div className="mb-1 sm:mb-2 md:mb-3">
                       <div
-                        className="w-full h-full bg-gradient-to-br from-amber-800 via-amber-700 to-amber-900"
-                        style={{
-                          backgroundImage: `
-                               repeating-linear-gradient(
-                                 90deg,
-                                 transparent,
-                                 transparent 2px,
-                                 rgba(139, 69, 19, 0.1) 2px,
-                                 rgba(139, 69, 19, 0.1) 4px
-                               ),
-                               repeating-linear-gradient(
-                                 0deg,
-                                 transparent,
-                                 transparent 8px,
-                                 rgba(160, 82, 45, 0.1) 8px,
-                                 rgba(160, 82, 45, 0.1) 12px
-                               )
-                             `,
-                        }}
-                      />
-                    </div>
-                    {/* Realistic Bucket Icon */}
-                    <div className="mb-2 sm:mb-3 md:mb-4 relative">
-                      <svg
-                        className={`h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 mx-auto ${
+                        className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full mx-auto flex items-center justify-center ${
                           bucket.color === "emerald"
-                            ? "text-emerald-400"
+                            ? "bg-emerald-500/20 border border-emerald-500/30"
                             : bucket.color === "amber"
-                            ? "text-amber-400"
-                            : "text-rose-400"
+                            ? "bg-amber-500/20 border border-amber-500/30"
+                            : "bg-rose-500/20 border border-rose-500/30"
                         }`}
-                        viewBox="0 0 100 100"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
                       >
-                        {/* Bucket Body */}
-                        <path
-                          d="M20 35 L25 85 Q25 90 30 90 L70 90 Q75 90 75 85 L80 35 Z"
-                          fill="currentColor"
-                          opacity="0.8"
-                        />
-                        {/* Bucket Rim */}
-                        <ellipse
-                          cx="50"
-                          cy="35"
-                          rx="30"
-                          ry="8"
-                          fill="currentColor"
-                        />
-                        {/* Bucket Handle Left */}
-                        <path
-                          d="M15 40 Q10 40 10 45 Q10 50 15 50 L20 50"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          fill="none"
-                          opacity="0.9"
-                        />
-                        {/* Bucket Handle Right */}
-                        <path
-                          d="M80 50 L85 50 Q90 50 90 45 Q90 40 85 40"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          fill="none"
-                          opacity="0.9"
-                        />
-                        {/* Bucket Shine */}
-                        <ellipse
-                          cx="40"
-                          cy="55"
-                          rx="8"
-                          ry="15"
-                          fill="white"
-                          opacity="0.3"
-                        />
-                        {/* Bucket Bottom Shadow */}
-                        <ellipse
-                          cx="50"
-                          cy="85"
-                          rx="22"
-                          ry="4"
-                          fill="black"
-                          opacity="0.2"
-                        />
-                      </svg>
+                        <span className="text-lg sm:text-xl md:text-2xl">
+                          {bucket.type === "greater"
+                            ? ">"
+                            : bucket.type === "equal"
+                            ? "="
+                            : "<"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Bucket Label */}
                     <h3
-                      className={`text-lg sm:text-xl md:text-2xl font-bold mb-1 sm:mb-2 md:mb-3 relative z-10 ${
+                      className={`text-xs sm:text-sm md:text-lg font-bold mb-0.5 sm:mb-1 ${
                         bucket.color === "emerald"
-                          ? "text-emerald-700 dark:text-emerald-300"
+                          ? "text-emerald-400"
                           : bucket.color === "amber"
-                          ? "text-amber-700 dark:text-amber-300"
-                          : "text-rose-700 dark:text-rose-300"
+                          ? "text-amber-400"
+                          : "text-rose-400"
                       }`}
-                      style={{
-                        fontFamily: "Courier New, monospace",
-                        letterSpacing: "1px",
-                        textShadow: "1px 1px 0px rgba(0,0,0,0.3)",
-                      }}
                     >
-                      {bucket.label.toUpperCase()}
+                      {bucket.label}
                     </h3>
 
                     {/* Description */}
-                    <p
-                      className={`text-xs sm:text-sm mb-2 sm:mb-3 md:mb-4 relative z-10 ${
-                        bucket.color === "emerald"
-                          ? "text-emerald-600 dark:text-emerald-200"
-                          : bucket.color === "amber"
-                          ? "text-amber-600 dark:text-amber-200"
-                          : "text-rose-600 dark:text-rose-200"
-                      }`}
-                    >
+                    <p className="text-[10px] sm:text-xs text-gray-400 hidden sm:block">
                       {bucket.type === "greater"
-                        ? "For the larger number"
+                        ? "Larger number"
                         : bucket.type === "equal"
-                        ? "When numbers are the same"
-                        : "For the smaller number"}
+                        ? "Same numbers"
+                        : "Smaller number"}
                     </p>
 
                     {/* Dropped Number Display */}
@@ -1053,7 +800,7 @@ export default function ComparingNumbersGame() {
                         initial={{ scale: 0, rotate: 180 }}
                         animate={{ scale: 1, rotate: 0 }}
                         className={`
-                          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl sm:rounded-2xl flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-bold shadow-2xl
+                          absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-xl flex items-center justify-center text-base sm:text-xl md:text-2xl font-bold shadow-2xl
                           ${
                             numbers.find(
                               (n) => n.value === bucket.droppedNumber
@@ -1063,7 +810,7 @@ export default function ComparingNumbersGame() {
                                   (n) => n.value === bucket.droppedNumber
                                 )?.isCorrect === false
                               ? "bg-gradient-to-br from-red-400 to-red-600 text-white"
-                              : "bg-gradient-to-br from-blue-400 to-blue-600 text-white"
+                              : "bg-gradient-to-br from-purple-400 to-pink-600 text-white"
                           }
                         `}
                       >
@@ -1084,12 +831,12 @@ export default function ComparingNumbersGame() {
                     className="text-center"
                   >
                     <div
-                      className={`text-2xl font-bold p-4 rounded-xl inline-block ${
-                        gameState.feedback.includes("LEVEL UP")
-                          ? "bg-gradient-to-r from-purple-500/30 to-blue-500/30 text-purple-300 border-2 border-purple-400 shadow-purple-400/50 shadow-lg"
+                      className={`text-sm sm:text-base md:text-lg font-bold px-4 py-2 sm:px-6 sm:py-3 rounded-xl inline-block ${
+                        gameState.feedback.includes("LEVEL")
+                          ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                           : gameState.feedback.includes("Perfect")
-                          ? "bg-green-500/20 text-green-400 border border-green-400"
-                          : "bg-red-500/20 text-red-400 border border-red-400"
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                          : "bg-red-500/20 text-red-400 border border-red-500/30"
                       }`}
                     >
                       {gameState.feedback}
@@ -1097,7 +844,7 @@ export default function ComparingNumbersGame() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           )}
 
           {/* Next Game Type Modal */}
@@ -1107,49 +854,47 @@ export default function ComparingNumbersGame() {
               animate={{ opacity: 1, scale: 1 }}
               className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
-              <Card className="bg-slate-800/95 border-purple-500 p-8 max-w-lg mx-auto backdrop-blur shadow-2xl">
+              <div className="bg-gray-800/95 border border-purple-500/50 rounded-2xl p-6 sm:p-8 max-w-lg mx-auto backdrop-blur shadow-2xl">
                 <div className="text-center">
-                  <Zap className="h-20 w-20 text-yellow-400 mx-auto mb-4 animate-pulse" />
-                  <h2 className="text-4xl font-bold text-white mb-4">
+                  <Zap className="h-16 w-16 sm:h-20 sm:w-20 text-yellow-400 mx-auto mb-4 animate-pulse" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">
                     🎉 Milestone Reached! 🎉
                   </h2>
-                  <p className="text-xl text-purple-300 mb-2">
+                  <p className="text-base sm:text-lg text-purple-300 mb-2">
                     Congratulations! You've completed Level {gameState.level}!
                   </p>
-                  <p className="text-gray-300 mb-6">
-                    You've unlocked the next type of number comparison
-                    challenge!
+                  <p className="text-gray-400 text-sm mb-4">
+                    You've unlocked the next challenge!
                   </p>
 
-                  <div className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-xl p-4 mb-6">
-                    <h3 className="text-lg font-bold text-white mb-2">
+                  <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-4 mb-6">
+                    <h3 className="text-sm sm:text-base font-bold text-white mb-2">
                       🚀 Ready for the next adventure?
                     </h3>
-                    <p className="text-sm text-gray-300">
-                      Choose to continue with the current game or try a new
-                      challenge type!
+                    <p className="text-xs sm:text-sm text-gray-300">
+                      Continue or try a new challenge type!
                     </p>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Button
                       onClick={handleNextGameType}
-                      className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 text-lg font-bold"
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold"
                     >
-                      <ArrowRight className="h-5 w-5 mr-2" />
-                      Next Game Type
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                      Next Game
                     </Button>
                     <Button
                       onClick={continueCurrentGame}
                       variant="outline"
-                      className="border-slate-500 text-slate-300 hover:bg-slate-700 px-6 py-3"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700 px-6 py-3 rounded-xl"
                     >
-                      <Play className="h-5 w-5 mr-2" />
-                      Continue Current
+                      <Play className="h-4 w-4 mr-2" />
+                      Continue
                     </Button>
                   </div>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           )}
 
@@ -1160,28 +905,28 @@ export default function ComparingNumbersGame() {
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <Card className="bg-slate-800/90 border-slate-700 p-8 max-w-md mx-auto backdrop-blur">
-                <Trophy className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-4">
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 sm:p-8 max-w-md mx-auto border border-gray-700">
+                <Trophy className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-400 mx-auto mb-4" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                   Challenge Complete!
                 </h2>
                 <p className="text-gray-300 mb-2">
                   Final Score:{" "}
-                  <span className="text-blue-400 font-bold text-2xl">
+                  <span className="text-purple-400 font-bold text-xl sm:text-2xl">
                     {gameState.score}
                   </span>
                 </p>
                 <p className="text-gray-300 mb-6">
                   Level Reached:{" "}
-                  <span className="text-purple-400 font-bold text-xl">
+                  <span className="text-pink-400 font-bold text-lg sm:text-xl">
                     {gameState.level}
                   </span>
                 </p>
 
-                <div className="flex gap-4 justify-center">
+                <div className="flex gap-3 justify-center">
                   <Button
                     onClick={startGame}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl"
                   >
                     <Play className="h-4 w-4 mr-2" />
                     Play Again
@@ -1189,58 +934,76 @@ export default function ComparingNumbersGame() {
                   <Button
                     onClick={resetGame}
                     variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 rounded-xl"
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset
                   </Button>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           )}
 
-          {/* Instructions */}
-          <Card className="bg-slate-800/80 border-slate-700 p-6 mt-8 backdrop-blur">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-400" />
-              How to Play:
+          {/* How to Play Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="mt-4 sm:mt-6 pb-4 sm:pb-8"
+          >
+            <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 text-center">
+              How to Play
             </h3>
-            <div className="grid md:grid-cols-2 gap-6 text-gray-300">
-              <div>
-                <h4 className="font-semibold text-emerald-400 mb-2">
-                  🎯 Drag & Drop
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">🎯</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Drag & Drop
                 </h4>
-                <p className="text-sm">
-                  Drag the numbers to the correct category zones based on their
-                  comparison.
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Drag numbers to correct zones
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-blue-400 mb-2">
-                  ⭐ Build Combos
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">⭐</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Build Combos
                 </h4>
-                <p className="text-sm">
-                  Get multiple answers right in a row to build combo
-                  multipliers!
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Chain correct answers
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-purple-400 mb-2">
-                  📈 Level Up
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">📈</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Level Up
                 </h4>
-                <p className="text-sm">
-                  Reach score milestones to advance levels and earn more points.
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Reach score milestones
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-red-400 mb-2">❤️ Lives</h4>
-                <p className="text-sm">
-                  You have 3 lives. Wrong answers cost a life, but streaks give
-                  bonus points!
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">❤️</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  3 Lives
+                </h4>
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Streaks give bonus points
                 </p>
               </div>
             </div>
-          </Card>
+          </motion.div>
         </div>
       </section>
     </div>

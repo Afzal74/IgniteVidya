@@ -403,34 +403,34 @@ export default function KnowingOurNumbersPage() {
               systems through interactive learning
             </motion.p>
 
-            {/* Progress Stats */}
+            {/* Progress Stats - Compact horizontal layout on mobile */}
             <motion.div
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.4 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto"
+              className="grid grid-cols-3 gap-2 sm:gap-4 max-w-2xl mx-auto"
             >
-              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-2 sm:p-4">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {Math.round(currentProgress)}%
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Complete
                 </div>
               </Card>
-              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-2 sm:p-4">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {totalPoints}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Points Earned
                 </div>
               </Card>
-              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-4">
-                <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              <Card className="bg-white/90 dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 backdrop-blur-sm p-2 sm:p-4">
+                <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">
                   {completedTopics.length}/{subtopics.length}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Topics Done
                 </div>
               </Card>
