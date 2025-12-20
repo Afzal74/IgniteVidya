@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { motion } from 'framer-motion'
+import { ArrowLeft } from 'lucide-react'
 
 export default function TeacherLogin() {
   const [email, setEmail] = useState('')
@@ -135,7 +136,7 @@ export default function TeacherLogin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black relative overflow-hidden p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black relative overflow-hidden p-4 pt-20">
       {/* Animated Background - matching home page */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 opacity-30 dark:opacity-10">
@@ -174,18 +175,31 @@ export default function TeacherLogin() {
         />
       </div>
 
-      <Card className="w-full max-w-md relative z-10 border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-black dark:text-white">{isSignUp ? 'Create Teacher Account' : 'Teacher Login'}</CardTitle>
-          <CardDescription className="text-zinc-600 dark:text-zinc-400">
+      {/* Back Button - positioned above card */}
+      <div className="w-full max-w-md relative z-10 mb-2 px-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white px-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span className="text-sm">Back to Home</span>
+        </Button>
+      </div>
+
+      <Card className="w-full max-w-md relative z-10 border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm mb-8 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-10rem)] overflow-y-auto">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-black dark:text-white text-lg sm:text-xl">{isSignUp ? 'Create Teacher Account' : 'Teacher Login'}</CardTitle>
+          <CardDescription className="text-zinc-600 dark:text-zinc-400 text-sm">
             {isSignUp ? 'Sign up to access the teacher dashboard' : 'Sign in to access your dashboard'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-0">
           <form onSubmit={handleAuth} className="space-y-4">
             {isSignUp && (
               <>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
                     <Input

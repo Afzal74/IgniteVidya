@@ -353,10 +353,10 @@ export default function Navigation() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-20 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50"
+              className="fixed top-20 left-2 right-2 sm:left-4 sm:right-4 md:left-auto md:right-4 md:w-80 z-50 max-h-[calc(100vh-6rem)] overflow-y-auto"
             >
               <div className="bg-white dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl overflow-hidden">
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-black dark:text-white">
                       Navigation
@@ -464,11 +464,16 @@ export default function Navigation() {
                             playClickSound("navigation");
                           }}
                           onMouseEnter={() => playHoverSound("link")}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative cursor-not-allowed opacity-75 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
+                          className="group flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl transition-all duration-200 relative cursor-not-allowed opacity-75 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                         >
-                          <item.icon className="h-5 w-5" />
-                          <span className="font-medium">{item.label}</span>
-                          <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-600 dark:text-blue-400">
+                          <div className="relative">
+                            <item.icon className="h-5 w-5 flex-shrink-0" />
+                            {/* Small dot indicator on mobile */}
+                            <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full md:hidden" />
+                          </div>
+                          <span className="font-medium text-sm">{item.label}</span>
+                          {/* Full badge - hidden on mobile, shown on hover/focus */}
+                          <span className="hidden group-hover:inline-block group-focus:inline-block md:inline-block ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-600 dark:text-blue-400 whitespace-nowrap">
                             {item.badge}
                           </span>
                         </div>
@@ -482,16 +487,23 @@ export default function Navigation() {
                           }}
                           onMouseEnter={() => playHoverSound("link")}
                           className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative",
+                            "group flex items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3 rounded-xl transition-all duration-200 relative",
                             pathname === item.href
                               ? "bg-black dark:bg-white text-white dark:text-black"
                               : "hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-700 dark:text-zinc-300"
                           )}
                         >
-                          <item.icon className="h-5 w-5" />
-                          <span className="font-medium">{item.label}</span>
+                          <div className="relative">
+                            <item.icon className="h-5 w-5 flex-shrink-0" />
+                            {/* Small dot indicator on mobile for items with badges */}
+                            {item.badge && (
+                              <span className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full md:hidden" />
+                            )}
+                          </div>
+                          <span className="font-medium text-sm">{item.label}</span>
+                          {/* Full badge - hidden on mobile, shown on hover/focus */}
                           {item.badge && (
-                            <span className="ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-500 text-black shadow-lg relative overflow-hidden">
+                            <span className="hidden group-hover:inline-block group-focus:inline-block md:inline-block ml-auto text-xs font-bold px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-400 via-yellow-300 to-orange-500 text-black shadow-lg relative overflow-hidden whitespace-nowrap">
                               <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-30 animate-shimmer"></span>
                               {item.badge}
                             </span>
