@@ -83,35 +83,48 @@ export const getUserProfile = async (retryCount: number = 0): Promise<{
 
   console.log("getUserProfile - checking for user:", user.id, user.email, "retry:", retryCount);
 
-  // Check if user is a student (try both user_id and email)
-  let studentProfile = null;
+  // Check both student and teacher profiles simultaneously
+  const [studentResult, teacherResult] = await Promise.all([
+    supabase
+      .from("student_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single(),
+    supabase
+      .from("teacher_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+  ]);
 
-  // First try by user_id
-  const { data: studentByUserId, error: studentUserIdError } = await supabase
-    .from("student_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
+  const studentProfile = studentResult.data;
+  const teacherProfile = teacherResult.data;
 
-  console.log("Student profile by user_id:", {
-    studentByUserId,
-    studentUserIdError,
-  });
+  // If both profiles exist, this is a conflict that needs to be resolved
+  if (studentProfile && teacherProfile) {
+    console.error("ROLE CONFLICT: User has both student and teacher profiles!", {
+      userId: user.id,
+      email: user.email,
+      studentProfile: studentProfile.id,
+      teacherProfile: teacherProfile.id
+    });
+    
+    // For now, prioritize teacher role but log the conflict
+    // In production, you might want to force the user to choose or contact support
+    return {
+      user,
+      profile: teacherProfile as TeacherProfile,
+      userType: "teacher",
+    };
+  }
 
-  if (studentByUserId) {
-    studentProfile = studentByUserId;
-  } else {
-    // Try by email if user_id doesn't work
-    const { data: studentByEmail, error: studentEmailError } = await supabase
+  // Check student profile by email if not found by user_id
+  if (!studentProfile && !teacherProfile) {
+    const { data: studentByEmail } = await supabase
       .from("student_profiles")
       .select("*")
       .eq("email", user.email)
       .single();
-
-    console.log("Student profile by email:", {
-      studentByEmail,
-      studentEmailError,
-    });
 
     if (studentByEmail) {
       // Update the user_id to match current user
@@ -120,12 +133,37 @@ export const getUserProfile = async (retryCount: number = 0): Promise<{
         .update({ user_id: user.id })
         .eq("email", user.email);
 
-      studentProfile = studentByEmail;
+      return {
+        user,
+        profile: studentByEmail as StudentProfile,
+        userType: "student",
+      };
+    }
+
+    // Check teacher profile by email if not found by user_id
+    const { data: teacherByEmail } = await supabase
+      .from("teacher_profiles")
+      .select("*")
+      .eq("email", user.email)
+      .single();
+
+    if (teacherByEmail) {
+      // Update the user_id to match current user
+      await supabase
+        .from("teacher_profiles")
+        .update({ user_id: user.id })
+        .eq("email", user.email);
+
+      return {
+        user,
+        profile: teacherByEmail as TeacherProfile,
+        userType: "teacher",
+      };
     }
   }
 
   // If no profile found and this is the first attempt, retry after a short delay
-  if (!studentProfile && retryCount < 2) {
+  if (!studentProfile && !teacherProfile && retryCount < 2) {
     console.log("No profile found, retrying in 1 second...");
     await new Promise(resolve => setTimeout(resolve, 1000));
     return getUserProfile(retryCount + 1);
@@ -140,16 +178,8 @@ export const getUserProfile = async (retryCount: number = 0): Promise<{
     };
   }
 
-  // Check if user is a teacher
-  const { data: teacherProfile, error: teacherError } = await supabase
-    .from("teacher_profiles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single();
-
-  console.log("Teacher profile check:", { teacherProfile, teacherError });
-
   if (teacherProfile) {
+    console.log("Found teacher profile, returning teacher user type");
     return {
       user,
       profile: teacherProfile as TeacherProfile,

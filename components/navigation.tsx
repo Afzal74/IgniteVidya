@@ -34,6 +34,8 @@ import { useSoundEffects } from "@/hooks/useSoundEffects";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { RoleConflictModal } from "@/components/role-conflict-modal";
+import { isStudentProfile, isTeacherProfile } from "@/lib/auth";
 
 const getNavItems = (studentGrade?: number) => {
   const baseItems = [
@@ -68,59 +70,34 @@ const getNavItems = (studentGrade?: number) => {
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
-  const [teacherProfile, setTeacherProfile] = useState<any>(null);
-  const [studentProfile, setStudentProfile] = useState<any>(null);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
-  const { user, loading } = useAuth();
+  const { user, loading, profile, userType, roleConflict, refreshProfile } = useAuth();
   const router = useRouter();
   const { soundEnabled, toggleSound, playHoverSound, playClickSound } =
     useSoundEffects();
 
-  useEffect(() => {
-    if (user) {
-      fetchProfiles();
-    } else {
-      setTeacherProfile(null);
-      setStudentProfile(null);
-    }
-  }, [user]);
-
-  const fetchProfiles = async () => {
-    if (!user) return;
-
-    // Check for teacher profile
-    const { data: teacherData } = await supabase
-      .from("teacher_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-    setTeacherProfile(teacherData);
-
-    // Check for student profile
-    const { data: studentData } = await supabase
-      .from("student_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .single();
-    setStudentProfile(studentData);
-
-    console.log("Navigation profiles:", {
-      teacherData: !!teacherData,
-      studentData: !!studentData,
-    });
-  };
+  const teacherProfile = userType === "teacher" && profile ? profile : null;
+  const studentProfile = userType === "student" && profile ? profile : null;
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    setTeacherProfile(null);
-    setStudentProfile(null);
     playClickSound("secondary");
     router.push("/");
   };
 
   return (
     <>
+      {/* Role Conflict Modal */}
+      {roleConflict && (
+        <RoleConflictModal
+          isOpen={true}
+          onClose={() => {}}
+          email={roleConflict.email}
+          userId={roleConflict.userId}
+        />
+      )}
+
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto px-4">
@@ -384,17 +361,17 @@ export default function Navigation() {
                     <h3 className="text-lg font-semibold text-black dark:text-white">
                       Navigation
                     </h3>
-                    {teacherProfile && (
+                    {teacherProfile && isTeacherProfile(teacherProfile) ? (
                       <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800">
                         <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
                           {teacherProfile.first_name}
                         </span>
                       </div>
-                    )}
+                    ) : null}
                   </div>
 
-                  {teacherProfile && (
+                  {teacherProfile && isTeacherProfile(teacherProfile) && (
                     <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border border-blue-200 dark:border-blue-800">
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
                         Logged in as Teacher
@@ -430,7 +407,7 @@ export default function Navigation() {
                     </div>
                   )}
 
-                  {studentProfile && (
+                  {studentProfile && isStudentProfile(studentProfile) && (
                     <div className="mb-4 p-3 rounded-xl bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border border-green-200 dark:border-green-800">
                       <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-2">
                         Logged in as Student
@@ -471,7 +448,11 @@ export default function Navigation() {
                   )}
 
                   <div className="grid grid-cols-2 md:grid-cols-1 gap-2">
-                    {getNavItems(studentProfile?.grade).map((item) =>
+                    {getNavItems(
+                      studentProfile && isStudentProfile(studentProfile) 
+                        ? studentProfile.grade 
+                        : undefined
+                    ).map((item) =>
                       item.badge === "Coming Soon" ? (
                         <div
                           key={item.href}

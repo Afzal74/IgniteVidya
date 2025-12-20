@@ -54,7 +54,7 @@ export default function StudentLogin() {
         // Check if email is already registered as a teacher
         const { data: existingTeacher } = await supabase
           .from("teacher_profiles")
-          .select("email")
+          .select("email, user_id")
           .eq("email", email)
           .single();
 
@@ -174,7 +174,7 @@ export default function StudentLogin() {
         // First check if this email is registered as a teacher
         const { data: teacherCheck } = await supabase
           .from("teacher_profiles")
-          .select("email")
+          .select("email, user_id")
           .eq("email", email)
           .single();
 
@@ -435,7 +435,7 @@ export default function StudentLogin() {
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                        {Array.from({ length: 7 }, (_, i) => i + 6).map(
                           (gradeNum) => (
                             <SelectItem
                               key={gradeNum}

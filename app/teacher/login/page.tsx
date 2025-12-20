@@ -38,7 +38,7 @@ export default function TeacherLogin() {
         // Check if email is already registered as a student
         const { data: existingStudent } = await supabase
           .from('student_profiles')
-          .select('email')
+          .select('email, user_id')
           .eq('email', email)
           .single()
 
@@ -97,7 +97,7 @@ export default function TeacherLogin() {
         // First check if this email is registered as a student
         const { data: studentCheck } = await supabase
           .from('student_profiles')
-          .select('email')
+          .select('email, user_id')
           .eq('email', email)
           .single()
 
