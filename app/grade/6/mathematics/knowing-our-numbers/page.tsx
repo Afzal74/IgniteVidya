@@ -365,16 +365,18 @@ export default function KnowingOurNumbersPage() {
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 via-white to-purple-50/30 dark:from-gray-900/50 dark:via-black dark:to-purple-900/50" />
 
       {/* Header */}
-      <section className="pt-20 md:pt-24 pb-8 px-4 md:px-6 relative z-10">
+      <section className="pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative z-10">
         <div className="max-w-7xl mx-auto">
           {/* Back Button */}
           <Link href="/grade/6/mathematics">
             <Button
               variant="ghost"
-              className="mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300"
+              size="sm"
+              className="mb-3 sm:mb-4 md:mb-6 text-black dark:text-white hover:text-zinc-600 dark:hover:text-zinc-300 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Mathematics
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Back to Mathematics</span>
+              <span className="sm:hidden">Back</span>
             </Button>
           </Link>
 

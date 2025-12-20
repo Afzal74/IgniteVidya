@@ -1022,23 +1022,25 @@ export default function FlappyWordsGame() {
         ))}
       </div>
 
-      <section className="pt-16 md:pt-20 pb-8 px-4 md:px-6 relative z-10">
+      <section className="pt-14 sm:pt-16 md:pt-20 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-3 sm:mb-4 md:mb-6">
             <Link href="/grade/6/english">
               <Button
                 variant="ghost"
-                className="text-white hover:text-blue-200"
+                size="sm"
+                className="text-white hover:text-blue-200 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2 h-auto"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to English
+                <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Back to English</span>
+                <span className="sm:hidden">Back</span>
               </Button>
             </Link>
 
-            <div className="text-center">
+            <div className="text-center flex-1 mx-2">
               <h1
-                className="text-3xl md:text-4xl font-bold text-white mb-2"
+                className="text-lg sm:text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-0.5 sm:mb-1 md:mb-2"
                 style={{
                   fontFamily: "Orbitron, monospace",
                   textShadow: "2px 2px 0px rgba(0,0,0,0.5)",
@@ -1046,7 +1048,7 @@ export default function FlappyWordsGame() {
               >
                 🐦 FLAPPY WORDS 🐦
               </h1>
-              <p className="text-blue-100">
+              <p className="text-blue-100 text-xs sm:text-sm hidden sm:block">
                 Find the correct vocabulary definition by crossing pipes!
               </p>
             </div>
@@ -1059,61 +1061,70 @@ export default function FlappyWordsGame() {
                 }))
               }
               variant="ghost"
-              className="text-white hover:text-blue-200"
+              size="sm"
+              className="text-white hover:text-blue-200 p-1 sm:p-2"
             >
               {gameState.soundEnabled ? (
-                <Volume2 className="h-5 w-5" />
+                <Volume2 className="h-4 w-4 sm:h-5 sm:w-5" />
               ) : (
-                <VolumeX className="h-5 w-5" />
+                <VolumeX className="h-4 w-4 sm:h-5 sm:w-5" />
               )}
             </Button>
           </div>
 
           {/* Game Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 md:gap-4 mb-3 sm:mb-4 md:mb-6">
+            <Card className="bg-white/20 backdrop-blur border-white/30 p-2 sm:p-3 md:p-4 text-center">
               <div
-                className="text-2xl font-bold text-white"
+                className="text-base sm:text-lg md:text-2xl font-bold text-white"
                 style={{ fontFamily: "Orbitron, monospace" }}
               >
                 {gameState.score}
               </div>
-              <div className="text-sm text-blue-100">SCORE</div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-blue-100">
+                SCORE
+              </div>
             </Card>
-            <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
+            <Card className="bg-white/20 backdrop-blur border-white/30 p-2 sm:p-3 md:p-4 text-center">
               <div
-                className="text-2xl font-bold text-white"
+                className="text-base sm:text-lg md:text-2xl font-bold text-white"
                 style={{ fontFamily: "Orbitron, monospace" }}
               >
                 {gameState.questionsAnswered}/{gameState.totalQuestions}
               </div>
-              <div className="text-sm text-blue-100">PROGRESS</div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-blue-100">
+                PROGRESS
+              </div>
             </Card>
-            <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
+            <Card className="bg-white/20 backdrop-blur border-white/30 p-2 sm:p-3 md:p-4 text-center">
               <div
-                className="text-2xl font-bold text-white"
+                className="text-base sm:text-lg md:text-2xl font-bold text-white"
                 style={{ fontFamily: "Orbitron, monospace" }}
               >
                 {gameState.lives}
               </div>
-              <div className="text-sm text-blue-100">LIVES</div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-blue-100">
+                LIVES
+              </div>
             </Card>
-            <Card className="bg-white/20 backdrop-blur border-white/30 p-4 text-center">
-              <div className="text-sm font-bold text-white uppercase">
+            <Card className="bg-white/20 backdrop-blur border-white/30 p-2 sm:p-3 md:p-4 text-center">
+              <div className="text-xs sm:text-sm font-bold text-white uppercase">
                 {getCurrentDifficulty()}
               </div>
-              <div className="text-sm text-blue-100">DIFFICULTY</div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-blue-100">
+                DIFFICULTY
+              </div>
             </Card>
           </div>
 
           {/* Game Canvas */}
-          <div className="flex justify-center mb-6">
-            <div className="relative">
+          <div className="flex justify-center mb-3 sm:mb-4 md:mb-6">
+            <div className="relative w-full max-w-4xl">
               <canvas
                 ref={canvasRef}
                 width={GAME_WIDTH}
                 height={GAME_HEIGHT}
-                className="border-4 border-white/50 rounded-lg shadow-2xl cursor-pointer"
+                className="border-2 sm:border-4 border-white/50 rounded-lg shadow-2xl cursor-pointer w-full h-auto"
                 onClick={jump}
                 style={{ maxWidth: "100%", height: "auto" }}
               />
@@ -1136,41 +1147,41 @@ export default function FlappyWordsGame() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg"
+                  className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg p-2 sm:p-4"
                 >
-                  <Card className="bg-gradient-to-br from-white to-yellow-50 p-6 text-center max-w-md shadow-2xl border-2 border-yellow-200">
-                    <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
-                      <Trophy className="h-10 w-10 text-white" />
+                  <Card className="bg-gradient-to-br from-white to-yellow-50 p-3 sm:p-4 md:p-6 text-center max-w-xs sm:max-w-sm md:max-w-md shadow-2xl border-2 border-yellow-200">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-2 sm:mb-3 md:mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg animate-bounce">
+                      <Trophy className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white" />
                     </div>
                     <h2
-                      className="text-3xl font-bold mb-4 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
+                      className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent"
                       style={{ fontFamily: "Orbitron, monospace" }}
                     >
                       🎉 CONGRATULATIONS! 🎉
                     </h2>
 
-                    <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-4 rounded-xl mb-4 border border-yellow-200">
+                    <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-2 sm:p-3 md:p-4 rounded-xl mb-2 sm:mb-3 md:mb-4 border border-yellow-200">
                       <p
-                        className="text-gray-700 mb-2 text-lg font-semibold"
+                        className="text-gray-700 mb-1 sm:mb-2 text-xs sm:text-sm md:text-lg font-semibold"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
                         MISSION ACCOMPLISHED!
                       </p>
-                      <div className="grid grid-cols-2 gap-4 mt-4">
-                        <div className="bg-green-100 p-3 rounded-lg border border-green-300">
+                      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 mt-2 sm:mt-3 md:mt-4">
+                        <div className="bg-green-100 p-2 sm:p-3 rounded-lg border border-green-300">
                           <div
-                            className="text-2xl font-bold text-green-700"
+                            className="text-lg sm:text-xl md:text-2xl font-bold text-green-700"
                             style={{ fontFamily: "Orbitron, monospace" }}
                           >
                             {gameState.correctAnswers}
                           </div>
-                          <div className="text-xs text-green-600 font-semibold">
-                            CORRECT ANSWERS
+                          <div className="text-[10px] sm:text-xs text-green-600 font-semibold">
+                            CORRECT
                           </div>
                         </div>
-                        <div className="bg-blue-100 p-3 rounded-lg border border-blue-300">
+                        <div className="bg-blue-100 p-2 sm:p-3 rounded-lg border border-blue-300">
                           <div
-                            className="text-2xl font-bold text-blue-700"
+                            className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700"
                             style={{ fontFamily: "Orbitron, monospace" }}
                           >
                             {Math.round(
@@ -1180,32 +1191,32 @@ export default function FlappyWordsGame() {
                             )}
                             %
                           </div>
-                          <div className="text-xs text-blue-600 font-semibold">
+                          <div className="text-[10px] sm:text-xs text-blue-600 font-semibold">
                             ACCURACY
                           </div>
                         </div>
                       </div>
 
-                      <div className="mt-4 p-3 bg-purple-100 rounded-lg border border-purple-300">
+                      <div className="mt-2 sm:mt-3 md:mt-4 p-2 sm:p-3 bg-purple-100 rounded-lg border border-purple-300">
                         <div
-                          className="text-lg font-bold text-purple-700"
+                          className="text-sm sm:text-base md:text-lg font-bold text-purple-700"
                           style={{ fontFamily: "Orbitron, monospace" }}
                         >
                           FINAL SCORE: {gameState.score}
                         </div>
-                        <div className="text-sm text-purple-600 mt-1">
+                        <div className="text-[10px] sm:text-xs md:text-sm text-purple-600 mt-1">
                           You completed all 15 vocabulary challenges!
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-3 justify-center">
+                    <div className="flex gap-2 sm:gap-3 justify-center">
                       <Button
                         onClick={startGame}
-                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-6 py-3 text-lg font-semibold shadow-lg"
+                        className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 px-3 sm:px-4 md:px-6 py-2 sm:py-3 text-xs sm:text-sm md:text-lg font-semibold shadow-lg"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
-                        <Play className="h-5 w-5 mr-2" />
+                        <Play className="h-3 w-3 sm:h-4 sm:w-4 md:h-5 md:w-5 mr-1 sm:mr-2" />
                         PLAY AGAIN
                       </Button>
                     </div>
@@ -1218,35 +1229,35 @@ export default function FlappyWordsGame() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg"
+                  className="absolute inset-0 bg-black/80 flex items-center justify-center rounded-lg p-2 sm:p-4"
                 >
-                  <Card className="bg-gradient-to-br from-white to-blue-50 p-6 text-center max-w-sm shadow-2xl border-2 border-blue-200">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
-                      <Trophy className="h-8 w-8 text-white" />
+                  <Card className="bg-gradient-to-br from-white to-blue-50 p-3 sm:p-4 md:p-6 text-center max-w-xs sm:max-w-sm shadow-2xl border-2 border-blue-200">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 mx-auto mb-2 sm:mb-3 md:mb-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center shadow-lg">
+                      <Trophy className="h-5 w-5 sm:h-6 sm:w-6 md:h-8 md:w-8 text-white" />
                     </div>
                     <h2
-                      className="text-2xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
+                      className="text-base sm:text-lg md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent"
                       style={{ fontFamily: "Orbitron, monospace" }}
                     >
                       MISSION COMPLETE
                     </h2>
 
-                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-xl mb-4 border border-blue-200">
+                    <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-2 sm:p-3 md:p-4 rounded-xl mb-2 sm:mb-3 md:mb-4 border border-blue-200">
                       <p
-                        className="text-gray-700 mb-2 text-sm font-semibold"
+                        className="text-gray-700 mb-1 sm:mb-2 text-xs sm:text-sm font-semibold"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
                         FINAL SCORE:
                       </p>
                       <div
-                        className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3"
+                        className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2 sm:mb-3"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
                         {gameState.score}
                       </div>
-                      <div className="flex justify-center items-center gap-2 text-xs">
-                        <div className="bg-green-100 px-2 py-1 rounded-lg border border-green-300 flex items-center gap-1">
-                          <Star className="h-3 w-3 text-green-600" />
+                      <div className="flex justify-center items-center gap-1 sm:gap-2 text-[10px] sm:text-xs">
+                        <div className="bg-green-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border border-green-300 flex items-center gap-0.5 sm:gap-1">
+                          <Star className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-green-600" />
                           <span
                             className="text-green-700 font-semibold"
                             style={{ fontFamily: "Orbitron, monospace" }}
@@ -1254,8 +1265,8 @@ export default function FlappyWordsGame() {
                             {Math.floor(gameState.score / 30)} WORDS
                           </span>
                         </div>
-                        <div className="bg-blue-100 px-2 py-1 rounded-lg border border-blue-300 flex items-center gap-1">
-                          <Target className="h-3 w-3 text-blue-600" />
+                        <div className="bg-blue-100 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg border border-blue-300 flex items-center gap-0.5 sm:gap-1">
+                          <Target className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-blue-600" />
                           <span
                             className="text-blue-700 font-semibold"
                             style={{ fontFamily: "Orbitron, monospace" }}
@@ -1266,22 +1277,22 @@ export default function FlappyWordsGame() {
                       </div>
                     </div>
 
-                    <div className="flex gap-3 justify-center">
+                    <div className="flex gap-2 sm:gap-3 justify-center">
                       <Button
                         onClick={startGame}
-                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-4 py-2 text-sm font-semibold shadow-lg"
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
-                        <Play className="h-4 w-4 mr-1" />
+                        <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                         RESTART
                       </Button>
                       <Button
                         onClick={resetGame}
                         variant="outline"
-                        className="border-2 border-gray-400 text-gray-700 hover:bg-gray-100 px-4 py-2 text-sm font-semibold"
+                        className="border-2 border-gray-400 text-gray-700 hover:bg-gray-100 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold"
                         style={{ fontFamily: "Orbitron, monospace" }}
                       >
-                        <RotateCcw className="h-4 w-4 mr-1" />
+                        <RotateCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-0.5 sm:mr-1" />
                         RESET
                       </Button>
                     </div>
@@ -1298,20 +1309,24 @@ export default function FlappyWordsGame() {
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
-                    className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-lg"
+                    className="absolute inset-0 bg-black/70 flex items-center justify-center rounded-lg p-2 sm:p-4"
                   >
-                    <Card className="bg-white p-8 text-center max-w-sm">
-                      <div className="text-6xl mb-4">🐦</div>
-                      <h2 className="text-2xl font-bold mb-4">Flappy Words</h2>
-                      <p className="text-gray-600 mb-6">
+                    <Card className="bg-white p-4 sm:p-6 md:p-8 text-center max-w-xs sm:max-w-sm">
+                      <div className="text-4xl sm:text-5xl md:text-6xl mb-2 sm:mb-3 md:mb-4">
+                        🐦
+                      </div>
+                      <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 md:mb-4">
+                        Flappy Words
+                      </h2>
+                      <p className="text-gray-600 mb-3 sm:mb-4 md:mb-6 text-xs sm:text-sm md:text-base">
                         Fly through pipes and match vocabulary definitions! Get
                         bonus points for correct answers!
                       </p>
                       <Button
                         onClick={startGame}
-                        className="bg-blue-600 hover:bg-blue-700 text-lg px-8 py-3"
+                        className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base md:text-lg px-4 sm:px-6 md:px-8 py-2 sm:py-3"
                       >
-                        <Play className="h-5 w-5 mr-2" />
+                        <Play className="h-4 w-4 sm:h-5 sm:w-5 mr-1 sm:mr-2" />
                         Start Flying
                       </Button>
                     </Card>
@@ -1331,12 +1346,14 @@ export default function FlappyWordsGame() {
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       exit={{ scale: 1.5, opacity: 0 }}
-                      className="text-8xl font-bold text-white mb-4"
+                      className="text-5xl sm:text-6xl md:text-8xl font-bold text-white mb-2 sm:mb-3 md:mb-4"
                       style={{ fontFamily: "Orbitron, monospace" }}
                     >
                       {gameState.countdownNumber}
                     </motion.div>
-                    <p className="text-white text-xl">Get Ready!</p>
+                    <p className="text-white text-base sm:text-lg md:text-xl">
+                      Get Ready!
+                    </p>
                   </div>
                 </motion.div>
               )}
@@ -1344,12 +1361,12 @@ export default function FlappyWordsGame() {
           </div>
 
           {/* Controls */}
-          <div className="text-center mb-6">
-            <p className="text-white mb-4">
-              <strong>Controls:</strong> Click the bird or press SPACE/UP ARROW
-              to fly!
+          <div className="text-center mb-3 sm:mb-4 md:mb-6">
+            <p className="text-white mb-2 sm:mb-3 md:mb-4 text-xs sm:text-sm md:text-base">
+              <strong>Controls:</strong> Click/Tap or press SPACE/UP ARROW to
+              fly!
             </p>
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-2 sm:gap-4">
               <select
                 value={gameState.difficulty}
                 onChange={(e) =>
@@ -1358,7 +1375,7 @@ export default function FlappyWordsGame() {
                     difficulty: e.target.value as "easy" | "medium" | "hard",
                   }))
                 }
-                className="px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30"
+                className="px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 rounded-lg bg-white/20 text-white border border-white/30 text-xs sm:text-sm md:text-base"
                 disabled={gameState.isPlaying}
               >
                 <option value="easy">Easy Words</option>
@@ -1369,40 +1386,44 @@ export default function FlappyWordsGame() {
           </div>
 
           {/* Instructions */}
-          <Card className="bg-white/20 backdrop-blur border-white/30 p-6">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-400" />
+          <Card className="bg-white/20 backdrop-blur border-white/30 p-3 sm:p-4 md:p-6">
+            <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-2 sm:mb-3 md:mb-4 flex items-center gap-1 sm:gap-2">
+              <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
               How to Play:
             </h3>
-            <div className="grid md:grid-cols-2 gap-6 text-white">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-2 sm:gap-4 md:gap-6 text-white">
               <div>
-                <h4 className="font-semibold text-yellow-300 mb-2">
+                <h4 className="font-semibold text-yellow-300 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                   🐦 Flying
                 </h4>
-                <p className="text-sm">
+                <p className="text-[10px] sm:text-xs md:text-sm">
                   Click or press SPACE to make the bird fly. Avoid hitting the
                   pipes!
                 </p>
               </div>
               <div>
-                <h4 className="font-semibold text-green-300 mb-2">
+                <h4 className="font-semibold text-green-300 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
                   📚 Vocabulary Challenge
                 </h4>
-                <p className="text-sm">
+                <p className="text-[10px] sm:text-xs md:text-sm">
                   After passing each pipe, match the word with its correct
-                  definition from multiple choices!
+                  definition!
                 </p>
               </div>
               <div>
-                <h4 className="font-semibold text-blue-300 mb-2">🎯 Scoring</h4>
-                <p className="text-sm">
+                <h4 className="font-semibold text-blue-300 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
+                  🎯 Scoring
+                </h4>
+                <p className="text-[10px] sm:text-xs md:text-sm">
                   Get 10 points for passing pipes + 20 bonus points for correct
-                  vocabulary answers!
+                  answers!
                 </p>
               </div>
               <div>
-                <h4 className="font-semibold text-red-300 mb-2">❤️ Lives</h4>
-                <p className="text-sm">
+                <h4 className="font-semibold text-red-300 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">
+                  ❤️ Lives
+                </h4>
+                <p className="text-[10px] sm:text-xs md:text-sm">
                   You have 3 lives. Don't crash into pipes or the ground!
                 </p>
               </div>
@@ -1419,29 +1440,29 @@ export default function FlappyWordsGame() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
-              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-2 sm:p-4"
             >
-              <Card className="bg-gradient-to-br from-white to-blue-50 p-3 max-w-sm mx-auto text-center shadow-2xl border-2 border-blue-200">
-                <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-pink-500 to-blue-600 rounded-full flex items-center justify-center">
-                  <div className="text-base">🎯</div>
+              <Card className="bg-gradient-to-br from-white to-blue-50 p-2 sm:p-3 max-w-[90vw] sm:max-w-sm mx-auto text-center shadow-2xl border-2 border-blue-200 max-h-[85vh] overflow-y-auto">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2 bg-gradient-to-br from-pink-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <div className="text-sm sm:text-base">🎯</div>
                 </div>
-                <h3 className="text-lg font-bold mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h3 className="text-sm sm:text-base md:text-lg font-bold mb-2 sm:mb-3 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Vocabulary Challenge!
                 </h3>
-                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-3 rounded-xl mb-3 border border-blue-200">
-                  <h4 className="text-xl font-bold text-blue-800 mb-2">
+                <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-2 sm:p-3 rounded-xl mb-2 sm:mb-3 border border-blue-200">
+                  <h4 className="text-base sm:text-lg md:text-xl font-bold text-blue-800 mb-1 sm:mb-2">
                     {gameState.currentWord?.word}
                   </h4>
-                  <p className="text-gray-700 mb-3 font-semibold text-sm">
+                  <p className="text-gray-700 mb-2 sm:mb-3 font-semibold text-xs sm:text-sm">
                     What does this word mean?
                   </p>
-                  <div className="space-y-2">
+                  <div className="space-y-1.5 sm:space-y-2">
                     {gameState.currentWord?.options.map((option, index) => (
                       <button
                         key={`${gameState.currentWord?.word}-${index}`}
                         onClick={() => selectAnswer(option)}
                         disabled={gameState.showFeedback}
-                        className={`w-full p-2 text-left rounded-lg border-2 transition-all duration-300 ${
+                        className={`w-full p-1.5 sm:p-2 text-left rounded-lg border-2 transition-all duration-300 ${
                           gameState.showFeedback
                             ? option === gameState.currentWord?.definition
                               ? "border-green-500 bg-green-200 text-green-900"
@@ -1450,24 +1471,28 @@ export default function FlappyWordsGame() {
                               ? "border-red-500 bg-red-200 text-red-900"
                               : "border-gray-300 bg-gray-100 text-gray-900"
                             : gameState.selectedAnswer === option
-                            ? "border-blue-500 bg-blue-200 text-blue-900 shadow-lg transform scale-105"
+                            ? "border-blue-500 bg-blue-200 text-blue-900 shadow-lg transform scale-[1.02]"
                             : "border-gray-300 hover:border-blue-400 hover:bg-blue-50 bg-white text-gray-900"
                         }`}
                       >
-                        <span className="font-bold text-blue-600 mr-2 text-sm">
+                        <span className="font-bold text-blue-600 mr-1 sm:mr-2 text-xs sm:text-sm">
                           {String.fromCharCode(65 + index)}.
                         </span>
-                        <span className="font-medium text-sm text-black">
+                        <span className="font-medium text-xs sm:text-sm text-black">
                           {option}
                         </span>
                         {gameState.showFeedback &&
                           option === gameState.currentWord?.definition && (
-                            <span className="ml-2 text-green-600">✅</span>
+                            <span className="ml-1 sm:ml-2 text-green-600">
+                              ✅
+                            </span>
                           )}
                         {gameState.showFeedback &&
                           option === gameState.selectedAnswer &&
                           option !== gameState.currentWord?.definition && (
-                            <span className="ml-2 text-red-600">❌</span>
+                            <span className="ml-1 sm:ml-2 text-red-600">
+                              ❌
+                            </span>
                           )}
                       </button>
                     ))}
@@ -1479,21 +1504,21 @@ export default function FlappyWordsGame() {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6"
+                    className="mb-3 sm:mb-4 md:mb-6"
                   >
                     <div
-                      className={`p-4 rounded-xl border-2 mb-4 ${
+                      className={`p-2 sm:p-3 md:p-4 rounded-xl border-2 mb-2 sm:mb-3 md:mb-4 ${
                         gameState.isCorrectAnswer
                           ? "bg-green-100 border-green-300"
                           : "bg-red-100 border-red-300"
                       }`}
                     >
-                      <div className="flex items-center justify-center mb-2">
-                        <div className="text-2xl mr-2">
+                      <div className="flex items-center justify-center mb-1 sm:mb-2">
+                        <div className="text-lg sm:text-xl md:text-2xl mr-1 sm:mr-2">
                           {gameState.isCorrectAnswer ? "🎉" : "💔"}
                         </div>
                         <h4
-                          className={`text-xl font-bold ${
+                          className={`text-sm sm:text-base md:text-xl font-bold ${
                             gameState.isCorrectAnswer
                               ? "text-green-700"
                               : "text-red-700"
@@ -1508,20 +1533,20 @@ export default function FlappyWordsGame() {
                   </motion.div>
                 )}
 
-                <div className="flex gap-3 justify-center">
+                <div className="flex gap-2 sm:gap-3 justify-center">
                   {!gameState.showFeedback ? (
                     <>
                       <Button
                         onClick={submitAnswer}
                         disabled={!gameState.selectedAnswer}
-                        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 px-4 py-2 text-sm font-semibold shadow-lg"
+                        className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg"
                       >
-                        Submit (+20 pts)
+                        Submit (+20)
                       </Button>
                       <Button
                         onClick={skipWord}
                         variant="outline"
-                        className="border-2 border-gray-400 text-gray-700 hover:bg-gray-100 px-4 py-2 text-sm font-semibold"
+                        className="border-2 border-gray-400 text-gray-700 hover:bg-gray-100 px-2 sm:px-3 md:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold"
                       >
                         Skip
                       </Button>
@@ -1529,7 +1554,7 @@ export default function FlappyWordsGame() {
                   ) : (
                     <Button
                       onClick={continueFeedback}
-                      className={`px-6 py-2 text-sm font-semibold shadow-lg ${
+                      className={`px-3 sm:px-4 md:px-6 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold shadow-lg ${
                         gameState.isCorrectAnswer
                           ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                           : "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
@@ -1539,13 +1564,13 @@ export default function FlappyWordsGame() {
                         ? "Game Over"
                         : gameState.gameCompleted
                         ? "Complete! 🎉"
-                        : "Continue Flying! 🐦"}
+                        : "Continue! 🐦"}
                     </Button>
                   )}
                 </div>
 
                 {!gameState.showFeedback && (
-                  <p className="text-xs text-orange-600 mt-3 font-medium">
+                  <p className="text-[10px] sm:text-xs text-orange-600 mt-2 sm:mt-3 font-medium">
                     ⚠️ Wrong answer costs 1 life!
                   </p>
                 )}

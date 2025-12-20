@@ -95,7 +95,7 @@ export default function RocketAscendingGame({
   const [targetedAsteroid, setTargetedAsteroid] = useState<string | null>(null);
   const [rocketPosition, setRocketPosition] = useState({ x: 0, y: 0 });
   const [rocketRotation, setRocketRotation] = useState(-90);
-  
+
   // Bullet animation state
   const [bullets, setBullets] = useState<
     Array<{
@@ -715,34 +715,37 @@ export default function RocketAscendingGame({
   // Fire bullet animation from rocket to asteroid
   const fireBullet = (asteroid: NumberAsteroid, onComplete: () => void) => {
     const bulletId = `bullet-${Date.now()}`;
-    
+
     // Rocket position (right side of game area)
     const rocketXPercent = 85;
     const rocketYPercent = 50;
-    
+
     // Target asteroid position
     const targetXPercent = asteroid.xPercent || 30;
     const targetYPercent = asteroid.yPercent || 30;
-    
+
     // Add bullet to state
-    setBullets(prev => [...prev, {
-      id: bulletId,
-      startXPercent: rocketXPercent,
-      startYPercent: rocketYPercent,
-      endXPercent: targetXPercent + 5, // Center of asteroid
-      endYPercent: targetYPercent + 5,
-      asteroidId: asteroid.id,
-      progress: 0
-    }]);
-    
+    setBullets((prev) => [
+      ...prev,
+      {
+        id: bulletId,
+        startXPercent: rocketXPercent,
+        startYPercent: rocketYPercent,
+        endXPercent: targetXPercent + 5, // Center of asteroid
+        endYPercent: targetYPercent + 5,
+        asteroidId: asteroid.id,
+        progress: 0,
+      },
+    ]);
+
     // Play laser sound immediately
     const pitchVariation = 0.8 + (asteroid.value / 20) * 0.4;
     playSound("laser", pitchVariation);
-    
+
     // Remove bullet and trigger explosion after animation
     const bulletDuration = 200; // ms - fast bullet
     setTimeout(() => {
-      setBullets(prev => prev.filter(b => b.id !== bulletId));
+      setBullets((prev) => prev.filter((b) => b.id !== bulletId));
       onComplete();
     }, bulletDuration);
   };
@@ -761,12 +764,12 @@ export default function RocketAscendingGame({
     fireBullet(asteroid, () => {
       // Explosion happens when bullet reaches asteroid
       playSound("explosion");
-      
+
       // Get actual pixel position for explosion particles
       if (gameAreaRef.current) {
         const rect = gameAreaRef.current.getBoundingClientRect();
-        const explosionX = (asteroid.xPercent || 30) / 100 * rect.width + 40;
-        const explosionY = (asteroid.yPercent || 30) / 100 * rect.height + 40;
+        const explosionX = ((asteroid.xPercent || 30) / 100) * rect.width + 40;
+        const explosionY = ((asteroid.yPercent || 30) / 100) * rect.height + 40;
         createExplosion(explosionX, explosionY, isCorrect);
       } else {
         createExplosion(asteroid.x + 40, asteroid.y + 40, isCorrect);
@@ -1066,22 +1069,22 @@ export default function RocketAscendingGame({
         ))}
       </div>
 
-      <section className="pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative z-10">
+      <section className="pt-16 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="mb-4"
+            className="mb-3 sm:mb-4"
           >
             <Button
               onClick={onBackToMainGame}
               variant="outline"
               size="sm"
-              className="border-gray-700 hover:bg-gray-800 text-gray-300"
+              className="border-gray-700 hover:bg-gray-800 text-gray-300 text-xs sm:text-sm px-2 py-1 sm:px-3 sm:py-2"
             >
-              <ArrowLeft className="h-3 w-3 mr-1" />
+              <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               Back
             </Button>
           </motion.div>
@@ -1247,17 +1250,19 @@ export default function RocketAscendingGame({
                     {/* Bullet glow trail */}
                     <div className="relative">
                       {/* Main bullet */}
-                      <div 
+                      <div
                         className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500"
                         style={{
-                          boxShadow: '0 0 10px #fbbf24, 0 0 20px #f97316, 0 0 30px #ef4444',
+                          boxShadow:
+                            "0 0 10px #fbbf24, 0 0 20px #f97316, 0 0 30px #ef4444",
                         }}
                       />
                       {/* Bullet trail */}
-                      <div 
+                      <div
                         className="absolute top-1/2 -translate-y-1/2 -right-4 sm:-right-6 w-6 sm:w-10 h-1.5 sm:h-2 rounded-full opacity-80"
                         style={{
-                          background: 'linear-gradient(to left, transparent, #fbbf24, #f97316)',
+                          background:
+                            "linear-gradient(to left, transparent, #fbbf24, #f97316)",
                         }}
                       />
                       {/* Inner glow */}
