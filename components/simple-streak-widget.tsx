@@ -153,48 +153,48 @@ export default function SimpleStreakWidget({ studentId, className = "" }: Simple
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card className={`bg-gray-800/90 backdrop-blur-sm border-gray-600/50 p-3 ${className}`}>
-      <div className="space-y-2">
+    <Card className={`bg-gray-800/90 backdrop-blur-sm border-gray-600/50 p-2 sm:p-3 ${className}`}>
+      <div className="space-y-1.5 sm:space-y-2">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-green-400" />
-            <span className="text-sm font-medium text-white">{monthName}</span>
+        <div className="flex items-center justify-between flex-wrap gap-1">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-green-400" />
+            <span className="text-xs sm:text-sm font-medium text-white">{monthName}</span>
           </div>
           
-          <div className="flex items-center gap-3 text-xs">
-            <div className="flex items-center gap-1 text-orange-400">
-              <Flame className="h-3 w-3" />
+          <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs">
+            <div className="flex items-center gap-0.5 sm:gap-1 text-orange-400">
+              <Flame className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               <span className="font-bold">{stats.currentStreak}</span>
             </div>
-            <div className="flex items-center gap-1 text-yellow-400">
-              <Trophy className="h-3 w-3" />
+            <div className="flex items-center gap-0.5 sm:gap-1 text-yellow-400">
+              <Trophy className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               <span className="font-bold">{stats.longestStreak}</span>
             </div>
-            <div className="flex items-center gap-1 text-blue-400">
-              <Target className="h-3 w-3" />
+            <div className="flex items-center gap-0.5 sm:gap-1 text-blue-400">
+              <Target className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
               <span className="font-bold">{stats.activeDays}</span>
             </div>
           </div>
         </div>
 
         {/* Calendar */}
-        <div className="space-y-0.5">
+        <div className="space-y-0.5 overflow-x-auto">
           {/* Week headers */}
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
+          <div className="grid grid-cols-7 gap-0.5 mb-1 min-w-[180px]">
             {weekDays.map((day, index) => (
-              <div key={index} className="text-xs text-gray-500 text-center font-medium w-6">
+              <div key={index} className="text-[10px] sm:text-xs text-gray-500 text-center font-medium w-5 sm:w-6">
                 {day.charAt(0)}
               </div>
             ))}
           </div>
 
           {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-0.5">
+          <div className="grid grid-cols-7 gap-0.5 min-w-[180px]">
             {calendarGrid.map((day, index) => (
               <div key={index}>
                 <div
-                  className={`w-6 h-6 rounded-sm border cursor-pointer transition-colors flex items-center justify-center hover:scale-110 text-xs font-medium ${
+                  className={`w-5 h-5 sm:w-6 sm:h-6 rounded-sm border cursor-pointer transition-colors flex items-center justify-center hover:scale-110 text-[10px] sm:text-xs font-medium ${
                     !day.isCurrentMonth 
                       ? 'bg-gray-900/30 border-gray-800/30 text-gray-600'
                       : day.level > 0 
@@ -213,11 +213,11 @@ export default function SimpleStreakWidget({ studentId, className = "" }: Simple
         </div>
 
         {/* Legend */}
-        <div className="flex items-center justify-between text-xs text-gray-500">
+        <div className="flex items-center justify-between text-[10px] sm:text-xs text-gray-500">
           <span>Less</span>
           <div className="flex gap-0.5">
             {[0, 1, 2, 3, 4].map((level) => (
-              <div key={level} className={`w-2 h-2 rounded-sm ${getColorClass(level)}`} />
+              <div key={level} className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-sm ${getColorClass(level)}`} />
             ))}
           </div>
           <span>More</span>
@@ -225,8 +225,8 @@ export default function SimpleStreakWidget({ studentId, className = "" }: Simple
 
         {/* Hover info */}
         {hoveredDay && hoveredDay.level > 0 && (
-          <div className="bg-gray-700/80 rounded p-2 text-xs">
-            <div className="text-white font-medium mb-1">
+          <div className="bg-gray-700/80 rounded p-1.5 sm:p-2 text-[10px] sm:text-xs">
+            <div className="text-white font-medium mb-0.5 sm:mb-1">
               {new Date(hoveredDay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </div>
             <div className="text-gray-300">
