@@ -11,7 +11,6 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -20,6 +19,8 @@ type NumberAsteroid = {
   value: number;
   x: number;
   y: number;
+  xPercent?: number;
+  yPercent?: number;
   isShot: boolean;
   isCorrect: boolean | null;
 };
@@ -94,6 +95,20 @@ export default function RocketAscendingGame({
   const [targetedAsteroid, setTargetedAsteroid] = useState<string | null>(null);
   const [rocketPosition, setRocketPosition] = useState({ x: 0, y: 0 });
   const [rocketRotation, setRocketRotation] = useState(-90);
+  
+  // Bullet animation state
+  const [bullets, setBullets] = useState<
+    Array<{
+      id: string;
+      startXPercent: number;
+      startYPercent: number;
+      endXPercent: number;
+      endYPercent: number;
+      asteroidId: string;
+      progress: number;
+    }>
+  >([]);
+  const gameAreaRef = useRef<HTMLDivElement>(null);
 
   // Generate random numbers for asteroids
   const generateAsteroids = () => {
@@ -122,91 +137,43 @@ export default function RocketAscendingGame({
       targetSequence = [...numbers].sort((a, b) => b - a); // descending
     }
 
-    // Responsive asteroid positioning - horizontal layout for mobile
-    const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-    const isTablet = typeof window !== "undefined" && window.innerWidth < 1024;
+    // Simple grid positioning - use percentages that work for any container size
+    // Layout: 3 asteroids on top row, 2 on bottom row
+    // Leave right 20% for rocket
+    const positions = [
+      { col: 0, row: 0 }, // Top left
+      { col: 1, row: 0 }, // Top center
+      { col: 2, row: 0 }, // Top right
+      { col: 0.5, row: 1 }, // Bottom left-center
+      { col: 1.5, row: 1 }, // Bottom right-center
+    ];
 
-    // Dynamic game area dimensions based on screen size
-    let gameAreaWidth, gameAreaHeight, asteroidSize, padding;
-
-    if (isMobile) {
-      // Mobile: horizontal scrollable layout
-      gameAreaWidth = Math.max(600, count * 120); // Ensure enough width for all asteroids
-      gameAreaHeight = 256; // Match the h-64 class (16rem = 256px)
-      asteroidSize = 80;
-      padding = 20;
-    } else if (isTablet) {
-      // Tablet: hybrid layout
-      gameAreaWidth = 600;
-      gameAreaHeight = 280;
-      asteroidSize = 85;
-      padding = 30;
-    } else {
-      // Desktop: original layout
-      gameAreaWidth = 700;
-      gameAreaHeight = 300;
-      asteroidSize = 90;
-      padding = 50;
-    }
-
-    // Create asteroids with responsive positioning
     const newAsteroids: NumberAsteroid[] = numbers.map((num, index) => {
-      let x, y;
+      const pos = positions[index];
 
-      if (isMobile) {
-        // Mobile: Horizontal line layout with slight vertical variation
-        const availableWidth = gameAreaWidth - 2 * padding;
-        const slotWidth = availableWidth / count;
+      // Calculate percentage-based positions
+      // X: 5% to 65% (leaving 35% for rocket area on right)
+      // Y: 10% to 80%
+      const xPercent = 5 + (pos.col / 3) * 60; // 5% to 65%
+      const yPercent = 15 + (pos.row / 2) * 55; // 15% to 70%
 
-        x = padding + index * slotWidth + (slotWidth - asteroidSize) / 2;
-        y = (gameAreaHeight - asteroidSize) / 2 + (Math.random() - 0.5) * 30; // Small vertical randomization
-
-        // Ensure asteroids stay within boundaries
-        x = Math.max(
-          padding,
-          Math.min(x, gameAreaWidth - asteroidSize - padding)
-        );
-        y = Math.max(20, Math.min(y, gameAreaHeight - asteroidSize - 20));
-      } else {
-        // Desktop/Tablet: Grid layout
-        const cols = Math.ceil(Math.sqrt(count));
-        const rows = Math.ceil(count / cols);
-
-        const col = index % cols;
-        const row = Math.floor(index / cols);
-
-        // Calculate slot dimensions
-        const slotWidth = (gameAreaWidth - 2 * padding) / cols;
-        const slotHeight = (gameAreaHeight - 2 * padding) / rows;
-
-        // Calculate base position for this slot
-        const baseX = padding + col * slotWidth;
-        const baseY = padding + row * slotHeight;
-
-        // Add randomization within the slot (but ensure asteroid fits)
-        const maxOffsetX = Math.max(0, slotWidth - asteroidSize);
-        const maxOffsetY = Math.max(0, slotHeight - asteroidSize);
-
-        x = baseX + Math.random() * maxOffsetX;
-        y = baseY + Math.random() * maxOffsetY;
-
-        // Ensure asteroids stay within boundaries
-        x = Math.max(0, Math.min(x, gameAreaWidth - asteroidSize));
-        y = Math.max(0, Math.min(y, gameAreaHeight - asteroidSize));
-      }
+      // Add small random offset (±5%)
+      const randomX = (Math.random() - 0.5) * 8;
+      const randomY = (Math.random() - 0.5) * 10;
 
       return {
         id: `asteroid-${Date.now()}-${index}`,
         value: num,
-        x,
-        y,
+        xPercent: Math.max(5, Math.min(60, xPercent + randomX)),
+        yPercent: Math.max(10, Math.min(75, yPercent + randomY)),
+        // Keep x, y for backward compatibility but they'll be overridden by percent
+        x: 0,
+        y: 0,
         isShot: false,
         isCorrect: null,
       };
     });
 
-    console.log("Generated asteroids:", newAsteroids);
-    console.log("Target sequence:", targetSequence);
     setAsteroids(newAsteroids);
     setGameState((prev) => ({
       ...prev,
@@ -242,34 +209,14 @@ export default function RocketAscendingGame({
     }
   }, [gameState.isPlaying]);
 
-  // Update rocket rotation based on targeted asteroid
+  // Update rocket rotation based on targeted asteroid - simplified for percentage positioning
   useEffect(() => {
-    if (targetedAsteroid && rocketPosition.x && rocketPosition.y) {
-      const asteroid = asteroids.find((a) => a.id === targetedAsteroid);
-      if (asteroid) {
-        // Use responsive sizing for asteroid center calculation
-        const isMobile =
-          typeof window !== "undefined" && window.innerWidth < 640;
-        const asteroidSize = isMobile ? 32 : 40; // Half of asteroid width/height for center
-        const asteroidCenterX = asteroid.x + asteroidSize;
-        const asteroidCenterY = asteroid.y + asteroidSize;
-
-        // Calculate angle from rocket to asteroid
-        const deltaX = asteroidCenterX - rocketPosition.x;
-        const deltaY = asteroidCenterY - rocketPosition.y;
-
-        // Convert to degrees - rocket emoji points up by default, so we need to adjust
-        // atan2(deltaY, deltaX) gives us the angle from rocket to asteroid
-        // We subtract 90 degrees because the rocket emoji's default orientation is pointing up (90°)
-        const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI) + 90;
-
-        setRocketRotation(angle);
-      }
-    } else {
-      // Reset rotation to face left when no target (default left-facing position)
-      setRocketRotation(-90);
+    if (!targetedAsteroid) {
+      setRocketRotation(-90); // Default left-facing position
     }
-  }, [targetedAsteroid, rocketPosition, asteroids]);
+    // Note: Rotation calculation disabled for percentage-based positioning
+    // The rocket will stay in default position
+  }, [targetedAsteroid]);
 
   // Particle animation
   useEffect(() => {
@@ -765,6 +712,41 @@ export default function RocketAscendingGame({
     setParticles((prev) => [...prev, ...newParticles]);
   };
 
+  // Fire bullet animation from rocket to asteroid
+  const fireBullet = (asteroid: NumberAsteroid, onComplete: () => void) => {
+    const bulletId = `bullet-${Date.now()}`;
+    
+    // Rocket position (right side of game area)
+    const rocketXPercent = 85;
+    const rocketYPercent = 50;
+    
+    // Target asteroid position
+    const targetXPercent = asteroid.xPercent || 30;
+    const targetYPercent = asteroid.yPercent || 30;
+    
+    // Add bullet to state
+    setBullets(prev => [...prev, {
+      id: bulletId,
+      startXPercent: rocketXPercent,
+      startYPercent: rocketYPercent,
+      endXPercent: targetXPercent + 5, // Center of asteroid
+      endYPercent: targetYPercent + 5,
+      asteroidId: asteroid.id,
+      progress: 0
+    }]);
+    
+    // Play laser sound immediately
+    const pitchVariation = 0.8 + (asteroid.value / 20) * 0.4;
+    playSound("laser", pitchVariation);
+    
+    // Remove bullet and trigger explosion after animation
+    const bulletDuration = 200; // ms - fast bullet
+    setTimeout(() => {
+      setBullets(prev => prev.filter(b => b.id !== bulletId));
+      onComplete();
+    }, bulletDuration);
+  };
+
   // Handle asteroid click (shooting)
   const shootAsteroid = (asteroid: NumberAsteroid) => {
     const expectedNumber =
@@ -775,13 +757,21 @@ export default function RocketAscendingGame({
     setTargetedAsteroid(null);
     stopLaserTargetingSound();
 
-    // Add pitch variation based on asteroid value for more dynamic sound
-    const pitchVariation = 0.8 + (asteroid.value / 20) * 0.4; // Range from 0.8 to 1.2
-    playSound("laser", pitchVariation);
-    setTimeout(() => {
+    // Fire bullet animation, then handle the hit
+    fireBullet(asteroid, () => {
+      // Explosion happens when bullet reaches asteroid
       playSound("explosion");
-      createExplosion(asteroid.x + 40, asteroid.y + 40, isCorrect);
-    }, 100);
+      
+      // Get actual pixel position for explosion particles
+      if (gameAreaRef.current) {
+        const rect = gameAreaRef.current.getBoundingClientRect();
+        const explosionX = (asteroid.xPercent || 30) / 100 * rect.width + 40;
+        const explosionY = (asteroid.yPercent || 30) / 100 * rect.height + 40;
+        createExplosion(explosionX, explosionY, isCorrect);
+      } else {
+        createExplosion(asteroid.x + 40, asteroid.y + 40, isCorrect);
+      }
+    });
 
     // Don't mark asteroid as shot permanently - allow re-shooting after wrong attempts
     // Only temporarily mark for visual feedback
@@ -922,6 +912,7 @@ export default function RocketAscendingGame({
       showDescendingIntro: false,
     });
     setParticles([]);
+    setBullets([]);
   };
 
   const resetGame = () => {
@@ -945,6 +936,7 @@ export default function RocketAscendingGame({
     });
     setAsteroids([]);
     setParticles([]);
+    setBullets([]);
   };
 
   const startDescendingLevel = () => {
@@ -1054,24 +1046,7 @@ export default function RocketAscendingGame({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-purple-900 relative overflow-hidden">
-      {/* Animated stars background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-slate-800/20 to-transparent"></div>
-        {[...Array(50)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 bg-white rounded-full animate-pulse"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 3}s`,
-              animationDuration: `${2 + Math.random() * 2}s`,
-            }}
-          />
-        ))}
-      </div>
-
+    <div className="min-h-screen bg-gray-900 relative overflow-hidden">
       {/* Particles */}
       <div className="fixed inset-0 pointer-events-none">
         {particles.map((particle) => (
@@ -1091,148 +1066,137 @@ export default function RocketAscendingGame({
         ))}
       </div>
 
-      <section className="pt-16 md:pt-24 pb-6 md:pb-8 px-3 md:px-6 relative z-10">
+      <section className="pt-8 sm:pt-12 md:pt-16 pb-4 sm:pb-6 md:pb-8 px-2 sm:px-4 md:px-6 relative z-10">
         <div className="max-w-6xl mx-auto">
-          {/* Header - Mobile optimization */}
-          <div className="flex flex-col md:flex-row items-center justify-between mb-4 md:mb-8 space-y-2 md:space-y-0">
-            {/* Back button - floating on mobile */}
+          {/* Back Button */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-4"
+          >
             <Button
               onClick={onBackToMainGame}
-              variant="ghost"
-              className="text-gray-300 hover:text-white self-start absolute top-4 left-4 z-20 bg-slate-800/70 backdrop-blur-sm md:static md:bg-transparent md:backdrop-blur-none rounded-full md:rounded-md p-2 md:p-2 h-10 w-10 md:w-auto md:h-auto"
+              variant="outline"
+              size="sm"
+              className="border-gray-700 hover:bg-gray-800 text-gray-300"
             >
-              <ArrowLeft className="h-4 w-4 md:mr-2" />
-              <span className="hidden md:inline">Back to Game</span>
+              <ArrowLeft className="h-3 w-3 mr-1" />
+              Back
             </Button>
+          </motion.div>
 
-            <div className="text-center flex-1 md:flex-none">
-              <h1 className="text-xl md:text-3xl lg:text-4xl font-bold text-white mb-1 md:mb-2 flex flex-col md:flex-row items-center gap-1 md:gap-2" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '2px', textShadow: '2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000' }}>
-                <span>🚀 SPACE ROCKET</span>
-                <span className="hidden md:inline">
-                  {gameState.currentMode === "ascending"
-                    ? "ASCENDING ORDER"
-                    : "DESCENDING ORDER"}{" "}
-                  🚀
-                </span>
-                <span className="md:hidden text-sm">GAME 🚀</span>
-              </h1>
-              <p className="text-gray-300 text-xs md:text-base">
-                Shoot asteroids in{" "}
-                <span className="hidden md:inline">
-                  {gameState.currentMode}
-                </span>
-                <span className="md:hidden">correct</span> order!
-              </p>
+          {/* Hero Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-4 md:mb-6"
+          >
+            <div className="mb-3 md:mb-4">
+              <span className="px-3 py-1.5 md:px-4 md:py-2 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs md:text-sm font-semibold">
+                {gameState.currentMode === "ascending"
+                  ? "Ascending Order"
+                  : "Descending Order"}{" "}
+                Challenge
+              </span>
             </div>
+            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-white mb-2">
+              🚀 Space Rocket Mission
+            </h1>
+            <p className="text-gray-400 text-xs sm:text-sm">
+              Shoot asteroids in {gameState.currentMode} order!
+            </p>
+          </motion.div>
 
-            <div className="w-0 md:w-24"></div>
-          </div>
-
-          {/* Game Stats - Compact mobile layout */}
-          <div className="flex flex-wrap gap-1 sm:grid sm:grid-cols-5 sm:gap-4 justify-center mb-3 md:mb-8">
-            {/* Mobile: Single row with mini cards */}
-            <div className="flex gap-1 w-full justify-center sm:hidden">
-              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
-                <div className="text-sm font-bold text-blue-400 truncate">
-                  {gameState.score}
-                </div>
-                <div className="text-xs text-gray-400">💰</div>
-              </div>
-              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
-                <div className="text-sm font-bold text-purple-400 truncate">
-                  {gameState.level}
-                </div>
-                <div className="text-xs text-gray-400">🎮</div>
-              </div>
-              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
-                <div className="text-sm font-bold text-red-400 truncate">
-                  {gameState.lives}
-                </div>
-                <div className="text-xs text-gray-400">❤️</div>
-              </div>
-              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
-                <div className="text-sm font-bold text-yellow-400 truncate">
-                  {gameState.streak}
-                </div>
-                <div className="text-xs text-gray-400">⚡</div>
-              </div>
-              <div className="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-center backdrop-blur flex-1 min-w-0 max-w-16">
-                <div className="text-sm font-bold text-emerald-400 truncate">
-                  {gameState.combo}
-                </div>
-                <div className="text-xs text-gray-400">🔥</div>
-              </div>
-            </div>
-
-            {/* Desktop: Original larger cards */}
-            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-blue-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
+          {/* Game Stats - Compact Mobile Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="grid grid-cols-5 gap-1.5 sm:gap-2 md:gap-4 mb-4 sm:mb-6 md:mb-8"
+          >
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-purple-400">
                 {gameState.score}
               </div>
-              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>SCORE</div>
-            </Card>
-            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-purple-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
+                SCORE
+              </div>
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-pink-400">
                 {gameState.level}
               </div>
-              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>LEVEL</div>
-            </Card>
-            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-red-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
+                LEVEL
+              </div>
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-red-400">
                 {gameState.lives}
               </div>
-              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>LIVES</div>
-            </Card>
-            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-yellow-400" style={{ fontFamily: 'Courier New, monospace', letterSpacing: '1px' }}>
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
+                LIVES
+              </div>
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
                 {gameState.streak}
               </div>
-              <div className="text-sm text-gray-400" style={{ fontFamily: 'Courier New, monospace' }}>STREAK</div>
-            </Card>
-            <Card className="hidden sm:block bg-slate-800/80 border-slate-700 p-4 text-center backdrop-blur">
-              <div className="text-2xl font-bold text-emerald-400">
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
+                STREAK
+              </div>
+            </div>
+            <div className="bg-gray-800/90 backdrop-blur-sm rounded-xl p-2 sm:p-3 md:p-4 border border-gray-700 text-center">
+              <div className="text-lg sm:text-xl md:text-2xl font-bold text-cyan-400">
                 {gameState.combo}
               </div>
-              <div className="text-sm text-gray-400">Combo</div>
-            </Card>
-          </div>
+              <div className="text-[10px] sm:text-xs md:text-sm text-gray-400">
+                COMBO
+              </div>
+            </div>
+          </motion.div>
 
-          {/* Start Game Button - Compact mobile version */}
+          {/* Start Game Button */}
           {!gameState.isPlaying &&
             !gameState.gameOver &&
             !gameState.gameComplete && (
-              <div className="text-center mb-6 md:mb-8">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-center mb-4 sm:mb-6 md:mb-8"
+              >
+                <Button
+                  onClick={startGame}
+                  className="w-full max-w-md bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-3 sm:py-4 rounded-xl text-base sm:text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <Button
-                    onClick={startGame}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 md:px-12 md:py-4 text-base md:text-lg font-bold rounded-lg md:rounded-xl shadow-lg"
-                  >
-                    <Play className="h-4 w-4 md:h-6 md:w-6 mr-2 md:mr-3" />
-                    <span className="hidden sm:inline">Launch Mission</span>
-                    <span className="sm:hidden">Start</span>
-                  </Button>
-                </motion.div>
-              </div>
+                  <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  Launch Mission
+                </Button>
+              </motion.div>
             )}
 
           {/* Game Area */}
           {gameState.isPlaying && (
-            <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-4 sm:space-y-6"
+            >
               {/* Sequence Bucket */}
-              <div className="text-center mb-4 md:mb-6 px-2">
-                <h3 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">
-                  🎯 Sequence Bucket:
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-3 sm:p-4 border border-gray-700">
+                <h3 className="text-sm sm:text-base font-semibold text-white mb-2 sm:mb-3 text-center">
+                  🎯 Sequence Bucket
                 </h3>
-                <div className="flex justify-center gap-1.5 sm:gap-2 flex-wrap max-w-md mx-auto">
+                <div className="flex justify-center gap-1.5 sm:gap-2 flex-wrap">
                   {gameState.sequenceBucket.map((item, index) => (
                     <motion.div
                       key={`bucket-${index}`}
                       initial={{ scale: 0, rotate: 180 }}
                       animate={{ scale: 1, rotate: 0 }}
-                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center text-white font-bold shadow-lg text-sm sm:text-base ${
+                      className={`w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg flex items-center justify-center text-white font-bold shadow-lg text-xs sm:text-sm md:text-base ${
                         item.isCorrect
                           ? "bg-gradient-to-br from-emerald-400 to-emerald-600"
                           : "bg-gradient-to-br from-red-400 to-red-600"
@@ -1243,7 +1207,7 @@ export default function RocketAscendingGame({
                   ))}
                   {gameState.currentSequenceIndex <
                     gameState.targetSequence.length && (
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-dashed border-emerald-400 rounded-lg flex items-center justify-center text-emerald-400 font-bold text-sm sm:text-base">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 border-2 border-dashed border-purple-400 rounded-lg flex items-center justify-center text-purple-400 font-bold text-xs sm:text-sm md:text-base">
                       ?
                     </div>
                   )}
@@ -1252,18 +1216,60 @@ export default function RocketAscendingGame({
 
               {/* Space Area with Asteroids */}
               <div
-                className="relative h-64 sm:h-80 md:h-96 lg:h-[28rem] bg-gradient-to-b from-indigo-900/30 to-purple-900/30 rounded-xl sm:rounded-2xl lg:rounded-3xl border-2 border-slate-700 backdrop-blur mx-1 sm:mx-2 lg:mx-0"
+                ref={gameAreaRef}
+                className="relative h-56 sm:h-72 md:h-80 lg:h-96 bg-gray-800/50 rounded-xl sm:rounded-2xl border border-gray-700 backdrop-blur overflow-hidden"
                 style={{
                   backgroundImage:
-                    "radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.3), transparent 50%), radial-gradient(circle at 80% 70%, rgba(59, 130, 246, 0.3), transparent 50%)",
-                  overflowX: "auto",
-                  overflowY: "hidden",
+                    "radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.2), transparent 50%), radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.2), transparent 50%)",
                 }}
               >
-                {/* Rocket at right side, positioned lower on mobile */}
+                {/* Bullet animations */}
+                {bullets.map((bullet) => (
+                  <motion.div
+                    key={bullet.id}
+                    className="absolute z-50 pointer-events-none"
+                    initial={{
+                      left: `${bullet.startXPercent}%`,
+                      top: `${bullet.startYPercent}%`,
+                      scale: 1,
+                      opacity: 1,
+                    }}
+                    animate={{
+                      left: `${bullet.endXPercent}%`,
+                      top: `${bullet.endYPercent}%`,
+                      scale: [1, 1.2, 1],
+                    }}
+                    transition={{
+                      duration: 0.2,
+                      ease: "linear",
+                    }}
+                  >
+                    {/* Bullet glow trail */}
+                    <div className="relative">
+                      {/* Main bullet */}
+                      <div 
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500"
+                        style={{
+                          boxShadow: '0 0 10px #fbbf24, 0 0 20px #f97316, 0 0 30px #ef4444',
+                        }}
+                      />
+                      {/* Bullet trail */}
+                      <div 
+                        className="absolute top-1/2 -translate-y-1/2 -right-4 sm:-right-6 w-6 sm:w-10 h-1.5 sm:h-2 rounded-full opacity-80"
+                        style={{
+                          background: 'linear-gradient(to left, transparent, #fbbf24, #f97316)',
+                        }}
+                      />
+                      {/* Inner glow */}
+                      <div className="absolute inset-0 w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-white/60 blur-sm" />
+                    </div>
+                  </motion.div>
+                ))}
+
+                {/* Rocket at right side */}
                 <motion.div
                   ref={rocketRef}
-                  className="absolute right-3 sm:right-4 top-3/4 sm:top-1/2 transform -translate-y-1/2"
+                  className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 z-30"
                   animate={{
                     x: [0, -3, 0],
                     rotate: rocketRotation,
@@ -1274,17 +1280,17 @@ export default function RocketAscendingGame({
                   }}
                 >
                   {/* Round background for rocket - smaller on mobile */}
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-700/80 to-slate-900/80 rounded-full border-2 border-slate-600/50 backdrop-blur-sm shadow-lg flex items-center justify-center">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 animate-pulse"></div>
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gradient-to-br from-gray-700/80 to-gray-900/80 rounded-full border-2 border-gray-600/50 backdrop-blur-sm shadow-lg flex items-center justify-center">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-400/20 to-pink-400/20 animate-pulse"></div>
                     <img
                       src="/super-Brain.png"
                       alt="Super Brain"
-                      className="w-12 h-12 sm:w-16 sm:h-16 relative z-10 object-contain drop-shadow-lg"
+                      className="w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 relative z-10 object-contain drop-shadow-lg"
                     />
                   </div>
                 </motion.div>
 
-                {/* Targeting Line */}
+                {/* Targeting Line - simplified for percentage-based positioning */}
                 {targetedAsteroid &&
                   (() => {
                     const targetAsteroid = asteroids.find(
@@ -1292,137 +1298,19 @@ export default function RocketAscendingGame({
                     );
                     if (!targetAsteroid) return null;
 
-                    // Calculate responsive asteroid center based on screen size
-                    const isMobile =
-                      typeof window !== "undefined" && window.innerWidth < 640;
-                    const isTablet =
-                      typeof window !== "undefined" && window.innerWidth < 1024;
-
-                    // Match the asteroid size calculation from generateAsteroids
-                    let asteroidDisplaySize;
-                    if (isMobile) {
-                      asteroidDisplaySize = 32; // Half of 64px (16*4)
-                    } else if (isTablet) {
-                      asteroidDisplaySize = 40; // Half of 80px (20*4)
-                    } else {
-                      asteroidDisplaySize = 40; // Half of 80px (20*4) for desktop
-                    }
-
-                    const asteroidCenterX =
-                      targetAsteroid.x + asteroidDisplaySize;
-                    const asteroidCenterY =
-                      targetAsteroid.y + asteroidDisplaySize;
-
-                    return (
-                      <motion.svg
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          overflow: "visible", // Ensure line isn't clipped
-                          zIndex: 50, // Ensure targeting line appears above asteroids
-                        }}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                      >
-                        <motion.line
-                          x1={rocketPosition.x}
-                          y1={rocketPosition.y}
-                          x2={asteroidCenterX}
-                          y2={asteroidCenterY}
-                          stroke="#FF0000"
-                          strokeWidth="3"
-                          strokeDasharray="0"
-                          initial={{ pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: [0.6, 1, 0.6] }}
-                          transition={{
-                            pathLength: { duration: 0.3 },
-                            opacity: {
-                              duration: 0.8,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            },
-                          }}
-                          style={{
-                            filter: "drop-shadow(0 0 8px #FF0000)",
-                            vectorEffect: "non-scaling-stroke", // Maintain stroke width across scaling
-                          }}
-                        />
-                        {/* Laser sight dots */}
-                        <motion.circle
-                          cx={asteroidCenterX}
-                          cy={asteroidCenterY}
-                          r="3"
-                          fill="#FF0000"
-                          initial={{ scale: 0 }}
-                          animate={{ scale: [0, 1, 0] }}
-                          transition={{ duration: 0.5, repeat: Infinity }}
-                          style={{
-                            filter: "drop-shadow(0 0 4px #FF0000)",
-                          }}
-                        />
-                        {/* Additional targeting circle around asteroid */}
-                        <motion.circle
-                          cx={asteroidCenterX}
-                          cy={asteroidCenterY}
-                          r={asteroidDisplaySize * 0.8}
-                          fill="none"
-                          stroke="#FF0000"
-                          strokeWidth="2"
-                          strokeDasharray="8 4"
-                          initial={{ scale: 0, rotate: 0 }}
-                          animate={{
-                            scale: [0.8, 1.2, 0.8],
-                            rotate: 360,
-                            opacity: [0.3, 0.8, 0.3],
-                          }}
-                          transition={{
-                            scale: {
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            },
-                            rotate: {
-                              duration: 2,
-                              repeat: Infinity,
-                              ease: "linear",
-                            },
-                            opacity: {
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "easeInOut",
-                            },
-                          }}
-                          style={{
-                            filter: "drop-shadow(0 0 4px #FF0000)",
-                          }}
-                        />
-                      </motion.svg>
-                    );
+                    // For percentage-based asteroids, we'll use CSS to draw the targeting effect
+                    // The actual line drawing is complex with percentages, so we simplify
+                    return null; // Disable targeting line for now - touch/click still works
                   })()}
-
-                {/* Debug: Show asteroid count */}
-                {asteroids.length > 0 && (
-                  <div className="absolute top-2 left-2 text-white bg-black/50 px-2 py-1 rounded text-sm z-50">
-                    Asteroids: {asteroids.length}
-                  </div>
-                )}
 
                 {/* Asteroids */}
                 {asteroids.map((asteroid, index) => {
-                  console.log("Rendering asteroid:", asteroid); // Debug log
-
                   // Mobile-optimized floating movement
                   const isMobile =
                     typeof window !== "undefined" && window.innerWidth < 640;
-                  const floatX = isMobile
-                    ? 1 + (index % 2) * 1
-                    : 2 + (index % 2) * 2; // Smaller movement on mobile
-                  const floatY = isMobile
-                    ? 0.5 + (index % 3) * 0.5
-                    : 1 + (index % 3) * 1; // Smaller movement on mobile
-                  const floatDuration = 5 + (index % 3) * 2; // Consistent slower movement
+                  const floatX = isMobile ? 1 : 2;
+                  const floatY = isMobile ? 1 : 2;
+                  const floatDuration = 4 + (index % 3);
 
                   return (
                     <motion.div
@@ -1435,14 +1323,10 @@ export default function RocketAscendingGame({
                           : "active:scale-95 hover:scale-110"
                       }`}
                       style={{
-                        left: asteroid.x,
-                        top: asteroid.y,
+                        // Use percentage positioning for responsive layout
+                        left: `${asteroid.xPercent || 10}%`,
+                        top: `${asteroid.yPercent || 20}%`,
                         zIndex: 40,
-                        // Wider touch zone for mobile
-                        padding: isMobile ? "12px" : "8px",
-                        margin: isMobile ? "-12px" : "-8px",
-                        minWidth: isMobile ? "96px" : "80px",
-                        minHeight: isMobile ? "96px" : "80px",
                       }}
                       initial={{ scale: 1, rotate: 0 }}
                       animate={{
@@ -1457,7 +1341,6 @@ export default function RocketAscendingGame({
                             ? 0
                             : 0.5
                           : 1,
-                        // Mobile-optimized floating movement
                         x: asteroid.isShot ? 0 : [0, floatX, 0, -floatX, 0],
                         y: asteroid.isShot ? 0 : [0, -floatY, 0, floatY, 0],
                       }}
@@ -1476,7 +1359,6 @@ export default function RocketAscendingGame({
                           ease: "easeInOut",
                         },
                       }}
-                      // Mobile-friendly interactions
                       onTouchStart={(e) => {
                         e.preventDefault();
                         if (!asteroid.isShot) {
@@ -1507,9 +1389,9 @@ export default function RocketAscendingGame({
                         }
                       }}
                     >
-                      {/* Asteroid with irregular shape */}
+                      {/* Asteroid with irregular shape - responsive sizes */}
                       <div
-                        className={`relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center text-lg sm:text-xl font-bold shadow-2xl ${
+                        className={`relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 flex items-center justify-center text-sm sm:text-base md:text-xl font-bold shadow-2xl ${
                           asteroid.isCorrect === true
                             ? "text-white"
                             : asteroid.isCorrect === false
@@ -1533,20 +1415,20 @@ export default function RocketAscendingGame({
                               : "0 8px 32px rgba(0, 0, 0, 0.3), inset -2px -2px 8px rgba(0, 0, 0, 0.3), inset 2px 2px 8px rgba(120, 113, 108, 0.3)",
                         }}
                       >
-                        {/* Crater textures */}
+                        {/* Crater textures - smaller on mobile */}
                         <div className="absolute inset-0 opacity-30">
-                          <div className="absolute w-2 h-2 bg-black rounded-full top-2 left-3 opacity-40"></div>
-                          <div className="absolute w-1.5 h-1.5 bg-black rounded-full top-4 right-4 opacity-30"></div>
-                          <div className="absolute w-1 h-1 bg-black rounded-full bottom-3 left-2 opacity-50"></div>
-                          <div className="absolute w-1 h-1 bg-black rounded-full bottom-2 right-3 opacity-40"></div>
+                          <div className="absolute w-1 h-1 sm:w-2 sm:h-2 bg-black rounded-full top-1 sm:top-2 left-2 sm:left-3 opacity-40"></div>
+                          <div className="absolute w-1 h-1 sm:w-1.5 sm:h-1.5 bg-black rounded-full top-3 sm:top-4 right-3 sm:right-4 opacity-30"></div>
+                          <div className="absolute w-0.5 h-0.5 sm:w-1 sm:h-1 bg-black rounded-full bottom-2 sm:bottom-3 left-1 sm:left-2 opacity-50"></div>
+                          <div className="absolute w-0.5 h-0.5 sm:w-1 sm:h-1 bg-black rounded-full bottom-1 sm:bottom-2 right-2 sm:right-3 opacity-40"></div>
                         </div>
 
-                        {/* Asteroid Emoji and Number */}
+                        {/* Asteroid Emoji and Number - responsive sizes */}
                         <div className="relative z-10 flex flex-col items-center justify-center">
-                          <div className="text-xl sm:text-2xl mb-0.5 sm:mb-1">
+                          <div className="text-sm sm:text-lg md:text-xl mb-0 sm:mb-0.5">
                             {["🪨", "☄️", "🌑", "🌖", "🪨"][index % 5]}
                           </div>
-                          <span className="text-base sm:text-lg font-bold drop-shadow-lg">
+                          <span className="text-xs sm:text-sm md:text-lg font-bold drop-shadow-lg">
                             {asteroid.value}
                           </span>
                         </div>
@@ -1554,7 +1436,11 @@ export default function RocketAscendingGame({
                         {/* Glow effect for unshot asteroids */}
                         {!asteroid.isShot && (
                           <div
-                            className="absolute -inset-1 bg-amber-400 opacity-20 animate-pulse"
+                            className={`absolute -inset-0.5 sm:-inset-1 ${
+                              targetedAsteroid === asteroid.id
+                                ? "bg-purple-500 opacity-40"
+                                : "bg-purple-400 opacity-20"
+                            } animate-pulse`}
                             style={{
                               clipPath:
                                 "polygon(30% 0%, 70% 0%, 100% 30%, 85% 70%, 70% 100%, 30% 100%, 15% 70%, 0% 30%)",
@@ -1567,40 +1453,35 @@ export default function RocketAscendingGame({
                 })}
               </div>
 
-              {/* Feedback - Compact for mobile */}
+              {/* Feedback */}
               <AnimatePresence>
                 {gameState.feedback && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="text-center px-2"
+                    className="text-center"
                   >
                     <div
-                      className={`text-sm md:text-xl font-bold p-2 md:p-4 rounded-lg md:rounded-xl inline-block max-w-xs md:max-w-none mx-auto ${
+                      className={`text-xs sm:text-sm md:text-base font-bold px-3 py-2 sm:px-4 sm:py-2 rounded-xl inline-block max-w-xs sm:max-w-md ${
                         gameState.feedback.includes("Complete") ||
                         gameState.feedback.includes("LEVEL")
-                          ? "bg-gradient-to-r from-emerald-500/30 to-blue-500/30 text-emerald-300 border-2 border-emerald-400"
+                          ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
                           : gameState.feedback.includes("Correct")
-                          ? "bg-green-500/20 text-green-400 border border-green-400"
+                          ? "bg-green-500/20 text-green-400 border border-green-500/30"
                           : gameState.feedback.includes("Wrong")
-                          ? "bg-red-500/20 text-red-400 border border-red-400"
-                          : "bg-blue-500/20 text-blue-300 border border-blue-400"
+                          ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
                       }`}
                     >
-                      <span className="block md:hidden text-xs">
-                        {gameState.feedback.length > 50
-                          ? gameState.feedback.substring(0, 50) + "..."
-                          : gameState.feedback}
-                      </span>
-                      <span className="hidden md:block">
-                        {gameState.feedback}
-                      </span>
+                      {gameState.feedback.length > 60
+                        ? gameState.feedback.substring(0, 60) + "..."
+                        : gameState.feedback}
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           )}
 
           {/* Game Over */}
@@ -1610,28 +1491,28 @@ export default function RocketAscendingGame({
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <Card className="bg-slate-800/90 border-slate-700 p-8 max-w-md mx-auto backdrop-blur">
-                <Trophy className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
-                <h2 className="text-3xl font-bold text-white mb-4">
+              <div className="bg-gray-800/90 backdrop-blur-sm rounded-2xl p-6 sm:p-8 max-w-md mx-auto border border-gray-700">
+                <Trophy className="h-12 w-12 sm:h-16 sm:w-16 text-yellow-400 mx-auto mb-4" />
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
                   Mission Failed!
                 </h2>
                 <p className="text-gray-300 mb-2">
                   Final Score:{" "}
-                  <span className="text-blue-400 font-bold text-2xl">
+                  <span className="text-purple-400 font-bold text-xl sm:text-2xl">
                     {gameState.score}
                   </span>
                 </p>
                 <p className="text-gray-300 mb-6">
                   Level Reached:{" "}
-                  <span className="text-purple-400 font-bold text-xl">
+                  <span className="text-pink-400 font-bold text-lg sm:text-xl">
                     {gameState.level}
                   </span>
                 </p>
 
-                <div className="flex gap-4 justify-center">
+                <div className="flex gap-3 justify-center">
                   <Button
                     onClick={startGame}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
+                    className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl"
                   >
                     <Play className="h-4 w-4 mr-2" />
                     Try Again
@@ -1639,13 +1520,13 @@ export default function RocketAscendingGame({
                   <Button
                     onClick={resetGame}
                     variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    className="border-gray-600 text-gray-300 hover:bg-gray-700 rounded-xl"
                   >
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Reset
                   </Button>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           )}
 
@@ -1654,122 +1535,69 @@ export default function RocketAscendingGame({
             <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             >
-              <Card className="bg-gradient-to-br from-slate-900/95 via-indigo-900/90 to-purple-900/95 border-2 border-yellow-400/50 p-8 max-w-2xl mx-auto backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                {/* Background pattern */}
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(255,215,0,0.1),_transparent_50%),radial-gradient(circle_at_70%_80%,_rgba(59,130,246,0.1),_transparent_50%)]" />
-
-                {/* Content */}
-                <div className="relative z-10 text-center">
-                  {/* Rocket Icon */}
+              <div className="bg-gray-800/95 border border-purple-500/50 rounded-2xl p-4 sm:p-6 max-w-lg mx-auto backdrop-blur shadow-2xl">
+                <div className="text-center">
                   <motion.div
-                    animate={{
-                      rotate: [0, 10, -10, 0],
-                      scale: [1, 1.1, 1],
-                    }}
+                    animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    className="mb-6"
+                    className="mb-4"
                   >
-                    <div className="text-6xl mb-4">🚀</div>
+                    <div className="text-4xl sm:text-5xl">🚀</div>
                   </motion.div>
 
-                  <motion.h2
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="text-4xl font-black text-center mb-4"
-                  >
-                    <span className="bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent drop-shadow-lg">
-                      NOW DESCENDING ORDER!
+                  <h2 className="text-xl sm:text-2xl font-bold text-white mb-3">
+                    <span className="bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">
+                      Now: Descending Order!
                     </span>
-                  </motion.h2>
+                  </h2>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="space-y-4 mb-8"
-                  >
-                    <h3 className="text-2xl font-bold text-white mb-4">
-                      🔄 New Challenge: Reverse the Order!
-                    </h3>
+                  <p className="text-gray-300 text-sm mb-4">
+                    Great job! Now shoot asteroids from{" "}
+                    <strong className="text-orange-400">
+                      LARGEST to SMALLEST
+                    </strong>
+                    .
+                  </p>
 
-                    <div className="bg-slate-800/60 p-6 rounded-xl border border-blue-400/30">
-                      <p className="text-slate-200 text-lg mb-4">
-                        Excellent work with ascending order! Now let's try the
-                        opposite direction.
+                  <div className="grid grid-cols-2 gap-2 mb-4">
+                    <div className="bg-green-500/20 border border-green-500/30 p-2 rounded-lg">
+                      <p className="text-green-300 text-xs">
+                        ✅ Ascending Done
                       </p>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div className="bg-green-500/20 border border-green-400/30 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-2xl">✅</span>
-                            <h4 className="font-bold text-green-300">
-                              Ascending Complete
-                            </h4>
-                          </div>
-                          <p className="text-green-200 text-sm">
-                            Smallest to Largest (1 → 2 → 3)
-                          </p>
-                        </div>
-
-                        <div className="bg-orange-500/20 border border-orange-400/30 p-4 rounded-lg">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-2xl">🎯</span>
-                            <h4 className="font-bold text-orange-300">
-                              Descending Ready
-                            </h4>
-                          </div>
-                          <p className="text-orange-200 text-sm">
-                            Largest to Smallest (3 → 2 → 1)
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="bg-blue-500/20 border border-blue-400/30 p-4 rounded-lg">
-                        <h4 className="font-bold text-blue-300 mb-2">
-                          🔄 New Challenge:
-                        </h4>
-                        <p className="text-blue-200 text-sm">
-                          Shoot asteroids from{" "}
-                          <strong>LARGEST to SMALLEST</strong> numbers. The
-                          sequence will be reversed - start with the biggest
-                          number first!
-                        </p>
-                      </div>
+                      <p className="text-green-200 text-[10px]">1 → 2 → 3</p>
                     </div>
-                  </motion.div>
+                    <div className="bg-orange-500/20 border border-orange-500/30 p-2 rounded-lg">
+                      <p className="text-orange-300 text-xs">
+                        🎯 Descending Next
+                      </p>
+                      <p className="text-orange-200 text-[10px]">3 → 2 → 1</p>
+                    </div>
+                  </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.7 }}
-                    className="flex flex-col sm:flex-row gap-4 justify-center"
-                  >
+                  <div className="flex flex-col sm:flex-row gap-2 justify-center">
                     <Button
                       onClick={startDescendingLevel}
-                      className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 hover:from-orange-600 hover:via-red-600 hover:to-pink-600 text-white font-bold px-8 py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                      className="bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white font-semibold px-4 py-2 rounded-xl"
                     >
-                      <Star className="h-5 w-5 mr-2" />
+                      <Star className="h-4 w-4 mr-2" />
                       Start Descending
                     </Button>
-
                     <Button
                       onClick={skipDescendingIntro}
                       variant="outline"
-                      className="border-2 border-yellow-400/50 text-yellow-300 hover:bg-yellow-400/10 hover:border-yellow-400 font-bold px-8 py-3 text-lg rounded-xl backdrop-blur transition-all duration-300"
+                      className="border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-xl"
                     >
-                      Skip Intro
+                      Skip
                     </Button>
-                  </motion.div>
+                  </div>
                 </div>
-              </Card>
+              </div>
             </motion.div>
           )}
 
@@ -1780,137 +1608,57 @@ export default function RocketAscendingGame({
               animate={{ opacity: 1, scale: 1 }}
               className="text-center"
             >
-              <Card className="bg-gradient-to-br from-slate-900/95 via-blue-900/90 to-purple-900/95 border-2 border-yellow-400/50 p-6 max-w-lg mx-auto backdrop-blur-xl shadow-2xl relative overflow-hidden">
-                {/* Professional background pattern */}
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 via-transparent to-blue-400/5" />
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(255,215,0,0.1),_transparent_50%),radial-gradient(circle_at_70%_80%,_rgba(59,130,246,0.1),_transparent_50%)]" />
-
-                {/* Real Trophy Emoji */}
+              <div className="bg-gray-800/95 border border-purple-500/50 rounded-2xl p-4 sm:p-6 max-w-md mx-auto backdrop-blur shadow-2xl">
                 <motion.div
-                  animate={{
-                    rotate: [0, 5, -5, 0],
-                    scale: [1, 1.05, 1],
-                  }}
+                  animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1] }}
                   transition={{
                     duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut",
                   }}
-                  className="text-center mb-4"
+                  className="text-center mb-3"
                 >
-                  <div className="text-6xl mb-2">🏆</div>
+                  <div className="text-4xl sm:text-5xl">🏆</div>
                 </motion.div>
 
-                <motion.h2
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{
-                    scale: [0.8, 1.1, 1],
-                    opacity: 1,
-                  }}
-                  transition={{
-                    duration: 1.2,
-                    ease: "easeOut",
-                  }}
-                  className="text-3xl font-black text-center mb-4 relative z-10"
-                >
-                  <span className="bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-300 bg-clip-text text-transparent drop-shadow-lg">
-                    MISSION ACCOMPLISHED
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-3">
+                  <span className="bg-gradient-to-r from-yellow-300 to-amber-300 bg-clip-text text-transparent">
+                    Mission Accomplished!
                   </span>
-                </motion.h2>
+                </h2>
 
-                <div className="space-y-4 mb-6 relative z-10">
-                  <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-slate-200 text-lg font-semibold text-center"
-                  >
-                    Outstanding! You completed both levels.
-                  </motion.p>
+                <p className="text-gray-300 text-sm mb-3">
+                  Outstanding! You completed both levels.
+                </p>
 
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="grid grid-cols-2 gap-3 max-w-sm mx-auto"
-                  >
-                    <div className="bg-gradient-to-br from-emerald-500/20 to-emerald-600/30 border border-emerald-400/30 px-3 py-2 rounded-lg backdrop-blur">
-                      <div className="flex items-center justify-center gap-1">
-                        <p className="text-emerald-200 text-sm font-medium">
-                          Lvl 1: Compare Numbers
-                        </p>
-                        <span className="text-emerald-300">✓</span>
-                      </div>
-                    </div>
-                    <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/30 border border-blue-400/30 px-3 py-2 rounded-lg backdrop-blur">
-                      <div className="flex items-center justify-center gap-1">
-                        <p className="text-blue-200 text-sm font-medium">
-                          Lvl 2: Ascending/Descending
-                        </p>
-                        <span className="text-blue-300">✓</span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.9 }}
-                    className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-yellow-400/20 p-4 rounded-xl backdrop-blur-sm"
-                  >
-                    <div className="text-center space-y-2">
-                      <div className="flex items-center justify-center gap-2">
-                        <Star className="h-5 w-5 text-yellow-400" />
-                        <p className="text-slate-300 font-medium">
-                          Final Score
-                        </p>
-                        <Star className="h-5 w-5 text-yellow-400" />
-                      </div>
-                      <p className="text-yellow-400 font-black text-4xl tracking-wider drop-shadow-lg">
-                        {gameState.score}
-                      </p>
-                      <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-                        <span>Levels Mastered:</span>
-                        <span className="text-emerald-400 font-bold text-xl">
-                          {gameState.completedLevels}/2
-                        </span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1.1 }}
-                    className="text-center"
-                  >
-                    <div className="inline-block bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/30 px-4 py-2 rounded-full backdrop-blur">
-                      <p className="text-purple-200 text-sm font-medium italic">
-                        "Number Comparison Master"
-                      </p>
-                    </div>
-                  </motion.div>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div className="bg-emerald-500/20 border border-emerald-500/30 px-2 py-1.5 rounded-lg">
+                    <p className="text-emerald-300 text-xs">Lvl 1 ✓</p>
+                  </div>
+                  <div className="bg-blue-500/20 border border-blue-500/30 px-2 py-1.5 rounded-lg">
+                    <p className="text-blue-300 text-xs">Lvl 2 ✓</p>
+                  </div>
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.3 }}
-                  className="flex flex-col gap-3 justify-center relative z-10"
-                >
-                  {/* Download Badge Button */}
+                <div className="bg-gray-700/50 border border-gray-600 p-3 rounded-xl mb-4">
+                  <p className="text-gray-400 text-xs mb-1">Final Score</p>
+                  <p className="text-yellow-400 font-bold text-2xl sm:text-3xl">
+                    {gameState.score}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
                   <Button
                     onClick={downloadCompletionBadge}
-                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold px-6 py-2 text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-semibold px-4 py-2 rounded-xl"
                   >
                     <Trophy className="h-4 w-4 mr-2" />
-                    Download Completion Badge
+                    Download Badge
                   </Button>
-
-                  <div className="flex gap-3 justify-center">
+                  <div className="flex gap-2">
                     <Button
                       onClick={startGame}
-                      className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white font-bold px-6 py-2 text-base rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-white/20"
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold px-4 py-2 rounded-xl"
                     >
                       <Sparkles className="h-4 w-4 mr-2" />
                       Play Again
@@ -1918,60 +1666,77 @@ export default function RocketAscendingGame({
                     <Button
                       onClick={resetGame}
                       variant="outline"
-                      className="border-2 border-yellow-400/50 text-yellow-300 hover:bg-yellow-400/10 hover:border-yellow-400 font-bold px-6 py-2 text-base rounded-lg backdrop-blur transition-all duration-300"
+                      className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-700 px-4 py-2 rounded-xl"
                     >
                       <RotateCcw className="h-4 w-4 mr-2" />
-                      New Game
+                      Reset
                     </Button>
                   </div>
-                </motion.div>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           )}
 
-          {/* Instructions */}
-          <Card className="bg-slate-800/80 border-slate-700 p-6 mt-8 backdrop-blur">
-            <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-              <Star className="h-5 w-5 text-yellow-400" />
-              Mission Briefing:
+          {/* How to Play Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+            className="mt-4 sm:mt-6 pb-4 sm:pb-8"
+          >
+            <h3 className="text-base sm:text-lg font-bold text-white mb-3 sm:mb-4 text-center">
+              Mission Briefing
             </h3>
-            <div className="grid md:grid-cols-2 gap-6 text-gray-300">
-              <div>
-                <h4 className="font-semibold text-blue-400 mb-2">
-                  🚀 Your Mission
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">🚀</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Your Mission
                 </h4>
-                <p className="text-sm">
-                  Click asteroids with your rocket's laser to shoot them in
-                  ascending order (smallest to largest).
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Click asteroids in order
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-emerald-400 mb-2">
-                  🎯 Sequence Bucket
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">🎯</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Sequence Bucket
                 </h4>
-                <p className="text-sm">
-                  Successfully shot numbers appear in your sequence bucket in
-                  the correct order.
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Track your progress
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-purple-400 mb-2">
-                  📈 Level Up
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">📈</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  Level Up
                 </h4>
-                <p className="text-sm">
-                  Complete sequences to earn points. Higher levels have more
-                  asteroids to sort!
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Complete sequences
                 </p>
               </div>
-              <div>
-                <h4 className="font-semibold text-red-400 mb-2">❤️ Lives</h4>
-                <p className="text-sm">
-                  Shooting asteroids out of order costs a life. Complete the
-                  sequence before running out!
+
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-gray-700 text-center">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-2">
+                  <span className="text-base sm:text-lg">❤️</span>
+                </div>
+                <h4 className="text-white font-semibold mb-1 text-xs sm:text-sm">
+                  3 Lives
+                </h4>
+                <p className="text-gray-400 text-[10px] sm:text-xs">
+                  Don't miss the order
                 </p>
               </div>
             </div>
-          </Card>
+          </motion.div>
         </div>
       </section>
     </div>
