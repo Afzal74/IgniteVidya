@@ -182,13 +182,20 @@ export default function TeacherLiveClassRoomPage() {
   const [brushColor, setBrushColor] = useState("#ff0000");
   const [brushSize, setBrushSize] = useState(3);
   const [isEraser, setIsEraser] = useState(false);
-  const [whiteboardTool, setWhiteboardTool] = useState<"draw" | "text" | "shape" | "image">("draw");
+  const [whiteboardTool, setWhiteboardTool] = useState<
+    "draw" | "text" | "shape" | "image"
+  >("draw");
   const [textSize, setTextSize] = useState(20);
   const [textFont, setTextFont] = useState("Arial");
-  const [selectedShape, setSelectedShape] = useState<"rectangle" | "circle" | "line" | "arrow">("rectangle");
+  const [selectedShape, setSelectedShape] = useState<
+    "rectangle" | "circle" | "line" | "arrow"
+  >("rectangle");
   const [whiteboardHistory, setWhiteboardHistory] = useState<ImageData[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [textInputPos, setTextInputPos] = useState<{ x: number; y: number } | null>(null);
+  const [textInputPos, setTextInputPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [textInputValue, setTextInputValue] = useState("");
   const textInputRef = useRef<HTMLInputElement>(null);
   const whiteboardRef = useRef<HTMLCanvasElement>(null);
@@ -1258,30 +1265,30 @@ export default function TeacherLiveClassRoomPage() {
   const initWhiteboard = useCallback(() => {
     const canvas = whiteboardRef.current;
     if (!canvas) return;
-    
+
     // Only initialize once - don't clear on color/size change
     if (whiteboardInitialized.current && whiteboardCtxRef.current) {
       return;
     }
-    
+
     canvas.width = canvas.offsetWidth || 800;
     canvas.height = canvas.offsetHeight || 600;
-    
+
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
       whiteboardCtxRef.current = ctx;
-      
+
       // Fill with white background
       ctx.fillStyle = "#ffffff";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
       // Save initial state to history
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       setWhiteboardHistory([imageData]);
       setHistoryIndex(0);
-      
+
       whiteboardInitialized.current = true;
     }
   }, []);
@@ -1291,7 +1298,7 @@ export default function TeacherLiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
-    
+
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const newHistory = whiteboardHistory.slice(0, historyIndex + 1);
     newHistory.push(imageData);
@@ -1305,11 +1312,11 @@ export default function TeacherLiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
-    
+
     const newIndex = historyIndex - 1;
     ctx.putImageData(whiteboardHistory[newIndex], 0, 0);
     setHistoryIndex(newIndex);
-    
+
     // Broadcast undo
     channelRef.current?.send({
       type: "broadcast",
@@ -1324,11 +1331,11 @@ export default function TeacherLiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
-    
+
     const newIndex = historyIndex + 1;
     ctx.putImageData(whiteboardHistory[newIndex], 0, 0);
     setHistoryIndex(newIndex);
-    
+
     // Broadcast redo
     channelRef.current?.send({
       type: "broadcast",
@@ -1347,23 +1354,30 @@ export default function TeacherLiveClassRoomPage() {
   // Commit text to whiteboard
   const commitText = () => {
     if (!textInputValue.trim() || !textInputPos) return;
-    
+
     const ctx = whiteboardCtxRef.current;
     if (!ctx) return;
-    
+
     ctx.font = `${textSize}px ${textFont}`;
     ctx.fillStyle = brushColor;
     ctx.fillText(textInputValue, textInputPos.x, textInputPos.y);
-    
+
     saveToHistory();
-    
+
     // Broadcast text
     channelRef.current?.send({
       type: "broadcast",
       event: "whiteboard-text",
-      payload: { x: textInputPos.x, y: textInputPos.y, text: textInputValue, color: brushColor, size: textSize, font: textFont },
+      payload: {
+        x: textInputPos.x,
+        y: textInputPos.y,
+        text: textInputValue,
+        color: brushColor,
+        size: textSize,
+        font: textFont,
+      },
     });
-    
+
     setTextInputPos(null);
     setTextInputValue("");
   };
@@ -1375,21 +1389,28 @@ export default function TeacherLiveClassRoomPage() {
   };
 
   // Draw shape on whiteboard
-  const drawShape = (startX: number, startY: number, endX: number, endY: number) => {
+  const drawShape = (
+    startX: number,
+    startY: number,
+    endX: number,
+    endY: number
+  ) => {
     const ctx = whiteboardCtxRef.current;
     if (!ctx) return;
-    
+
     ctx.strokeStyle = brushColor;
     ctx.lineWidth = brushSize;
     ctx.fillStyle = brushColor + "33"; // Semi-transparent fill
-    
+
     if (selectedShape === "rectangle") {
       const width = endX - startX;
       const height = endY - startY;
       ctx.strokeRect(startX, startY, width, height);
       ctx.fillRect(startX, startY, width, height);
     } else if (selectedShape === "circle") {
-      const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+      const radius = Math.sqrt(
+        Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)
+      );
       ctx.beginPath();
       ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
       ctx.stroke();
@@ -1410,17 +1431,31 @@ export default function TeacherLiveClassRoomPage() {
       const headLength = 15;
       ctx.beginPath();
       ctx.moveTo(endX, endY);
-      ctx.lineTo(endX - headLength * Math.cos(angle - Math.PI / 6), endY - headLength * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(
+        endX - headLength * Math.cos(angle - Math.PI / 6),
+        endY - headLength * Math.sin(angle - Math.PI / 6)
+      );
       ctx.moveTo(endX, endY);
-      ctx.lineTo(endX - headLength * Math.cos(angle + Math.PI / 6), endY - headLength * Math.sin(angle + Math.PI / 6));
+      ctx.lineTo(
+        endX - headLength * Math.cos(angle + Math.PI / 6),
+        endY - headLength * Math.sin(angle + Math.PI / 6)
+      );
       ctx.stroke();
     }
-    
+
     // Broadcast shape
     channelRef.current?.send({
       type: "broadcast",
       event: "whiteboard-shape",
-      payload: { shape: selectedShape, startX, startY, endX, endY, color: brushColor, size: brushSize },
+      payload: {
+        shape: selectedShape,
+        startX,
+        startY,
+        endX,
+        endY,
+        color: brushColor,
+        size: brushSize,
+      },
     });
   };
 
@@ -1428,7 +1463,7 @@ export default function TeacherLiveClassRoomPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -1436,7 +1471,7 @@ export default function TeacherLiveClassRoomPage() {
         const canvas = whiteboardRef.current;
         const ctx = whiteboardCtxRef.current;
         if (!canvas || !ctx) return;
-        
+
         // Scale image to fit (max 300px)
         const maxSize = 300;
         let width = img.width;
@@ -1446,14 +1481,14 @@ export default function TeacherLiveClassRoomPage() {
           width *= ratio;
           height *= ratio;
         }
-        
+
         // Draw at center
         const x = (canvas.width - width) / 2;
         const y = (canvas.height - height) / 2;
         ctx.drawImage(img, x, y, width, height);
-        
+
         saveToHistory();
-        
+
         // Broadcast image
         channelRef.current?.send({
           type: "broadcast",
@@ -1466,15 +1501,17 @@ export default function TeacherLiveClassRoomPage() {
     reader.readAsDataURL(file);
   };
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const startDrawing = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
 
     const rect = canvas.getBoundingClientRect();
     let x, y;
-    
-    if ('touches' in e) {
+
+    if ("touches" in e) {
       x = e.touches[0].clientX - rect.left;
       y = e.touches[0].clientY - rect.top;
     } else {
@@ -1501,26 +1538,34 @@ export default function TeacherLiveClassRoomPage() {
     setIsDrawing(true);
     ctx.beginPath();
     ctx.moveTo(x, y);
-    
+
     // Broadcast start point
     channelRef.current?.send({
       type: "broadcast",
       event: "whiteboard-draw",
-      payload: { type: "start", x, y, color: isEraser ? "#ffffff" : brushColor, size: isEraser ? brushSize * 3 : brushSize },
+      payload: {
+        type: "start",
+        x,
+        y,
+        color: isEraser ? "#ffffff" : brushColor,
+        size: isEraser ? brushSize * 3 : brushSize,
+      },
     });
   };
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const draw = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     if (!isDrawing) return;
-    
+
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
 
     const rect = canvas.getBoundingClientRect();
     let x, y;
-    
-    if ('touches' in e) {
+
+    if ("touches" in e) {
       e.preventDefault();
       x = e.touches[0].clientX - rect.left;
       y = e.touches[0].clientY - rect.top;
@@ -1529,20 +1574,26 @@ export default function TeacherLiveClassRoomPage() {
       y = e.clientY - rect.top;
     }
 
-    if (whiteboardTool === "shape" && shapeStartPos.current && tempCanvas.current) {
+    if (
+      whiteboardTool === "shape" &&
+      shapeStartPos.current &&
+      tempCanvas.current
+    ) {
       // Preview shape by restoring temp canvas and drawing shape
       ctx.drawImage(tempCanvas.current, 0, 0);
       ctx.strokeStyle = brushColor;
       ctx.lineWidth = brushSize;
       ctx.fillStyle = brushColor + "33";
-      
+
       const startX = shapeStartPos.current.x;
       const startY = shapeStartPos.current.y;
-      
+
       if (selectedShape === "rectangle") {
         ctx.strokeRect(startX, startY, x - startX, y - startY);
       } else if (selectedShape === "circle") {
-        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        const radius = Math.sqrt(
+          Math.pow(x - startX, 2) + Math.pow(y - startY, 2)
+        );
         ctx.beginPath();
         ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
         ctx.stroke();
@@ -1559,35 +1610,45 @@ export default function TeacherLiveClassRoomPage() {
     ctx.lineWidth = isEraser ? brushSize * 3 : brushSize;
     ctx.lineTo(x, y);
     ctx.stroke();
-    
+
     // Broadcast draw point
     channelRef.current?.send({
       type: "broadcast",
       event: "whiteboard-draw",
-      payload: { type: "draw", x, y, color: isEraser ? "#ffffff" : brushColor, size: isEraser ? brushSize * 3 : brushSize },
+      payload: {
+        type: "draw",
+        x,
+        y,
+        color: isEraser ? "#ffffff" : brushColor,
+        size: isEraser ? brushSize * 3 : brushSize,
+      },
     });
   };
 
-  const stopDrawing = (e?: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  const stopDrawing = (
+    e?:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>
+  ) => {
     if (!isDrawing) return;
-    
+
     if (whiteboardTool === "shape" && shapeStartPos.current && e) {
       const canvas = whiteboardRef.current;
       if (!canvas) return;
-      
+
       const rect = canvas.getBoundingClientRect();
       let x, y;
-      if ('touches' in e && e.changedTouches) {
+      if ("touches" in e && e.changedTouches) {
         x = e.changedTouches[0].clientX - rect.left;
         y = e.changedTouches[0].clientY - rect.top;
-      } else if ('clientX' in e) {
+      } else if ("clientX" in e) {
         x = e.clientX - rect.left;
         y = e.clientY - rect.top;
       } else {
         x = shapeStartPos.current.x;
         y = shapeStartPos.current.y;
       }
-      
+
       // Restore and draw final shape
       if (tempCanvas.current) {
         whiteboardCtxRef.current?.drawImage(tempCanvas.current, 0, 0);
@@ -1599,7 +1660,7 @@ export default function TeacherLiveClassRoomPage() {
     } else if (whiteboardTool === "draw") {
       saveToHistory();
     }
-    
+
     setIsDrawing(false);
     channelRef.current?.send({
       type: "broadcast",
@@ -1612,10 +1673,10 @@ export default function TeacherLiveClassRoomPage() {
     const canvas = whiteboardRef.current;
     const ctx = whiteboardCtxRef.current;
     if (!canvas || !ctx) return;
-    
+
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     // Broadcast clear
     channelRef.current?.send({
       type: "broadcast",
@@ -2132,9 +2193,9 @@ export default function TeacherLiveClassRoomPage() {
 
       <div className="flex-1 flex overflow-hidden relative z-10">
         {/* Main Layout: Mobile = column, Desktop = row with students on left */}
-        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
+        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2 relative">
           {/* Main Video - Host or Spotlighted user */}
-          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0 h-[calc(100%-6rem)] md:h-auto">
             {spotlightUser
               ? // Show spotlighted student
                 (() => {
@@ -2170,8 +2231,8 @@ export default function TeacherLiveClassRoomPage() {
                   ))}
           </div>
 
-          {/* Thumbnails - Host (if spotlighted) + Students */}
-          <div className="flex flex-row md:flex-col gap-1 md:gap-2 h-24 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible">
+          {/* Thumbnails - Host (if spotlighted) + Students - Mobile: floating overlay */}
+          <div className="absolute bottom-14 left-1 right-1 md:relative md:bottom-auto md:left-auto md:right-auto flex flex-row md:flex-col gap-1 md:gap-2 h-16 md:h-auto md:w-32 lg:w-40 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible z-10">
             {/* Show host thumbnail when someone else is spotlighted */}
             {spotlightUser &&
               sortedVideos
@@ -2926,32 +2987,55 @@ export default function TeacherLiveClassRoomPage() {
                   {/* Tool Selection */}
                   <div className="flex gap-1 border-r border-[#444] pr-2">
                     <button
-                      onClick={() => { setWhiteboardTool("draw"); setIsEraser(false); }}
-                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "draw" && !isEraser ? "bg-[#00ff41] border-[#00ff41] text-[#0f0f23]" : "border-[#00ff41] text-[#00ff41]"}`}
+                      onClick={() => {
+                        setWhiteboardTool("draw");
+                        setIsEraser(false);
+                      }}
+                      className={`p-1 border-2 text-[8px] ${
+                        whiteboardTool === "draw" && !isEraser
+                          ? "bg-[#00ff41] border-[#00ff41] text-[#0f0f23]"
+                          : "border-[#00ff41] text-[#00ff41]"
+                      }`}
                       title="Draw"
                     >
                       <Pencil className="h-3 w-3" />
                     </button>
                     <button
                       onClick={() => setWhiteboardTool("text")}
-                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "text" ? "bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]" : "border-[#00d4ff] text-[#00d4ff]"}`}
+                      className={`p-1 border-2 text-[8px] ${
+                        whiteboardTool === "text"
+                          ? "bg-[#00d4ff] border-[#00d4ff] text-[#0f0f23]"
+                          : "border-[#00d4ff] text-[#00d4ff]"
+                      }`}
                       title="Text"
                     >
                       T
                     </button>
                     <button
                       onClick={() => setWhiteboardTool("shape")}
-                      className={`p-1 border-2 text-[8px] ${whiteboardTool === "shape" ? "bg-[#ff00ff] border-[#ff00ff] text-[#0f0f23]" : "border-[#ff00ff] text-[#ff00ff]"}`}
+                      className={`p-1 border-2 text-[8px] ${
+                        whiteboardTool === "shape"
+                          ? "bg-[#ff00ff] border-[#ff00ff] text-[#0f0f23]"
+                          : "border-[#ff00ff] text-[#ff00ff]"
+                      }`}
                       title="Shapes"
                     >
                       ▢
                     </button>
-                    <label className="p-1 border-2 border-[#ffff00] text-[#ffff00] cursor-pointer hover:bg-[#ffff00] hover:text-[#0f0f23]" title="Add Image">
+                    <label
+                      className="p-1 border-2 border-[#ffff00] text-[#ffff00] cursor-pointer hover:bg-[#ffff00] hover:text-[#0f0f23]"
+                      title="Add Image"
+                    >
                       🖼
-                      <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
                     </label>
                   </div>
-                  
+
                   {/* Shape Selection (when shape tool active) */}
                   {whiteboardTool === "shape" && (
                     <div className="flex gap-1 border-r border-[#444] pr-2">
@@ -2964,14 +3048,18 @@ export default function TeacherLiveClassRoomPage() {
                         <button
                           key={shape}
                           onClick={() => setSelectedShape(shape)}
-                          className={`w-6 h-6 border text-[10px] ${selectedShape === shape ? "bg-[#ff00ff] border-[#ff00ff] text-white" : "border-[#ff00ff] text-[#ff00ff]"}`}
+                          className={`w-6 h-6 border text-[10px] ${
+                            selectedShape === shape
+                              ? "bg-[#ff00ff] border-[#ff00ff] text-white"
+                              : "border-[#ff00ff] text-[#ff00ff]"
+                          }`}
                         >
                           {icon}
                         </button>
                       ))}
                     </div>
                   )}
-                  
+
                   {/* Text Options (when text tool active) */}
                   {whiteboardTool === "text" && (
                     <>
@@ -3004,19 +3092,35 @@ export default function TeacherLiveClassRoomPage() {
                       </select>
                     </>
                   )}
-                  
+
                   {/* Color Picker */}
                   <div className="flex gap-1">
-                    {["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#ff00ff", "#00ffff", "#ffffff", "#000000"].map((color) => (
+                    {[
+                      "#ff0000",
+                      "#00ff00",
+                      "#0000ff",
+                      "#ffff00",
+                      "#ff00ff",
+                      "#00ffff",
+                      "#ffffff",
+                      "#000000",
+                    ].map((color) => (
                       <button
                         key={color}
-                        onClick={() => { setBrushColor(color); setIsEraser(false); }}
-                        className={`w-5 h-5 rounded border-2 ${brushColor === color && !isEraser ? "border-white scale-110" : "border-transparent"}`}
+                        onClick={() => {
+                          setBrushColor(color);
+                          setIsEraser(false);
+                        }}
+                        className={`w-5 h-5 rounded border-2 ${
+                          brushColor === color && !isEraser
+                            ? "border-white scale-110"
+                            : "border-transparent"
+                        }`}
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
-                  
+
                   {/* Brush Size */}
                   <select
                     value={brushSize}
@@ -3028,16 +3132,23 @@ export default function TeacherLiveClassRoomPage() {
                     <option value={10}>Thick</option>
                     <option value={20}>XL</option>
                   </select>
-                  
+
                   {/* Eraser */}
                   <button
-                    onClick={() => { setIsEraser(!isEraser); setWhiteboardTool("draw"); }}
-                    className={`p-1 border-2 ${isEraser ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]" : "border-[#ffff00] text-[#ffff00]"}`}
+                    onClick={() => {
+                      setIsEraser(!isEraser);
+                      setWhiteboardTool("draw");
+                    }}
+                    className={`p-1 border-2 ${
+                      isEraser
+                        ? "bg-[#ffff00] border-[#ffff00] text-[#0f0f23]"
+                        : "border-[#ffff00] text-[#ffff00]"
+                    }`}
                     title="Eraser"
                   >
                     <Eraser className="h-4 w-4" />
                   </button>
-                  
+
                   {/* Undo/Redo */}
                   <div className="flex gap-1 border-l border-[#444] pl-2">
                     <button
@@ -3057,7 +3168,7 @@ export default function TeacherLiveClassRoomPage() {
                       ↪
                     </button>
                   </div>
-                  
+
                   {/* Clear */}
                   <button
                     onClick={clearWhiteboard}
@@ -3066,7 +3177,7 @@ export default function TeacherLiveClassRoomPage() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
-                  
+
                   {/* Close */}
                   <button
                     onClick={() => {
@@ -3097,9 +3208,13 @@ export default function TeacherLiveClassRoomPage() {
                   onTouchMove={draw}
                   onTouchEnd={(e) => stopDrawing(e)}
                   className={`w-full h-full bg-white rounded touch-none ${
-                    whiteboardTool === "text" ? "cursor-text" : 
-                    whiteboardTool === "shape" ? "cursor-crosshair" : 
-                    isEraser ? "cursor-cell" : "cursor-crosshair"
+                    whiteboardTool === "text"
+                      ? "cursor-text"
+                      : whiteboardTool === "shape"
+                      ? "cursor-crosshair"
+                      : isEraser
+                      ? "cursor-cell"
+                      : "cursor-crosshair"
                   }`}
                   style={{ minHeight: "400px" }}
                 />
@@ -3107,7 +3222,10 @@ export default function TeacherLiveClassRoomPage() {
                 {textInputPos && (
                   <div
                     className="absolute flex items-center gap-1 bg-white border-2 border-[#00d4ff] rounded shadow-lg p-1"
-                    style={{ left: textInputPos.x + 8, top: textInputPos.y + 8 }}
+                    style={{
+                      left: textInputPos.x + 8,
+                      top: textInputPos.y + 8,
+                    }}
                   >
                     <input
                       ref={textInputRef}
@@ -3120,7 +3238,10 @@ export default function TeacherLiveClassRoomPage() {
                       }}
                       placeholder="Type text..."
                       className="px-2 py-1 text-black outline-none min-w-[150px]"
-                      style={{ fontSize: `${Math.min(textSize, 24)}px`, fontFamily: textFont }}
+                      style={{
+                        fontSize: `${Math.min(textSize, 24)}px`,
+                        fontFamily: textFont,
+                      }}
                       autoFocus
                     />
                     <button
@@ -3479,7 +3600,7 @@ function HostVideoTile({
 
   return (
     <div
-      className={`w-full max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 ${
+      className={`w-full h-full md:max-w-4xl md:aspect-video bg-[#1a1a3e] border-2 md:border-4 ${
         isSpeaking
           ? "border-[#00ff41] shadow-[0_0_20px_#00ff41]"
           : "border-[#ffff00]"
@@ -3493,12 +3614,19 @@ function HostVideoTile({
           playsInline
           muted={isLocal}
           className={`w-full h-full object-cover ${showVideo ? "" : "hidden"}`}
-          style={isBlurEnabled ? { filter: "blur(10px)", transform: "scale(1.1)" } : {}}
+          style={
+            isBlurEnabled
+              ? { filter: "blur(10px)", transform: "scale(1.1)" }
+              : {}
+          }
         />
         {/* Overlay for blur effect - shows person without blur */}
         {isBlurEnabled && showVideo && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-[60%] h-[80%] rounded-full overflow-hidden" style={{ boxShadow: "0 0 60px 30px rgba(0,0,0,0.5)" }}>
+            <div
+              className="w-[60%] h-[80%] rounded-full overflow-hidden"
+              style={{ boxShadow: "0 0 60px 30px rgba(0,0,0,0.5)" }}
+            >
               {/* This creates a "spotlight" effect on the person */}
             </div>
           </div>
@@ -3605,7 +3733,7 @@ function SpotlightVideoTile({
   return (
     <div
       onDoubleClick={onDoubleClick}
-      className={`w-full h-full max-h-[70vh] md:max-h-none md:max-w-4xl aspect-video bg-[#1a1a3e] border-2 md:border-4 cursor-pointer ${
+      className={`w-full h-full md:max-w-4xl md:aspect-video bg-[#1a1a3e] border-2 md:border-4 cursor-pointer ${
         isSpeaking
           ? "border-[#00ff41] shadow-[0_0_20px_#00ff41]"
           : "border-[#00d4ff]"
@@ -3732,7 +3860,7 @@ function StudentThumbnail({
   return (
     <div
       onDoubleClick={onDoubleClick}
-      className={`relative w-32 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200 cursor-pointer`}
+      className={`relative w-20 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-[#1a1a3e] border-2 ${borderColor} overflow-hidden group transition-all duration-200 cursor-pointer`}
     >
       <video
         ref={videoRef}
@@ -3743,9 +3871,9 @@ function StudentThumbnail({
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center bg-[#0f0f23]">
           <div
-            className={`w-10 h-10 md:w-12 md:h-12 ${
+            className={`w-7 h-7 md:w-12 md:h-12 ${
               avatarColors[colorIndex % 4]
-            } border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-base md:text-lg font-bold ${
+            } border-2 border-[#1a1a3e] flex items-center justify-center text-[#0f0f23] text-xs md:text-lg font-bold ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
@@ -3755,32 +3883,32 @@ function StudentThumbnail({
       )}
       {/* Speaking indicator */}
       {isSpeaking && (
-        <div className="absolute top-1 left-1 flex gap-0.5">
-          <div className="w-1 h-2 md:h-3 bg-[#00ff41] animate-pulse" />
+        <div className="absolute top-0.5 left-0.5 md:top-1 md:left-1 flex gap-0.5">
+          <div className="w-0.5 md:w-1 h-1.5 md:h-3 bg-[#00ff41] animate-pulse" />
           <div
-            className="w-1 h-3 md:h-4 bg-[#00ff41] animate-pulse"
+            className="w-0.5 md:w-1 h-2 md:h-4 bg-[#00ff41] animate-pulse"
             style={{ animationDelay: "100ms" }}
           />
           <div
-            className="w-1 h-1.5 md:h-2 bg-[#00ff41] animate-pulse"
+            className="w-0.5 md:w-1 h-1 md:h-2 bg-[#00ff41] animate-pulse"
             style={{ animationDelay: "200ms" }}
           />
         </div>
       )}
       {/* Spotlight indicator */}
       {isSpotlighted && (
-        <div className="absolute top-1 left-1 px-1 py-0.5 bg-[#ff00ff] text-white text-[6px]">
+        <div className="absolute top-0.5 left-0.5 md:top-1 md:left-1 px-0.5 md:px-1 py-0.5 bg-[#ff00ff] text-white text-[5px] md:text-[6px]">
           🔍
         </div>
       )}
       {/* Name label */}
-      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-[#0f0f23]/80 text-[8px] md:text-[8px] text-[#00ff41] truncate">
+      <div className="absolute bottom-0 left-0 right-0 px-0.5 md:px-1 py-0.5 bg-[#0f0f23]/80 text-[6px] md:text-[8px] text-[#00ff41] truncate">
         {name}
       </div>
       {/* Hand raised */}
       {isHandRaised && (
-        <div className="absolute top-1 right-1 w-5 h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
-          <Hand className="h-3 w-3 text-white" />
+        <div className="absolute top-0.5 right-0.5 md:top-1 md:right-1 w-3 md:w-5 h-3 md:h-5 bg-[#ff00ff] flex items-center justify-center animate-bounce">
+          <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
         </div>
       )}
       {/* Remove button on hover - desktop only */}

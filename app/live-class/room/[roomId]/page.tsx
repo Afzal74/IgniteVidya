@@ -1532,9 +1532,9 @@ export default function LiveClassRoomPage() {
 
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2">
+        <div className="flex-1 p-1 md:p-2 flex flex-col md:flex-row gap-1 md:gap-2 relative">
           {/* Main Video - Teacher or Spotlighted user */}
-          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0">
+          <div className="flex-1 flex items-center justify-center order-1 md:order-2 min-h-0 h-[calc(100%-7rem)] md:h-auto">
             {spotlightUser ? (
               // Show spotlighted student
               (() => {
@@ -1569,13 +1569,13 @@ export default function LiveClassRoomPage() {
             )}
           </div>
 
-          {/* Thumbnails - Teacher (if spotlighted) + Students */}
-          <div className="flex flex-row md:flex-col gap-2 md:gap-2 h-28 md:h-auto md:w-36 lg:w-44 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible md:overflow-y-auto p-1">
+          {/* Thumbnails - Teacher (if spotlighted) + Students - Mobile: floating overlay, Desktop: sidebar */}
+          <div className="absolute bottom-16 left-1 right-1 md:relative md:bottom-auto md:left-auto md:right-auto flex flex-row md:flex-col gap-1 md:gap-2 h-20 md:h-auto md:w-36 lg:w-44 flex-shrink-0 order-2 md:order-1 overflow-x-auto md:overflow-x-visible md:overflow-y-auto p-1 z-10">
             {/* Show teacher thumbnail when someone else is spotlighted */}
             {spotlightUser && (
               <div
                 onDoubleClick={() => setSpotlightUser(null)}
-                className="relative w-40 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden cursor-pointer ring-2 ring-yellow-400"
+                className="relative w-24 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden cursor-pointer ring-2 ring-yellow-400"
               >
                 <TeacherThumbnail
                   stream={teacherStream}
@@ -1586,14 +1586,14 @@ export default function LiveClassRoomPage() {
                 </div>
               </div>
             )}
-            {/* Your Video */}
+            {/* Your Video - Floating PIP style on mobile */}
             <div
               onDoubleClick={() =>
                 setSpotlightUser(
                   spotlightUser === participantId ? null : participantId
                 )
               }
-              className={`relative w-40 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 cursor-pointer group ${
+              className={`relative w-24 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 cursor-pointer group ${
                 spotlightUser === participantId
                   ? "ring-2 ring-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
                   : speakingUsers.has(participantId)
@@ -1617,7 +1617,7 @@ export default function LiveClassRoomPage() {
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div
-                    className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-lg md:text-xl font-bold ${
+                    className={`w-8 h-8 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm md:text-xl font-bold ${
                       speakingUsers.has(participantId) ? "animate-pulse" : ""
                     }`}
                   >
@@ -1638,7 +1638,7 @@ export default function LiveClassRoomPage() {
                   />
                 </div>
               )}
-              <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[8px] md:text-[10px] text-white truncate flex items-center gap-1">
+              <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[7px] md:text-[10px] text-white truncate flex items-center gap-0.5">
                 {isAudioEnabled ? (
                   <Mic className="h-2 w-2 md:h-2.5 md:w-2.5 text-green-400" />
                 ) : (
@@ -1647,8 +1647,8 @@ export default function LiveClassRoomPage() {
                 You
               </div>
               {isHandRaised && (
-                <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
-                  <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
+                <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-3 md:w-5 h-3 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
+                  <Hand className="h-1.5 md:h-3 w-1.5 md:w-3 text-white" />
                 </div>
               )}
             </div>
@@ -2392,7 +2392,7 @@ function TeacherVideoTile({
   return (
     <div
       onDoubleClick={onDoubleClick}
-      className={`w-full max-w-4xl aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 cursor-pointer ${
+      className={`w-full h-full md:max-w-4xl md:aspect-video bg-gray-800 rounded-lg md:rounded-xl overflow-hidden relative transition-all duration-300 cursor-pointer ${
         isSpeaking
           ? "ring-2 md:ring-4 ring-green-400 shadow-[0_0_20px_rgba(74,222,128,0.5)] md:shadow-[0_0_30px_rgba(74,222,128,0.5)]"
           : "ring-1 md:ring-2 ring-yellow-400"
@@ -2514,7 +2514,7 @@ function StudentThumbnailView({
 
   return (
     <div
-      className={`relative w-40 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
+      className={`relative w-24 h-full md:w-full md:h-auto aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden transition-all duration-200 ${
         isActiveSpeaker
           ? "ring-2 ring-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
           : isSpeaking
@@ -2531,9 +2531,9 @@ function StudentThumbnailView({
       {!showVideo && (
         <div className="w-full h-full flex items-center justify-center">
           <div
-            className={`w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br ${
+            className={`w-8 h-8 md:w-14 md:h-14 rounded-full bg-gradient-to-br ${
               colors[colorIndex % 4]
-            } flex items-center justify-center text-white text-lg md:text-xl font-bold ${
+            } flex items-center justify-center text-white text-sm md:text-xl font-bold ${
               isSpeaking ? "animate-pulse" : ""
             }`}
           >
@@ -2556,7 +2556,7 @@ function StudentThumbnailView({
         </div>
       )}
       {/* Name label */}
-      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[8px] md:text-[10px] text-white truncate flex items-center gap-1">
+      <div className="absolute bottom-0 left-0 right-0 px-1 py-0.5 bg-black/70 text-[7px] md:text-[10px] text-white truncate flex items-center gap-0.5">
         {isAudioEnabled ? (
           <Mic className="h-2 w-2 md:h-2.5 md:w-2.5 text-green-400" />
         ) : (
@@ -2566,8 +2566,8 @@ function StudentThumbnailView({
       </div>
       {/* Hand raised */}
       {isHandRaised && (
-        <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-4 md:w-5 h-4 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
-          <Hand className="h-2 md:h-3 w-2 md:w-3 text-white" />
+        <div className="absolute top-0.5 md:top-1 right-0.5 md:right-1 w-3 md:w-5 h-3 md:h-5 bg-yellow-500 rounded-full flex items-center justify-center animate-bounce">
+          <Hand className="h-1.5 md:h-3 w-1.5 md:w-3 text-white" />
         </div>
       )}
     </div>
