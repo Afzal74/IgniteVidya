@@ -36,3 +36,7 @@
 ## January 04, 2026 - Sunday
 - fix: bug fixes and error handling
 
+
+## January 04, 2026 - Sunday
+- docs: update documentation and guides
+
