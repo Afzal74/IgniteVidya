@@ -32,3 +32,7 @@
 ## January 03, 2026 - Saturday
 - feat: add new features and functionality
 
+
+## January 04, 2026 - Sunday
+- fix: bug fixes and error handling
+
