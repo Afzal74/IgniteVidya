@@ -40,3 +40,7 @@
 ## January 04, 2026 - Sunday
 - docs: update documentation and guides
 
+
+## January 05, 2026 - Monday
+- style: improve code formatting and style
+
