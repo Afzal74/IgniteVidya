@@ -108,3 +108,7 @@
 ## January 15, 2026 - Thursday
 - fix: bug fixes and error handling
 
+
+## January 15, 2026 - Thursday
+- test: add tests and improve coverage
+
