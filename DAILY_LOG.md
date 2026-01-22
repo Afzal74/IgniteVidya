@@ -168,3 +168,7 @@
 ## January 22, 2026 - Thursday
 - fix: bug fixes and error handling
 
+
+## January 22, 2026 - Thursday
+- docs: update documentation and guides
+
