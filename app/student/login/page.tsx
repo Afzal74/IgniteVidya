@@ -3,16 +3,6 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -348,205 +338,204 @@ export default function StudentLogin() {
     }
   };
 
+  const inputClass =
+    "w-full h-9 px-3 text-sm rounded border-2 border-zinc-900 dark:border-zinc-100 bg-white dark:bg-zinc-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.9)] text-zinc-900 dark:text-white font-medium placeholder:text-zinc-400 outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-black relative overflow-hidden p-4 pt-20">
-      {/* Animated Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-30 dark:opacity-10">
-          <div className="h-full w-full bg-[linear-gradient(rgba(59,130,246,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.3)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(59,130,246,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(59,130,246,0.1)_1px,transparent_1px)] bg-[size:20px_20px] animate-pulse" />
-        </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-100 dark:bg-zinc-900 p-4">
+      {/* Subtle grid background */}
+      <div className="fixed inset-0 pointer-events-none opacity-30 dark:opacity-15">
+        <div className="h-full w-full bg-[linear-gradient(rgba(0,0,0,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.05)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px]" />
       </div>
 
-      {/* Gradient Orbs */}
-      <div className="absolute inset-0">
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-64 h-64 bg-gradient-to-r from-green-400/25 to-blue-400/25 dark:from-green-400/10 dark:to-blue-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute top-3/4 right-1/4 w-48 h-48 bg-gradient-to-r from-purple-400/25 to-pink-400/25 dark:from-purple-400/10 dark:to-pink-400/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.3, 1],
-            x: [0, -40, 0],
-            y: [0, 20, 0],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
-      </div>
-
-      {/* Back Button - positioned above card */}
-      <div className="w-full max-w-2xl relative z-10 mb-2 px-1">
-        <Button
-          variant="ghost"
-          size="sm"
+      {/* Back Button */}
+      <div className="w-full max-w-lg relative z-10 mb-2">
+        <button
           onClick={() => router.push("/")}
-          className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white px-0"
+          className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-sm font-medium transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span className="text-sm">Back to Home</span>
-        </Button>
+          Back
+        </button>
       </div>
 
-      <Card className="w-full max-w-2xl relative z-10 border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-sm mb-8 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-10rem)] overflow-y-auto">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-black dark:text-white flex items-center gap-2 text-lg sm:text-xl">
-            🎓 {isSignUp ? "Create Student Account" : "Student Login"}
-          </CardTitle>
-          <CardDescription className="text-zinc-600 dark:text-zinc-400 text-sm">
-            {isSignUp
-              ? "Join the learning community and track your progress"
-              : "Sign in to access your dashboard"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-0">
-          <form onSubmit={handleAuth} className="space-y-4">
+      {/* Main Form Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="w-full max-w-lg relative z-10"
+      >
+        <div className="bg-zinc-200 dark:bg-zinc-800 p-5 rounded-lg border-2 border-zinc-900 dark:border-zinc-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.9)]">
+          {/* Title */}
+          <div className="mb-4">
+            <h1 className="text-zinc-900 dark:text-white font-bold text-lg">
+              🎓 {isSignUp ? "Create Student Account" : "Welcome back"}
+            </h1>
+            <p className="text-zinc-500 text-xs mt-0.5">
+              {isSignUp ? "Join the learning community" : "Sign in to continue"}
+            </p>
+          </div>
+
+          <form onSubmit={handleAuth} className="space-y-3">
             {isSignUp && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      First Name *
+                    </label>
+                    <input
                       id="firstName"
                       type="text"
                       placeholder="John"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       required
+                      className={inputClass}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Last Name *
+                    </label>
+                    <input
                       id="lastName"
                       type="text"
                       placeholder="Doe"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       required
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="grade">Grade *</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Grade *
+                    </label>
                     <Select value={grade} onValueChange={setGrade} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select grade" />
+                      <SelectTrigger className="h-9 text-sm border-2 border-zinc-900 dark:border-zinc-100 bg-white dark:bg-zinc-900 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.9)] text-zinc-900 dark:text-white font-medium rounded">
+                        <SelectValue placeholder="Grade" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {Array.from({ length: 7 }, (_, i) => i + 6).map(
-                          (gradeNum) => (
-                            <SelectItem
-                              key={gradeNum}
-                              value={gradeNum.toString()}
-                            >
-                              Grade {gradeNum}
-                            </SelectItem>
-                          )
-                        )}
+                      <SelectContent className="border-2 border-zinc-900 dark:border-zinc-100">
+                        {Array.from({ length: 7 }, (_, i) => i + 6).map((g) => (
+                          <SelectItem key={g} value={g.toString()}>
+                            Grade {g}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="section">Section</Label>
-                    <Input
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Section
+                    </label>
+                    <input
                       id="section"
                       type="text"
-                      placeholder="A, B, C..."
+                      placeholder="A"
                       value={section}
                       onChange={(e) => setSection(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Roll No.
+                    </label>
+                    <input
+                      id="rollNumber"
+                      type="text"
+                      placeholder="01"
+                      value={rollNumber}
+                      onChange={(e) => setRollNumber(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="rollNumber">Roll Number</Label>
-                    <Input
-                      id="rollNumber"
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      School *
+                    </label>
+                    <input
+                      id="schoolName"
                       type="text"
-                      placeholder="123"
-                      value={rollNumber}
-                      onChange={(e) => setRollNumber(e.target.value)}
+                      placeholder="School name"
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
+                      required
+                      className={inputClass}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                    <Input
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Date of Birth
+                    </label>
+                    <input
                       id="dateOfBirth"
                       type="date"
                       value={dateOfBirth}
                       onChange={(e) => setDateOfBirth(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="schoolName">School Name *</Label>
-                  <Input
-                    id="schoolName"
-                    type="text"
-                    placeholder="ABC High School"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="parentEmail">Parent Email</Label>
-                    <Input
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Parent Email
+                    </label>
+                    <input
                       id="parentEmail"
                       type="email"
                       placeholder="parent@email.com"
                       value={parentEmail}
                       onChange={(e) => setParentEmail(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
+                  <div>
+                    <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                      Phone
+                    </label>
+                    <input
                       id="phoneNumber"
                       type="tel"
                       placeholder="+91 98765 43210"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
+                      className={inputClass}
                     />
                   </div>
                 </div>
               </>
             )}
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
+            <div>
+              <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                Email *
+              </label>
+              <input
                 id="email"
                 type="email"
                 placeholder="student@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className={inputClass}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
+            <div>
+              <label className="text-zinc-900 dark:text-white text-xs font-semibold mb-1 block">
+                Password *
+              </label>
+              <input
                 id="password"
                 type="password"
                 placeholder="••••••••"
@@ -554,50 +543,51 @@ export default function StudentLogin() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
+                className={inputClass}
               />
             </div>
 
             {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 p-3 rounded border border-red-200 dark:border-red-900">
+              <div className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 p-2 rounded border border-red-300 dark:border-red-800">
                 {error}
               </div>
             )}
 
-            <Button
+            <button
               type="submit"
-              className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-white"
               disabled={loading}
+              className="w-full h-9 mt-2 rounded border-2 border-zinc-900 dark:border-zinc-100 bg-zinc-900 dark:bg-white shadow-[3px_3px_0px_0px_rgba(34,197,94,1)] text-white dark:text-zinc-900 font-bold text-sm cursor-pointer hover:shadow-none hover:translate-x-0.5 hover:translate-y-0.5 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all disabled:opacity-50"
             >
-              {loading ? "Loading..." : isSignUp ? "Create Account" : "Sign In"}
-            </Button>
+              {loading
+                ? "Loading..."
+                : isSignUp
+                ? "Create Account →"
+                : "Let's go →"}
+            </button>
 
-            <Button
+            <button
               type="button"
-              variant="ghost"
-              className="w-full text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white"
               onClick={() => setIsSignUp(!isSignUp)}
+              className="w-full text-zinc-500 hover:text-zinc-900 dark:hover:text-white text-xs font-medium py-1 transition-colors"
             >
               {isSignUp
                 ? "Already have an account? Sign In"
                 : "Don't have an account? Sign Up"}
-            </Button>
+            </button>
 
-            <div className="text-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">
-                Are you a teacher?
-              </p>
-              <Button
+            <div className="text-center pt-3 border-t border-zinc-300 dark:border-zinc-700">
+              <span className="text-xs text-zinc-500">Teacher? </span>
+              <button
                 type="button"
-                variant="outline"
                 onClick={() => router.push("/teacher/login")}
-                className="text-sm"
+                className="text-xs text-blue-600 dark:text-blue-400 font-semibold hover:underline"
               >
-                Teacher Login
-              </Button>
+                Login here
+              </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </motion.div>
     </div>
   );
 }
