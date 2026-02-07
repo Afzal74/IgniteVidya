@@ -300,3 +300,7 @@
 ## February 07, 2026 - Saturday
 - fix: bug fixes and error handling
 
+
+## February 07, 2026 - Saturday
+- docs: update documentation and guides
+
