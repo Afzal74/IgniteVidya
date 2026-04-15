@@ -820,3 +820,7 @@
 ## April 15, 2026 - Wednesday
 - fix: bug fixes and error handling
 
+
+## April 15, 2026 - Wednesday
+- docs: update documentation and guides
+
