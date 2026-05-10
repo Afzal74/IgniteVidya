@@ -996,3 +996,7 @@
 ## May 09, 2026 - Saturday
 - test: add tests and improve coverage
 
+
+## May 10, 2026 - Sunday
+- docs: update documentation and guides
+
