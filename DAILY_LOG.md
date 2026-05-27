@@ -1140,3 +1140,7 @@
 ## May 27, 2026 - Wednesday
 - perf: performance optimizations
 
+
+## May 27, 2026 - Wednesday
+- docs: update documentation and guides
+
