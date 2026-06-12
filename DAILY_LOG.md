@@ -1268,3 +1268,7 @@
 ## June 11, 2026 - Thursday
 - perf: performance optimizations
 
+
+## June 12, 2026 - Friday
+- docs: update documentation and guides
+
