@@ -20,13 +20,13 @@ A comprehensive academic companion application for IgniteVidya (Visvesvaraya Tec
 ### Installation
 
 1. **Clone the repository**
-   ```bash
+   ```bash script
    git clone <repository-url>
    cd IgniteVidya-vault
    ```
 
 2. **Install dependencies**
-   ```bash
+   ```bash script
    npm install
    ```
 
